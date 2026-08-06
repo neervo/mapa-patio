@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Ruta a Bahía A1-45</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        #mapa { width: 100vw; height: 100vh; z-index: 1; }
+        
+        .header {
+            background-color: rgba(0, 51, 102, 0.9);
+            color: white; padding: 15px; position: fixed; top: 0; left: 0;
+            width: 100%; z-index: 1000; text-align: center; box-sizing: border-box;
+        }
+        .header h1 { margin: 0; font-size: 18px; }
+        .header p { margin: 5px 0 0 0; font-size: 13px; color: #ffcc00; font-weight: bold; }
+
+        .help-btn {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background-color: #d32f2f; color: white; padding: 15px 30px;
+            border-radius: 50px; border: none; cursor: pointer; font-weight: bold;
+            font-size: 16px; box-shadow: 0 4px 15px rgba(211, 47, 47, 0.5); z-index: 1000;
+        }
+        .help-btn:active { background-color: #b71c1c; }
+        .help-btn:disabled { background-color: #757575; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Destino: BAHÍA A1-45</h1>
+        <p>⚠️ PROHIBIDO BAJAR DE LA UNIDAD ⚠️</p>
+    </div>
+
+    <div id="mapa"></div>
+
+    <button id="btnAyuda" class="help-btn">
+        🚨 Solicitar Auxilio Vial
+    </button>
+
+    <script>
+        // CONFIGURACIÓN DE TELEGRAM (Ya configurada con tus datos)
+        const TELEGRAM_TOKEN = "8515273340:AAHsV3fsue-dY9CZCWlj1izG-usRtgDY64k"; 
+        const TELEGRAM_CHAT_ID = "-5100426684";
+
+        // 1. INICIALIZAR MAPA
+        const mapa = L.map('mapa').setView([19.1903, -96.1537], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mapa);
+
+        // 2. DESTINO
+        L.marker([19.1950, -96.1500]).addTo(mapa).bindPopup("<b>Bahía A1-45</b><br>Destino final").openPopup();
+
+        // 3. UBICACIÓN DEL OPERADOR
+        let ubicacionActual = null;
+        let marcadorOperador = null;
+
+        mapa.locate({setView: true, maxZoom: 17, watch: true});
+
+        mapa.on('locationfound', function(e) {
+            ubicacionActual = e.latlng;
+            if (marcadorOperador) {
+                marcadorOperador.setLatLng(e.latlng);
+            } else {
+                marcadorOperador = L.circleMarker(e.latlng, {
+                    radius: 8, fillColor: "#0078ff", color: "#ffffff", weight: 2, opacity: 1, fillOpacity: 0.8
+                }).addTo(mapa);
+            }
+        });
+
+        // 4. ACCIÓN DEL BOTÓN (ENVIAR A TELEGRAM)
+        const btnAyuda = document.getElementById('btnAyuda');
+
+        btnAyuda.addEventListener('click', function() {
+            if (!ubicacionActual) {
+                alert("Aún estamos calculando tu ubicación precisa por GPS. Espera unos segundos e intenta de nuevo.");
+                return;
+            }
+
+            btnAyuda.disabled = true;
+            btnAyuda.innerHTML = "⏳ Enviando alerta...";
+
+            const linkGoogleMaps = `https://maps.google.com/?q=${ubicacionActual.lat},${ubicacionActual.lng}`;
+            const mensajeTexto = `🚨 *NUEVA ALERTA DE AUXILIO VIAL* 🚨\n\nUn operador se encuentra perdido en el patio y solicita apoyo para encontrar su bahía. No se ha bajado de la unidad.\n\n📍 *Ubicación exacta:* \n${linkGoogleMaps}`;
+
+            const urlTelegram = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+            
+            fetch(urlTelegram, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: mensajeTexto,
+                    parse_mode: 'Markdown'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.ok) {
+                    btnAyuda.innerHTML = "✅ Alerta Enviada";
+                    btnAyuda.style.backgroundColor = "#2e7d32";
+                    alert("Su alerta ha sido enviada a Central. Una patrulla va en camino. Manténgase en su unidad.");
+                } else {
+                    alert("Hubo un error de conexión al enviar la alerta.");
+                    btnAyuda.disabled = false;
+                    btnAyuda.innerHTML = "🚨 Reintentar Auxilio";
+                }
+            })
+            .catch(error => {
+                alert("Error de red. Verifique su internet.");
+                btnAyuda.disabled = false;
+                btnAyuda.innerHTML = "🚨 Reintentar Auxilio";
+            });
+        });
+    </script>
+</body>
+</html>
