@@ -28,9 +28,44 @@
         }
         .help-btn:active { background-color: #b71c1c; }
         .help-btn:disabled { background-color: #757575; cursor: not-allowed; }
+
+        /* Estilos de la Ventana Flotante (Modal) de Seguridad */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: rgba(0, 0, 0, 0.85); z-index: 3000;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background-color: #ffffff; color: #333333; padding: 25px; border-radius: 12px;
+            width: 85%; max-width: 420px; text-align: left; box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+        }
+        .modal-content h2 { color: #d32f2f; font-size: 17px; text-align: center; margin-top: 0; }
+        .reglas-lista { font-size: 13px; padding-left: 18px; line-height: 1.5; color: #444444; }
+        .reglas-lista li { margin-bottom: 8px; }
+        .modal-btn {
+            display: block; width: 100%; background-color: #003366; color: white;
+            padding: 12px; border: none; border-radius: 6px; font-weight: bold;
+            font-size: 15px; cursor: pointer; text-align: center; margin-top: 20px;
+        }
+        .modal-btn:active { background-color: #002244; }
     </style>
 </head>
 <body>
+
+    <!-- VENTANA FLOTANTE DE SEGURIDAD (Se muestra al abrir) -->
+    <div id="modalSeguridad" class="modal-overlay">
+        <div class="modal-content">
+            <h2>⚠️ AVISO DE SEGURIDAD VIAL ⚠️</h2>
+            <ul class="reglas-lista">
+                <li>Mantente en zona segura entre la cabina de tu unidad y el inicio de la primera plana.</li>
+                <li>No cruces ni te posicione entre las líneas de delimitación marcadas en piso.</li>
+                <li>Usa tu EPP completo (chaleco, casco, botas de casquillo) si por causa extrema desciendes.</li>
+                <li><strong>Prohibido bajar de la unidad</strong> a menos que la grúa te esté cargando.</li>
+            </ul>
+            <button id="btnEntendido" class="modal-btn">Entendido, ver mapa</button>
+        </div>
+    </div>
 
     <div class="header">
         <h1>PATIO DE CONTENEDORES</h1>
@@ -47,6 +82,11 @@
         // CONFIGURACIÓN DE TELEGRAM
         const TELEGRAM_TOKEN = "8515273340:AAHsV3fsue-dY9CZCWlj1izG-usRtgDY64k"; 
         const TELEGRAM_CHAT_ID = "-5100426684";
+
+        // Control del Modal de Seguridad
+        document.getElementById('btnEntendido').addEventListener('click', function() {
+            document.getElementById('modalSeguridad').style.display = 'none';
+        });
 
         // 1. INICIALIZAR MAPA centrado en el patio
         const mapa = L.map('mapa').setView([19.066, -104.295], 16);
@@ -118,7 +158,7 @@
         let ubicacionActual = null;
         let marcadorOperador = null;
 
-        mapa.locate({setView: false, maxZoom: 17, watch: true}); // No sobreescribimos el zoom global de golpe, solo seguimos al usuario
+        mapa.locate({setView: false, maxZoom: 17, watch: true});
 
         mapa.on('locationfound', function(e) {
             ubicacionActual = e.latlng;
@@ -162,7 +202,7 @@
                 if(data.ok) {
                     btnAyuda.innerHTML = "✅ Alerta Enviada";
                     btnAyuda.style.backgroundColor = "#2e7d32";
-                    alert("Su alerta ha sido enviada a Central. Una patrulla va en camino. Manténgase en su unidad.");
+                    alert("Su alerta ha sido enviada a Central. Una unidad de auxilio vial va en camino. Manténgase en su unidad y posición.");
                 } else {
                     alert("Hubo un error de conexión al enviar la alerta.");
                     btnAyuda.disabled = false;
