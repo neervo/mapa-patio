@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <!-- FIREBASE TODOTERRENO (Compat Mode) -->
+    <!-- FIREBASE TODOTERRENO -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 
@@ -18,30 +18,52 @@
         #mapa { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
         
         .header {
-            background-color: rgba(0, 26, 51, 0.9);
-            color: white; padding: 15px 20px; position: absolute; top: 0; left: 0;
-            width: 100%; z-index: 1000; box-sizing: border-box; display: flex;
+            background-color: rgba(0, 26, 51, 0.9); color: white; padding: 15px 20px; position: absolute; 
+            top: 0; left: 0; width: 100%; z-index: 1000; box-sizing: border-box; display: flex;
             justify-content: space-between; align-items: center; border-bottom: 3px solid #ffcc00;
         }
-        .header h1 { margin: 0; font-size: 20px; text-transform: uppercase; letter-spacing: 1px; }
-        .contador { font-size: 16px; font-weight: bold; background: #003366; padding: 5px 15px; border-radius: 20px; }
-        .emergencia-alerta { color: #ff4d4d; animation: parpadeo 1s infinite; display: none; font-weight: bold; }
+        .header h1 { margin: 0; font-size: 20px; letter-spacing: 1px; }
+        
+        .panel-derecho { display: flex; gap: 15px; align-items: center; }
+        
+        /* Buscador de Placas */
+        .buscador {
+            padding: 8px 15px; border-radius: 20px; border: none; outline: none;
+            font-weight: bold; text-transform: uppercase; width: 150px; text-align: center;
+        }
+        
+        .contador { font-size: 16px; font-weight: bold; background: #003366; padding: 8px 15px; border-radius: 20px; }
+        .emergencia-alerta { color: #ff4d4d; animation: parpadeo 1s infinite; display: none; font-weight: bold; font-size: 18px;}
         
         @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+
+        /* Estilo del botón dentro del popup del mapa */
+        .btn-resolver {
+            background-color: #2e7d32; color: white; border: none; padding: 10px 15px;
+            border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; width: 100%;
+        }
+        .btn-resolver:hover { background-color: #1b5e20; }
     </style>
 </head>
 <body>
 
+    <!-- Audio de Alerta (Archivo de sonido genérico de advertencia) -->
+    <audio id="sonidoAlerta" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+
     <div class="header">
         <h1>📡 TORRE DE CONTROL YMS</h1>
-        <div id="alertaGlobal" class="emergencia-alerta">🚨 ¡EMERGENCIA ACTIVA EN PATIO! 🚨</div>
-        <div class="contador">Unidades en Patio: <span id="contadorCamiones">0</span></div>
+        <div id="alertaGlobal" class="emergencia-alerta">🚨 ¡EMERGENCIA ACTIVA! 🚨</div>
+        
+        <div class="panel-derecho">
+            <input type="text" id="buscadorPlaca" class="buscador" placeholder="Buscar Placa...">
+            <div class="contador">Unidades: <span id="contadorCamiones">0</span></div>
+        </div>
     </div>
 
     <div id="mapa"></div>
 
     <script>
-        // 1. LO PRIMERO ES DIBUJAR EL MAPA (Para evitar la pantalla negra)
+        // 1. INICIALIZAR MAPA
         const mapa = L.map('mapa').setView([19.066, -104.295], 16);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mapa);
 
@@ -50,28 +72,34 @@
             apiKey: "AIzaSyAH7D-sLL4fCJDliP8xzuYUQGt-H5H7nXE",
             authDomain: "patio-densidad.firebaseapp.com",
             databaseURL: "https://patio-densidad-default-rtdb.firebaseio.com",
-            projectId: "patio-densidad",
-            storageBucket: "patio-densidad.firebasestorage.app",
-            messagingSenderId: "530029167611",
-            appId: "1:530029167611:web:f5cbcb021aebd05298415e"
+            projectId: "patio-densidad"
         };
-        
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // 3. LOGICA DEL RADAR
+        // 3. VARIABLES GLOBALES
         const marcadoresCamiones = {};
         const alertaGlobal = document.getElementById('alertaGlobal');
         const contadorDisplay = document.getElementById('contadorCamiones');
-        
+        const sonidoAlerta = document.getElementById('sonidoAlerta');
+        const buscadorPlaca = document.getElementById('buscadorPlaca');
+        let estadoEmergenciaAnterior = false;
+
+        // 4. FUNCIÓN PARA MARCAR COMO RESUELTO (Desde la computadora)
+        window.marcarResuelto = function(placa) {
+            // Le decimos a Firebase que regrese el estado a "normal"
+            db.ref('camiones_en_patio/' + placa).update({ estado: 'normal' });
+            mapa.closePopup(); // Cerramos el globito de información
+        };
+
+        // 5. ESCUCHAR LA BASE DE DATOS
         const camionesRef = db.ref('camiones_en_patio');
         
         camionesRef.on('value', (snapshot) => {
             const data = snapshot.val() || {};
-            let hayEmergencia = false;
+            let hayEmergenciaActual = false;
             let totalCamiones = 0;
 
-            // Dibujar o mover
             for (const placa in data) {
                 totalCamiones++;
                 const camion = data[placa];
@@ -79,20 +107,38 @@
                 const esEmergencia = camion.estado === "emergencia";
                 const colorPunto = esEmergencia ? "#ff0000" : "#00ff88"; 
                 
-                if (esEmergencia) hayEmergencia = true;
+                if (esEmergencia) hayEmergenciaActual = true;
+
+                // Armar el diseño del cuadrito que sale al dar clic al camión
+                let contenidoPopup = `<b>Unidad: ${placa}</b>`;
+                if (esEmergencia) {
+                    contenidoPopup = `
+                        <div style="text-align: center;">
+                            <b>🚨 EMERGENCIA: ${placa} 🚨</b><br>
+                            <button class="btn-resolver" onclick="marcarResuelto('${placa}')">
+                                ✅ Marcar Resuelto
+                            </button>
+                        </div>
+                    `;
+                }
 
                 if (marcadoresCamiones[placa]) {
                     marcadoresCamiones[placa].setLatLng(latlng);
                     marcadoresCamiones[placa].setStyle({ fillColor: colorPunto });
-                    if(esEmergencia) marcadoresCamiones[placa].bindPopup(`<b>🚨 EMERGENCIA: ${placa} 🚨</b>`).openPopup();
+                    marcadoresCamiones[placa].bindPopup(contenidoPopup);
+                    
+                    // Si se vuelve rojo, abrir su popup automáticamente para llamar la atención
+                    if(esEmergencia && !marcadoresCamiones[placa].isPopupOpen()) {
+                        marcadoresCamiones[placa].openPopup();
+                    }
                 } else {
                     marcadoresCamiones[placa] = L.circleMarker(latlng, {
                         radius: 10, fillColor: colorPunto, color: "#ffffff", weight: 2, fillOpacity: 0.9
-                    }).addTo(mapa).bindPopup(`<b>Unidad: ${placa}</b>`);
+                    }).addTo(mapa).bindPopup(contenidoPopup);
                 }
             }
 
-            // Limpiar los que ya salieron
+            // Limpiar los que ya salieron (cerraron su celular)
             for (const placa in marcadoresCamiones) {
                 if (!data[placa]) {
                     mapa.removeLayer(marcadoresCamiones[placa]);
@@ -100,8 +146,28 @@
                 }
             }
 
+            // 6. LÓGICA DE ALARMAS VISUALES Y SONORAS
             contadorDisplay.innerText = totalCamiones;
-            alertaGlobal.style.display = hayEmergencia ? "block" : "none";
+            alertaGlobal.style.display = hayEmergenciaActual ? "block" : "none";
+
+            // Si hay una emergencia nueva, hacer sonar la alarma
+            if (hayEmergenciaActual && !estadoEmergenciaAnterior) {
+                sonidoAlerta.play().catch(e => console.log("Navegador bloqueó el auto-play de audio"));
+            }
+            estadoEmergenciaAnterior = hayEmergenciaActual;
+        });
+
+        // 7. LÓGICA DEL BUSCADOR DE PLACAS
+        buscadorPlaca.addEventListener('input', function(e) {
+            const textoBuscado = e.target.value.toUpperCase();
+            if (textoBuscado === "") return;
+
+            // Buscar si la placa existe en nuestros marcadores
+            if (marcadoresCamiones[textoBuscado]) {
+                const marcador = marcadoresCamiones[textoBuscado];
+                mapa.setView(marcador.getLatLng(), 19); // Hacer zoom directo a ese camión
+                marcador.openPopup();
+            }
         });
     </script>
 </body>
