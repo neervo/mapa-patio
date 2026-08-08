@@ -9,7 +9,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: #333; }
         #mapa { width: 100vw; height: 100vh; z-index: 1; }
         
         .header {
@@ -29,41 +29,46 @@
         .help-btn:active { background-color: #b71c1c; }
         .help-btn:disabled { background-color: #757575; cursor: not-allowed; }
 
-        /* Estilos de la Ventana Flotante (Modal) de Seguridad */
+        /* Estilos del Modal de Entrada */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background-color: rgba(0, 0, 0, 0.85); z-index: 3000;
+            background-color: rgba(0, 0, 0, 0.9); z-index: 3000;
             display: flex; align-items: center; justify-content: center;
         }
         .modal-content {
-            background-color: #ffffff; color: #333333; padding: 25px; border-radius: 12px;
-            width: 85%; max-width: 420px; text-align: left; box-shadow: 0 5px 25px rgba(0,0,0,0.5);
-            box-sizing: border-box;
+            background-color: #ffffff; color: #333; padding: 25px; border-radius: 12px;
+            width: 90%; max-width: 400px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); box-sizing: border-box;
         }
-        .modal-content h2 { color: #d32f2f; font-size: 17px; text-align: center; margin-top: 0; }
-        .reglas-lista { font-size: 13px; padding-left: 18px; line-height: 1.5; color: #444444; }
-        .reglas-lista li { margin-bottom: 8px; }
+        .modal-content h2 { color: #d32f2f; font-size: 18px; text-align: center; margin-top: 0; }
+        .reglas-lista { font-size: 13px; padding-left: 18px; color: #444; margin-bottom: 20px;}
+        .input-placa {
+            width: 100%; padding: 12px; font-size: 16px; text-transform: uppercase;
+            border: 2px solid #003366; border-radius: 6px; box-sizing: border-box; text-align: center;
+            margin-bottom: 15px; font-weight: bold;
+        }
         .modal-btn {
             display: block; width: 100%; background-color: #003366; color: white;
-            padding: 12px; border: none; border-radius: 6px; font-weight: bold;
-            font-size: 15px; cursor: pointer; text-align: center; margin-top: 20px;
+            padding: 15px; border: none; border-radius: 6px; font-weight: bold;
+            font-size: 16px; cursor: pointer; text-align: center;
         }
         .modal-btn:active { background-color: #002244; }
     </style>
 </head>
 <body>
 
-    <!-- VENTANA FLOTANTE DE SEGURIDAD (Se muestra al abrir) -->
+    <!-- PANTALLA DE INGRESO Y REGLAS -->
     <div id="modalSeguridad" class="modal-overlay">
         <div class="modal-content">
-            <h2>⚠️ AVISO DE SEGURIDAD VIAL ⚠️</h2>
+            <h2>⚠️ AVISO DE SEGURIDAD ⚠️</h2>
             <ul class="reglas-lista">
-                <li>Mantente en zona segura entre la cabina de tu unidad y el inicio de la primera plana.</li>
-                <li>No cruces ni te posicione entre las líneas de delimitación marcadas en piso.</li>
-                <li>Usa tu EPP completo (chaleco, casco, botas de casquillo) si por causa extrema desciendes.</li>
-                <li><strong>Prohibido bajar de la unidad</strong> a menos que la grúa te esté cargando.</li>
+                <li>Mantente en la cabina de tu unidad.</li>
+                <li>No cruces las líneas de delimitación.</li>
+                <li>Usa tu EPP completo si desciendes por causa extrema.</li>
+                <li><strong>Prohibido bajar</strong> a menos que la grúa te cargue.</li>
+                <li><strong>Deja esta pantalla abierta</strong> para mantener activo el radar de seguridad.</li>
             </ul>
-            <button id="btnEntendido" class="modal-btn">Entendido, ver mapa</button>
+            <input type="text" id="placaInput" class="input-placa" placeholder="Escribe tus PLACAS o CITA" required autocomplete="off">
+            <button id="btnEntrar" class="modal-btn">Aceptar y Entrar a Patio</button>
         </div>
     </div>
 
@@ -74,26 +79,43 @@
 
     <div id="mapa"></div>
 
-    <button id="btnAyuda" class="help-btn">
-        🚨 Solicitar Auxilio Vial
-    </button>
+    <button id="btnAyuda" class="help-btn">🚨 Solicitar Auxilio Vial</button>
 
-    <script>
-        // CONFIGURACIÓN DE TELEGRAM
+    <!-- AQUÍ ESTÁ LA MAGIA DE FIREBASE (Módulo) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, set, onDisconnect } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        // Tus llaves de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAH7D-sLL4fCJDliP8xzuYUQGt-H5H7nXE",
+            authDomain: "patio-densidad.firebaseapp.com",
+            databaseURL: "https://patio-densidad-default-rtdb.firebaseio.com",
+            projectId: "patio-densidad",
+            storageBucket: "patio-densidad.firebasestorage.app",
+            messagingSenderId: "530029167611",
+            appId: "1:530029167611:web:f5cbcb021aebd05298415e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Telegram 
         const TELEGRAM_TOKEN = "8515273340:AAHsV3fsue-dY9CZCWlj1izG-usRtgDY64k"; 
         const TELEGRAM_CHAT_ID = "-5100426684";
 
-        // Control del Modal de Seguridad
-        document.getElementById('btnEntendido').addEventListener('click', function() {
-            document.getElementById('modalSeguridad').style.display = 'none';
-        });
+        let ubicacionActual = null;
+        let marcadorOperador = null;
+        let placaOperador = "";
+        let estadoOperador = "normal"; // Puede cambiar a "emergencia"
+        let wakeLock = null;
 
-        // 1. INICIALIZAR MAPA centrado en el patio
+        // INICIALIZAR MAPA
         const mapa = L.map('mapa').setView([19.066, -104.295], 16);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mapa);
 
-        // 2. LISTA DE BLOQUES Y CARRILES ESTÁTICOS EN EL PATIO
-        const listaBloques = [
+        // Bloques Estáticos (Versión resumida para que ocupe menos, puedes meter todos los tuyos)
+const listaBloques = [
             { nombre: "F0", lat: 19.06599, lng: -104.28998 },
             { nombre: "M0", lat: 19.06597, lng: -104.30006 },
             { nombre: "M9", lat: 19.05479, lng: -104.29888 },
@@ -146,73 +168,76 @@
             { nombre: "F4", lat: 19.07419, lng: -104.28855 },
             { nombre: "I4", lat: 19.07412, lng: -104.28811 }
         ];
+        listaBloques.forEach(b => L.marker([b.lat, b.lng]).addTo(mapa).bindPopup(`<b>${b.nombre}</b>`));
 
-        // Añadir pines estáticos al mapa para cada bloque/carril
-        listaBloques.forEach(bloque => {
-            L.marker([bloque.lat, bloque.lng])
-              .addTo(mapa)
-              .bindPopup(`<b>Carril / Bloque: ${bloque.nombre}</b>`);
+        // BOTÓN DE ENTRADA (Activa GPS, Firebase y WakeLock)
+        document.getElementById('btnEntrar').addEventListener('click', async function() {
+            const inputVal = document.getElementById('placaInput').value.trim().toUpperCase();
+            if(inputVal === "") { alert("Por favor ingresa tus placas o cita."); return; }
+            
+            placaOperador = inputVal;
+            document.getElementById('modalSeguridad').style.display = 'none';
+
+            // 1. Pedir a la pantalla que no se apague
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (err) { console.log("WakeLock no soportado"); }
+
+            // 2. Encender GPS y mandar a Firebase
+            mapa.locate({setView: false, maxZoom: 17, watch: true, enableHighAccuracy: true});
         });
 
-        // 3. UBICACIÓN EN TIEMPO REAL DEL OPERADOR (Punto Azul)
-        let ubicacionActual = null;
-        let marcadorOperador = null;
-
-        mapa.locate({setView: false, maxZoom: 17, watch: true});
-
+        // CADA QUE EL CELULAR SE MUEVE
         mapa.on('locationfound', function(e) {
             ubicacionActual = e.latlng;
+            
+            // Dibujar punto azul
             if (marcadorOperador) {
                 marcadorOperador.setLatLng(e.latlng);
             } else {
                 marcadorOperador = L.circleMarker(e.latlng, {
                     radius: 9, fillColor: "#0078ff", color: "#ffffff", weight: 3, opacity: 1, fillOpacity: 0.9
-                }).addTo(mapa).bindPopup("Tu ubicación actual").openPopup();
+                }).addTo(mapa).bindPopup("Tu unidad").openPopup();
             }
+
+            // Subir a Firebase
+            const camionesRef = ref(db, 'camiones_en_patio/' + placaOperador);
+            set(camionesRef, {
+                lat: ubicacionActual.lat,
+                lng: ubicacionActual.lng,
+                placa: placaOperador,
+                estado: estadoOperador
+            });
+
+            // Si el chofer cierra el navegador web, Firebase borra automáticamente su registro
+            onDisconnect(camionesRef).remove();
         });
 
-        // 4. ACCIÓN DEL BOTÓN DE AUXILIO (TELEGRAM)
+        // BOTÓN DE AUXILIO
         const btnAyuda = document.getElementById('btnAyuda');
-
         btnAyuda.addEventListener('click', function() {
-            if (!ubicacionActual) {
-                alert("Aún estamos calculando tu ubicación precisa por GPS. Espera unos segundos e intenta de nuevo.");
-                return;
-            }
+            if (!ubicacionActual) { alert("Calculando ubicación..."); return; }
 
             btnAyuda.disabled = true;
             btnAyuda.innerHTML = "⏳ Enviando alerta...";
 
-            const linkGoogleMaps = `https://maps.google.com/?q=${ubicacionActual.lat},${ubicacionActual.lng}`;
-            const mensajeTexto = `🚨 *NUEVA ALERTA DE AUXILIO VIAL* 🚨\n\nUn operador se encuentra perdido en el patio y solicita apoyo para encontrar su ubicación. No se ha bajado de la unidad.\n\n📍 *Ubicación exacta:* \n${linkGoogleMaps}`;
+            // 1. Cambiar color a ROJO en Firebase para la oficina
+            estadoOperador = "emergencia";
+            set(ref(db, 'camiones_en_patio/' + placaOperador), {
+                lat: ubicacionActual.lat, lng: ubicacionActual.lng, placa: placaOperador, estado: "emergencia"
+            });
 
-            const urlTelegram = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
-            
-            fetch(urlTelegram, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: TELEGRAM_CHAT_ID,
-                    text: mensajeTexto,
-                    parse_mode: 'Markdown'
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if(data.ok) {
-                    btnAyuda.innerHTML = "✅ Alerta Enviada";
-                    btnAyuda.style.backgroundColor = "#2e7d32";
-                    alert("Su alerta ha sido enviada a Central. Una unidad de auxilio vial va en camino. Manténgase en su unidad y posición.");
-                } else {
-                    alert("Hubo un error de conexión al enviar la alerta.");
-                    btnAyuda.disabled = false;
-                    btnAyuda.innerHTML = "🚨 Reintentar Auxilio";
-                }
-            })
-            .catch(error => {
-                alert("Error de red. Verifique su internet.");
-                btnAyuda.disabled = false;
-                btnAyuda.innerHTML = "🚨 Reintentar Auxilio";
+            // 2. Mandar Telegram a la patrulla
+            const msj = `🚨 *ALERTA VIAL* 🚨\nPlaca/Cita: *${placaOperador}*\n📍 https://maps.google.com/?q=${ubicacionActual.lat},${ubicacionActual.lng}`;
+            fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: msj, parse_mode: 'Markdown' })
+            }).then(() => {
+                btnAyuda.innerHTML = "✅ Alerta Enviada";
+                btnAyuda.style.backgroundColor = "#2e7d32";
+                alert("Alerta enviada. Manténgase en la unidad.");
             });
         });
     </script>
