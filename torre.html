@@ -5,16 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Torre de Control - Patio Logística</title>
     
+    <!-- Librerías del Mapa -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+    <!-- FIREBASE TODOTERRENO (Compat Mode) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+
     <style>
         body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: #1a1a1a; }
-        #mapa { width: 100vw; height: 100vh; z-index: 1; }
+        #mapa { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
         
         .header {
-            background-color: #001a33;
-            color: white; padding: 15px 20px; position: fixed; top: 0; left: 0;
+            background-color: rgba(0, 26, 51, 0.9);
+            color: white; padding: 15px 20px; position: absolute; top: 0; left: 0;
             width: 100%; z-index: 1000; box-sizing: border-box; display: flex;
             justify-content: space-between; align-items: center; border-bottom: 3px solid #ffcc00;
         }
@@ -35,11 +40,12 @@
 
     <div id="mapa"></div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+    <script>
+        // 1. LO PRIMERO ES DIBUJAR EL MAPA (Para evitar la pantalla negra)
+        const mapa = L.map('mapa').setView([19.066, -104.295], 16);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mapa);
 
-        // MISMAS LLAVES DE FIREBASE
+        // 2. CONECTAR FIREBASE 
         const firebaseConfig = {
             apiKey: "AIzaSyAH7D-sLL4fCJDliP8xzuYUQGt-H5H7nXE",
             authDomain: "patio-densidad.firebaseapp.com",
@@ -49,66 +55,51 @@
             messagingSenderId: "530029167611",
             appId: "1:530029167611:web:f5cbcb021aebd05298415e"
         };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        // INICIALIZAR MAPA (Vista amplia para la computadora)
-        const mapa = L.map('mapa').setView([19.066, -104.295], 16);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mapa);
-
-        // DICCIONARIO PARA GUARDAR LOS PUNTOS DEL MAPA
+        // 3. LOGICA DEL RADAR
         const marcadoresCamiones = {};
         const alertaGlobal = document.getElementById('alertaGlobal');
         const contadorDisplay = document.getElementById('contadorCamiones');
-
-        // ESCUCHAR LA BASE DE DATOS EN TIEMPO REAL
-        const camionesRef = ref(db, 'camiones_en_patio');
         
-        onValue(camionesRef, (snapshot) => {
+        const camionesRef = db.ref('camiones_en_patio');
+        
+        camionesRef.on('value', (snapshot) => {
             const data = snapshot.val() || {};
             let hayEmergencia = false;
             let totalCamiones = 0;
 
-            // 1. Dibujar o mover camiones activos
+            // Dibujar o mover
             for (const placa in data) {
                 totalCamiones++;
                 const camion = data[placa];
                 const latlng = [camion.lat, camion.lng];
                 const esEmergencia = camion.estado === "emergencia";
-                const colorPunto = esEmergencia ? "#ff0000" : "#00ff88"; // Rojo alerta, Verde normal
+                const colorPunto = esEmergencia ? "#ff0000" : "#00ff88"; 
                 
                 if (esEmergencia) hayEmergencia = true;
 
                 if (marcadoresCamiones[placa]) {
-                    // Si ya existe, solo lo movemos de lugar y actualizamos color
                     marcadoresCamiones[placa].setLatLng(latlng);
                     marcadoresCamiones[placa].setStyle({ fillColor: colorPunto });
-                    
-                    if(esEmergencia) {
-                        marcadoresCamiones[placa].bindPopup(`<b>🚨 EMERGENCIA: ${placa} 🚨</b>`).openPopup();
-                    }
+                    if(esEmergencia) marcadoresCamiones[placa].bindPopup(`<b>🚨 EMERGENCIA: ${placa} 🚨</b>`).openPopup();
                 } else {
-                    // Si es nuevo (acaba de escanear el QR), lo creamos
                     marcadoresCamiones[placa] = L.circleMarker(latlng, {
-                        radius: 10,
-                        fillColor: colorPunto,
-                        color: "#ffffff",
-                        weight: 2,
-                        fillOpacity: 0.9
+                        radius: 10, fillColor: colorPunto, color: "#ffffff", weight: 2, fillOpacity: 0.9
                     }).addTo(mapa).bindPopup(`<b>Unidad: ${placa}</b>`);
                 }
             }
 
-            // 2. Limpiar camiones que ya salieron (cerraron su página)
-            for (const placa en marcadoresCamiones) {
+            // Limpiar los que ya salieron
+            for (const placa in marcadoresCamiones) {
                 if (!data[placa]) {
-                    mapa.removeLayer(marcadoresCamiones[placa]); // Lo quitamos del mapa
-                    delete marcadoresCamiones[placa]; // Lo quitamos de la memoria
+                    mapa.removeLayer(marcadoresCamiones[placa]);
+                    delete marcadoresCamiones[placa];
                 }
             }
 
-            // 3. Actualizar panel visual
             contadorDisplay.innerText = totalCamiones;
             alertaGlobal.style.display = hayEmergencia ? "block" : "none";
         });
