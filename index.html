@@ -2,39 +2,62 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acceso Patio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GPS Patio</title>
     
+    <!-- Librerías del Mapa (Volvieron para el operador) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 
     <style>
-        body { font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background-color: #f4f4f9; }
-        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 350px; }
-        input { font-size: 24px; padding: 10px; width: 80%; text-transform: uppercase; text-align: center; border: 2px solid #ccc; border-radius: 5px; margin-bottom: 20px; font-weight: bold; }
-        button { font-size: 18px; padding: 15px 30px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        #mapa { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+        
+        /* Panel flotante estilo GPS (Abajo de la pantalla) */
+        .panel-flotante {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95); padding: 15px; border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1000; width: 90%; max-width: 350px;
+            text-align: center; backdrop-filter: blur(5px);
+        }
+
+        input { font-size: 20px; padding: 10px; width: 90%; text-transform: uppercase; text-align: center; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 10px; font-weight: bold; }
+        
+        .btn { font-size: 16px; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px; }
         .btn-entrar { background-color: #003366; color: white; }
-        .btn-entrar:hover { background-color: #001f4d; }
-        .btn-emergencia { background-color: #d32f2f; color: white; border-radius: 50px; padding: 25px 20px; font-size: 20px; margin-top: 30px; display: none; box-shadow: 0 5px 15px rgba(211, 47, 47, 0.4); }
-        #estado { margin-top: 20px; font-size: 18px; color: #555; }
-        .radio-alerta { display: none; background-color: #ff9800; color: white; padding: 10px; border-radius: 5px; margin-top: 20px; font-weight: bold; animation: parpadeo 1s infinite; }
-        @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+        .btn-salir { background-color: #555; color: white; }
+        .btn-emergencia { background-color: #d32f2f; color: white; display: none; }
+        
+        .info-placa { font-size: 18px; font-weight: bold; color: #003366; margin-bottom: 10px; display: none; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h2 id="tituloPantalla">REGISTRO DE PATIO</h2>
-        <input type="text" id="placa" placeholder="EJ: ABC-123" required>
-        <button id="btnAcción" class="btn-entrar" onclick="iniciarRastreo()">Entrar a Patio</button>
-        <div id="estado">Esperando ingreso...</div>
-        
-        <div id="alertaRadio" class="radio-alerta">🔊 Recibiendo mensaje de Torre...</div>
+    <div id="mapa"></div>
 
-        <button id="btnEmergencia" class="btn-emergencia" onclick="pedirAuxilio()">🚨 AUXILIO VIAL 🚨</button>
+    <div class="panel-flotante">
+        <!-- Pantalla Inicial -->
+        <div id="vista-login">
+            <input type="text" id="placa" placeholder="Placa del Tracto" required>
+            <button class="btn btn-entrar" onclick="iniciarRastreo()">Entrar al Patio</button>
+        </div>
+
+        <!-- Pantalla Activa (Compacta) -->
+        <div id="vista-activa">
+            <div id="texto-placa" class="info-placa"></div>
+            <button id="btnEmergencia" class="btn btn-emergencia" onclick="pedirAuxilio()">🚨 AUXILIO VIAL</button>
+            <button id="btnSalir" class="btn btn-salir" style="display:none;" onclick="salirRastreo()">Cerrar Viaje</button>
+        </div>
     </div>
 
     <script>
+        // Inicializar el mapa del Operador
+        const mapa = L.map('mapa', { zoomControl: false }).setView([19.066, -104.295], 16);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mapa);
+        let marcadorPropio = null;
+
         const firebaseConfig = {
             apiKey: "AIzaSyAH7D-sLL4fCJDliP8xzuYUQGt-H5H7nXE",
             authDomain: "patio-densidad.firebaseapp.com",
@@ -50,12 +73,16 @@
 
         function iniciarRastreo() {
             placaActual = document.getElementById("placa").value.trim().toUpperCase();
-            if (placaActual === "") { alert("Por favor, ingresa tus placas."); return; }
+            if (placaActual === "") { alert("Por favor, ingresa tu placa."); return; }
 
             if (navigator.geolocation) {
-                document.getElementById("estado").innerText = "Conectando al radar...";
+                // Cambiar vistas de la interfaz
+                document.getElementById("vista-login").style.display = "none";
+                document.getElementById("texto-placa").innerText = "UNIDAD: " + placaActual;
+                document.getElementById("texto-placa").style.display = "block";
+                document.getElementById("btnEmergencia").style.display = "block";
+                document.getElementById("btnSalir").style.display = "block";
                 
-                // MAGIA: Si el celular pierde internet o cierra la pestaña, bórralo de Firebase
                 db.ref('camiones_en_patio/' + placaActual).onDisconnect().remove();
                 
                 watchId = navigator.geolocation.watchPosition(
@@ -63,89 +90,69 @@
                         const lat = position.coords.latitude;
                         const lng = position.coords.longitude;
                         
-                        db.ref('camiones_en_patio/' + placaActual).update({
-                            lat: lat,
-                            lng: lng,
-                            placa: placaActual
-                        });
+                        // Actualizar Firebase
+                        db.ref('camiones_en_patio/' + placaActual).update({ lat: lat, lng: lng, placa: placaActual });
 
-                        document.getElementById("estado").innerHTML = `<b>Radar Activo:</b><br>Transmitiendo ubicación...`;
-                        document.getElementById("placa").style.display = "none";
-                        document.getElementById("tituloPantalla").innerText = placaActual;
-                        
-                        const btnAccion = document.getElementById("btnAcción");
-                        btnAccion.innerText = "Salir del Patio";
-                        btnAccion.style.backgroundColor = "#555";
-                        btnAccion.onclick = salirRastreo;
-
-                        document.getElementById("btnEmergencia").style.display = "block";
+                        // Actualizar mapa del celular
+                        mapa.setView([lat, lng], 18);
+                        if (marcadorPropio) {
+                            marcadorPropio.setLatLng([lat, lng]);
+                        } else {
+                            marcadorPropio = L.marker([lat, lng]).addTo(mapa);
+                        }
                         
                         escucharRadio();
                     },
-                    (error) => {
-                        document.getElementById("estado").innerText = "Error de GPS. Enciende tu ubicación.";
-                    },
+                    (error) => { alert("Error de GPS. Verifica tu ubicación."); },
                     { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
                 );
-            } else {
-                alert("Tu navegador no soporta GPS.");
-            }
+            } else { alert("GPS no soportado en este navegador."); }
         }
 
+        // TEXT TO SPEECH (Invisible para el operador)
         function escucharRadio() {
             db.ref('camiones_en_patio/' + placaActual).on('value', (snapshot) => {
                 const data = snapshot.val();
-                if (data && data.audio_mensaje && data.audio_timestamp > ultimoAudioReproducido) {
-                    ultimoAudioReproducido = data.audio_timestamp;
+                if (data && data.tts_mensaje && data.tts_timestamp > ultimoAudioReproducido) {
+                    ultimoAudioReproducido = data.tts_timestamp;
                     
-                    const alertaVisual = document.getElementById("alertaRadio");
-                    alertaVisual.style.display = "block"; 
-                    
-                    const reproductor = new Audio(data.audio_mensaje);
-                    
-                    reproductor.play().catch(e => {
-                        console.log("No se pudo reproducir", e);
-                        alertaVisual.style.display = "none"; // Ocultar si hay error
-                    });
-                    
-                    // Cuando termine de hablar, quitar el letrero
-                    reproductor.onended = () => { alertaVisual.style.display = "none"; };
-                    
-                    // Si el audio llega roto, quitar el letrero para que no se trabe
-                    reproductor.onerror = () => { alertaVisual.style.display = "none"; };
+                    // Crear la voz sintética y reproducirla automáticamente
+                    const mensaje = new SpeechSynthesisUtterance(data.tts_mensaje);
+                    mensaje.lang = 'es-MX'; // Acento español de México
+                    mensaje.rate = 1.0; // Velocidad normal
+                    window.speechSynthesis.speak(mensaje);
                 }
             });
         }
 
         function salirRastreo() {
-            if (watchId !== null) { navigator.geolocation.clearWatch(watchId); }
-            
-            // Borrar el camión de la base de datos y cancelar la regla de desconexión
+            if (watchId !== null) navigator.geolocation.clearWatch(watchId);
             db.ref('camiones_en_patio/' + placaActual).onDisconnect().cancel();
             db.ref('camiones_en_patio/' + placaActual).remove();
             
-            document.getElementById("estado").innerText = "Viaje finalizado. Estás fuera del radar.";
-            document.getElementById("btnAcción").innerText = "Entrar a Patio";
-            document.getElementById("btnAcción").style.backgroundColor = "#003366";
-            document.getElementById("btnAcción").onclick = iniciarRastreo;
-            document.getElementById("placa").style.display = "block";
+            if (marcadorPropio) { mapa.removeLayer(marcadorPropio); marcadorPropio = null; }
+            
+            document.getElementById("vista-login").style.display = "block";
             document.getElementById("placa").value = "";
-            document.getElementById("tituloPantalla").innerText = "REGISTRO DE PATIO";
+            document.getElementById("texto-placa").style.display = "none";
             document.getElementById("btnEmergencia").style.display = "none";
-            document.getElementById("alertaRadio").style.display = "none";
+            document.getElementById("btnSalir").style.display = "none";
             
             placaActual = "";
         }
 
+        // Confirmación antes de pedir auxilio
         function pedirAuxilio() {
             if (placaActual !== "") {
-                db.ref('camiones_en_patio/' + placaActual).update({ estado: 'emergencia' });
-                alert("🚨 Alerta enviada a la Torre de Control. Espera instrucciones por radio.");
+                const confirmar = confirm("¿Estás seguro de solicitar AUXILIO VIAL? Se alertará a la Torre de Control inmediatamente.");
+                if (confirmar) {
+                    db.ref('camiones_en_patio/' + placaActual).update({ estado: 'emergencia' });
+                }
             }
         }
 
         window.addEventListener("beforeunload", function (e) {
-            if (placaActual !== "") { db.ref('camiones_en_patio/' + placaActual).remove(); }
+            if (placaActual !== "") db.ref('camiones_en_patio/' + placaActual).remove();
         });
     </script>
 </body>
