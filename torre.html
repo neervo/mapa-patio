@@ -14,11 +14,7 @@
         body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: #1a1a1a; }
         #mapa { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
         
-        .header {
-            background-color: rgba(0, 26, 51, 0.9); color: white; padding: 15px 20px; position: absolute; 
-            top: 0; left: 0; width: 100%; z-index: 1000; box-sizing: border-box; display: flex;
-            justify-content: space-between; align-items: center; border-bottom: 3px solid #ffcc00;
-        }
+        .header { background-color: rgba(0, 26, 51, 0.9); color: white; padding: 15px 20px; position: absolute; top: 0; left: 0; width: 100%; z-index: 1000; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #ffcc00; }
         .header h1 { margin: 0; font-size: 20px; letter-spacing: 1px; }
         .panel-derecho { display: flex; gap: 15px; align-items: center; }
         .buscador { padding: 8px 15px; border-radius: 20px; border: none; outline: none; font-weight: bold; text-transform: uppercase; width: 150px; text-align: center; }
@@ -26,14 +22,15 @@
         .emergencia-alerta { color: #ff4d4d; animation: parpadeo 1s infinite; display: none; font-weight: bold; font-size: 18px;}
         @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
 
-        .btn-resolver { background-color: #2e7d32; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; width: 100%; }
-        .btn-radio { background-color: #ff9800; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 10px; user-select: none; }
-        .btn-eliminar { background-color: #555; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 5px; font-size: 12px; }
+        /* Controles del Popup */
+        .input-tts { width: 100%; padding: 8px; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
+        .btn-radio { background-color: #ff9800; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
+        .btn-resolver { background-color: #2e7d32; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px;}
+        .btn-eliminar { background-color: #555; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 10px; font-size: 12px; }
         .btn-eliminar:hover { background-color: #ff4d4d; }
     </style>
 </head>
 <body>
-
     <audio id="sonidoAlerta" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
     <div class="header">
@@ -44,7 +41,6 @@
             <div class="contador">Unidades: <span id="contadorCamiones">0</span></div>
         </div>
     </div>
-
     <div id="mapa"></div>
 
     <script>
@@ -65,67 +61,30 @@
         const contadorDisplay = document.getElementById('contadorCamiones');
         let estadoEmergenciaAnterior = false;
 
-        let grabadora;
-        let fragmentosAudio = [];
-        let streamActivo;
-
-        window.empezarGrabar = async function(placa) {
-            try {
-                streamActivo = await navigator.mediaDevices.getUserMedia({ audio: true });
-                grabadora = new MediaRecorder(streamActivo);
-                fragmentosAudio = [];
-
-                grabadora.ondataavailable = e => fragmentosAudio.push(e.data);
-                grabadora.onstop = () => {
-                    const blobAudio = new Blob(fragmentosAudio, { type: 'audio/webm' });
-                    const lector = new FileReader();
-                    lector.readAsDataURL(blobAudio);
-                    lector.onloadend = () => {
-                        db.ref('camiones_en_patio/' + placa).update({
-                            audio_mensaje: lector.result,
-                            audio_timestamp: Date.now()
-                        });
-                    };
-                    // Apagamos el micrófono para que no se quede prendido
-                    streamActivo.getTracks().forEach(track => track.stop());
-                };
-
-                grabadora.start();
+        // ENVIAR TEXTO A VOZ (TTS)
+        window.enviarTexto = function(placa) {
+            const input = document.getElementById('tts-' + placa);
+            const texto = input.value.trim();
+            
+            if (texto !== "") {
+                db.ref('camiones_en_patio/' + placa).update({
+                    tts_mensaje: texto,
+                    tts_timestamp: Date.now()
+                });
+                
+                input.value = ""; // Limpiar caja
                 const btn = document.getElementById('btn-radio-' + placa);
-                btn.innerText = "🔴 Grabando... (Suelta para enviar)";
-                btn.style.backgroundColor = "#d32f2f";
-            } catch (err) {
-                alert("Debes darle permisos de micrófono a tu navegador.");
+                btn.innerText = "✅ Mensaje Enviado";
+                btn.style.backgroundColor = "#4caf50";
+                setTimeout(() => {
+                    btn.innerText = "🗣️ Enviar por Radio";
+                    btn.style.backgroundColor = "#ff9800";
+                }, 2000);
             }
         };
 
-        window.detenerGrabar = function(placa) {
-            if (grabadora && grabadora.state === "recording") {
-                grabadora.stop();
-                const btn = document.getElementById('btn-radio-' + placa);
-                if(btn) {
-                    btn.innerText = "✅ Enviando...";
-                    btn.style.backgroundColor = "#4caf50";
-                    setTimeout(() => {
-                        btn.innerText = "🎤 Mantener presionado para hablar";
-                        btn.style.backgroundColor = "#ff9800";
-                    }, 1500);
-                }
-            }
-        };
-
-        window.marcarResuelto = function(placa) {
-            db.ref('camiones_en_patio/' + placa).update({ estado: 'normal' });
-            mapa.closePopup();
-        };
-
-        // NUEVA FUNCIÓN: Para eliminar camiones atascados (Fantasmas)
-        window.forzarSalida = function(placa) {
-            if(confirm("¿Estás seguro de que quieres forzar la salida de la unidad " + placa + "?")) {
-                db.ref('camiones_en_patio/' + placa).remove();
-                mapa.closePopup();
-            }
-        };
+        window.marcarResuelto = function(placa) { db.ref('camiones_en_patio/' + placa).update({ estado: 'normal' }); mapa.closePopup(); };
+        window.forzarSalida = function(placa) { if(confirm("¿Forzar salida de " + placa + "?")) { db.ref('camiones_en_patio/' + placa).remove(); mapa.closePopup(); } };
 
         const camionesRef = db.ref('camiones_en_patio');
         camionesRef.on('value', (snapshot) => {
@@ -142,30 +101,19 @@
                 if (esEmergencia) hayEmergenciaActual = true;
 
                 let contenidoPopup = `
-                    <div style="text-align: center; min-width: 180px;">
+                    <div style="text-align: center; min-width: 200px;">
                         <b style="font-size:16px;">UNIDAD: ${placa}</b><br><br>
-                        
-                        <button id="btn-radio-${placa}" class="btn-radio"
-                                onmousedown="empezarGrabar('${placa}')" 
-                                onmouseup="detenerGrabar('${placa}')"
-                                onmouseleave="detenerGrabar('${placa}')">
-                            🎤 Mantener presionado para hablar
-                        </button>
+                        <input type="text" id="tts-${placa}" class="input-tts" placeholder="Ej: Ve al bloque G2...">
+                        <button id="btn-radio-${placa}" class="btn-radio" onclick="enviarTexto('${placa}')">🗣️ Enviar por Radio</button>
                 `;
-
                 if (esEmergencia) {
                     contenidoPopup += `
-                        <div style="border-top: 2px solid #ccc; padding-top: 10px; margin-top: 10px;">
-                            <b>🚨 EMERGENCIA ACTIVA 🚨</b>
+                        <div style="border-top: 1px solid #ccc; padding-top: 10px;">
+                            <b style="color:red;">🚨 EMERGENCIA 🚨</b>
                             <button class="btn-resolver" onclick="marcarResuelto('${placa}')">✅ Marcar Resuelto</button>
-                        </div>
-                    `;
+                        </div>`;
                 }
-                
-                // Botón para limpiar fantasmas
-                contenidoPopup += `
-                        <button class="btn-eliminar" onclick="forzarSalida('${placa}')">🗑️ Forzar Salida</button>
-                    </div>`;
+                contenidoPopup += `<button class="btn-eliminar" onclick="forzarSalida('${placa}')">🗑️ Forzar Salida</button></div>`;
 
                 if (marcadoresCamiones[placa]) {
                     marcadoresCamiones[placa].setLatLng(latlng);
@@ -173,33 +121,20 @@
                     marcadoresCamiones[placa].bindPopup(contenidoPopup);
                     if(esEmergencia && !marcadoresCamiones[placa].isPopupOpen()) marcadoresCamiones[placa].openPopup();
                 } else {
-                    marcadoresCamiones[placa] = L.circleMarker(latlng, {
-                        radius: 10, fillColor: colorPunto, color: "#ffffff", weight: 2, fillOpacity: 0.9
-                    }).addTo(mapa).bindPopup(contenidoPopup);
+                    marcadoresCamiones[placa] = L.circleMarker(latlng, { radius: 10, fillColor: colorPunto, color: "#ffffff", weight: 2, fillOpacity: 0.9 }).addTo(mapa).bindPopup(contenidoPopup);
                 }
             }
 
-            for (const placa in marcadoresCamiones) {
-                if (!data[placa]) {
-                    mapa.removeLayer(marcadoresCamiones[placa]);
-                    delete marcadoresCamiones[placa];
-                }
-            }
-
+            for (const placa in marcadoresCamiones) { if (!data[placa]) { mapa.removeLayer(marcadoresCamiones[placa]); delete marcadoresCamiones[placa]; } }
             contadorDisplay.innerText = totalCamiones;
             alertaGlobal.style.display = hayEmergenciaActual ? "block" : "none";
-            if (hayEmergenciaActual && !estadoEmergenciaAnterior) {
-                document.getElementById('sonidoAlerta').play().catch(e => {});
-            }
+            if (hayEmergenciaActual && !estadoEmergenciaAnterior) document.getElementById('sonidoAlerta').play().catch(e => {});
             estadoEmergenciaAnterior = hayEmergenciaActual;
         });
 
         document.getElementById('buscadorPlaca').addEventListener('input', function(e) {
             const texto = e.target.value.toUpperCase();
-            if (texto !== "" && marcadoresCamiones[texto]) {
-                mapa.setView(marcadoresCamiones[texto].getLatLng(), 19);
-                marcadoresCamiones[texto].openPopup();
-            }
+            if (texto !== "" && marcadoresCamiones[texto]) { mapa.setView(marcadoresCamiones[texto].getLatLng(), 19); marcadoresCamiones[texto].openPopup(); }
         });
     </script>
 </body>
