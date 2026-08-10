@@ -2,146 +2,56 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Mapa de Patio y Auxilio Vial</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Torre de Control - Patio Logística</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <!-- FIREBASE TODOTERRENO -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 
     <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: #333; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: #1a1a1a; }
         #mapa { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
         
         .header {
-            background-color: rgba(0, 51, 102, 0.9); color: white; padding: 15px; position: absolute; 
-            top: 0; left: 0; width: 100%; z-index: 1000; text-align: center; box-sizing: border-box;
+            background-color: rgba(0, 26, 51, 0.9); color: white; padding: 15px 20px; position: absolute; 
+            top: 0; left: 0; width: 100%; z-index: 1000; box-sizing: border-box; display: flex;
+            justify-content: space-between; align-items: center; border-bottom: 3px solid #ffcc00;
         }
-        .header h1 { margin: 0; font-size: 18px; }
-        .header p { margin: 5px 0 0 0; font-size: 13px; color: #ffcc00; font-weight: bold; }
+        .header h1 { margin: 0; font-size: 20px; letter-spacing: 1px; }
+        .panel-derecho { display: flex; gap: 15px; align-items: center; }
+        .buscador { padding: 8px 15px; border-radius: 20px; border: none; outline: none; font-weight: bold; text-transform: uppercase; width: 150px; text-align: center; }
+        .contador { font-size: 16px; font-weight: bold; background: #003366; padding: 8px 15px; border-radius: 20px; }
+        .emergencia-alerta { color: #ff4d4d; animation: parpadeo 1s infinite; display: none; font-weight: bold; font-size: 18px;}
+        @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
 
-        .help-btn {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background-color: #d32f2f; color: white; padding: 15px 30px; border-radius: 50px; 
-            border: none; cursor: pointer; font-weight: bold; font-size: 16px; 
-            box-shadow: 0 4px 15px rgba(211, 47, 47, 0.5); z-index: 1000;
-        }
-        .help-btn:active { background-color: #b71c1c; }
-        .help-btn:disabled { background-color: #757575; cursor: not-allowed; }
-
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background-color: rgba(0, 0, 0, 0.9); z-index: 3000; display: flex; 
-            align-items: center; justify-content: center;
-        }
-        .modal-content {
-            background-color: #ffffff; color: #333; padding: 25px; border-radius: 12px;
-            width: 90%; max-width: 400px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); box-sizing: border-box;
-        }
-        .modal-content h2 { color: #d32f2f; font-size: 18px; text-align: center; margin-top: 0; }
-        .reglas-lista { font-size: 13px; padding-left: 18px; color: #444; margin-bottom: 20px;}
-        .input-placa {
-            width: 100%; padding: 12px; font-size: 16px; text-transform: uppercase;
-            border: 2px solid #003366; border-radius: 6px; box-sizing: border-box; 
-            text-align: center; margin-bottom: 15px; font-weight: bold;
-        }
-        .modal-btn {
-            display: block; width: 100%; background-color: #003366; color: white;
-            padding: 15px; border: none; border-radius: 6px; font-weight: bold;
-            font-size: 16px; cursor: pointer; text-align: center;
-        }
+        /* Botones del Popup */
+        .btn-resolver { background-color: #2e7d32; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; width: 100%; }
+        .btn-resolver:hover { background-color: #1b5e20; }
+        .btn-radio { background-color: #ff9800; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 10px; user-select: none; }
     </style>
 </head>
 <body>
 
-    <div id="modalSeguridad" class="modal-overlay">
-        <div class="modal-content">
-            <h2>⚠️ AVISO DE SEGURIDAD ⚠️</h2>
-            <ul class="reglas-lista">
-                <li>Mantente en la cabina de tu unidad.</li>
-                <li>No cruces las líneas de delimitación.</li>
-                <li><strong>Prohibido bajar</strong> a menos que la grúa te cargue.</li>
-                <li><strong>Deja esta pantalla abierta</strong> para asistencia.</li>
-            </ul>
-            <input type="text" id="placaInput" class="input-placa" placeholder="Escribe tus PLACAS o CITA" required autocomplete="off">
-            <button id="btnEntrar" class="modal-btn">Aceptar y Entrar a Patio</button>
-        </div>
-    </div>
+    <audio id="sonidoAlerta" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
     <div class="header">
-        <h1>PATIO DE CONTENEDORES</h1>
-        <p>⚠️ PROHIBIDO BAJAR DE LA UNIDAD ⚠️</p>
+        <h1>📡 TORRE DE CONTROL YMS</h1>
+        <div id="alertaGlobal" class="emergencia-alerta">🚨 ¡EMERGENCIA ACTIVA! 🚨</div>
+        <div class="panel-derecho">
+            <input type="text" id="buscadorPlaca" class="buscador" placeholder="Buscar Placa...">
+            <div class="contador">Unidades: <span id="contadorCamiones">0</span></div>
+        </div>
     </div>
 
     <div id="mapa"></div>
 
-    <button id="btnAyuda" class="help-btn">🚨 Solicitar Auxilio Vial</button>
-
     <script>
-        // 1. DIBUJAMOS EL MAPA PRIMERO 
         const mapa = L.map('mapa').setView([19.066, -104.295], 16);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mapa);
 
-        // Bloques Estáticos (Mete aquí tu lista larga)
-const listaBloques = [
-            { nombre: "F0", lat: 19.06599, lng: -104.28998 },
-            { nombre: "M0", lat: 19.06597, lng: -104.30006 },
-            { nombre: "M9", lat: 19.05479, lng: -104.29888 },
-            { nombre: "G1", lat: 19.06863, lng: -104.28923 },
-            { nombre: "G2", lat: 19.07064, lng: -104.28894 },
-            { nombre: "G3", lat: 19.07268, lng: -104.28858 },
-            { nombre: "G4", lat: 19.07414, lng: -104.28832 },
-            { nombre: "M1", lat: 19.07343, lng: -104.28997 },
-            { nombre: "M2", lat: 19.07066, lng: -104.28941 },
-            { nombre: "M3", lat: 19.07321, lng: -104.29051 },
-            { nombre: "M4", lat: 19.07502, lng: -104.29023 },
-            { nombre: "A4", lat: 19.07419, lng: -104.28999 },
-            { nombre: "A5", lat: 19.07487, lng: -104.28988 },
-            { nombre: "I2", lat: 19.07083, lng: -104.28875 },
-            { nombre: "I3", lat: 19.07082, lng: -104.28862 },
-            { nombre: "R4", lat: 19.07525, lng: -104.28916 },
-            { nombre: "R5", lat: 19.07514, lng: -104.28866 },
-            { nombre: "B5", lat: 19.07587, lng: -104.28954 },
-            { nombre: "C5", lat: 19.07584, lng: -104.28939 },
-            { nombre: "D5", lat: 19.07583, lng: -104.28918 },
-            { nombre: "M5", lat: 19.07691, lng: -104.28986 },
-            { nombre: "J6", lat: 19.07716, lng: -104.28974 },
-            { nombre: "A0", lat: 19.06634, lng: -104.29138 },
-            { nombre: "A1", lat: 19.06831, lng: -104.29073 },
-            { nombre: "A2", lat: 19.07079, lng: -104.29057 },
-            { nombre: "A3", lat: 19.07291, lng: -104.29104 },
-            { nombre: "B0", lat: 19.06628, lng: -104.29105 },
-            { nombre: "B1", lat: 19.06826, lng: -104.29071 },
-            { nombre: "B2", lat: 19.07074, lng: -104.29166 },
-            { nombre: "B3", lat: 19.07286, lng: -104.29122 },
-            { nombre: "B4", lat: 19.07439, lng: -104.29084 },
-            { nombre: "C0", lat: 19.06625, lng: -104.29082 },
-            { nombre: "C1", lat: 19.06823, lng: -104.29048 },
-            { nombre: "C2", lat: 19.07070, lng: -104.29004 },
-            { nombre: "C3", lat: 19.07281, lng: -104.28965 },
-            { nombre: "C4", lat: 19.07434, lng: -104.28937 },
-            { nombre: "D0", lat: 19.06619, lng: -104.29051 },
-            { nombre: "D1", lat: 19.06817, lng: -104.29015 },
-            { nombre: "D2", lat: 19.07063, lng: -104.28970 },
-            { nombre: "D3", lat: 19.07278, lng: -104.28935 },
-            { nombre: "D4", lat: 19.07429, lng: -104.28905 },
-            { nombre: "E0", lat: 19.06627, lng: -104.29027 },
-            { nombre: "E1", lat: 19.06814, lng: -104.28994 },
-            { nombre: "E2", lat: 19.07060, lng: -104.28950 },
-            { nombre: "E3", lat: 19.07274, lng: -104.28910 },
-            { nombre: "E4", lat: 19.07425, lng: -104.28883 },
-            { nombre: "F1", lat: 19.06810, lng: -104.28966 },
-            { nombre: "F2", lat: 19.07066, lng: -104.28916 },
-            { nombre: "F3", lat: 19.07270, lng: -104.28880 },
-            { nombre: "F4", lat: 19.07419, lng: -104.28855 },
-            { nombre: "I4", lat: 19.07412, lng: -104.28811 }
-        ];
-        listaBloques.forEach(b => L.marker([b.lat, b.lng]).addTo(mapa).bindPopup(`<b>${b.nombre}</b>`));
-
-        // 2. CONFIGURAR FIREBASE Y TELEGRAM
         const firebaseConfig = {
             apiKey: "AIzaSyAH7D-sLL4fCJDliP8xzuYUQGt-H5H7nXE",
             authDomain: "patio-densidad.firebaseapp.com",
@@ -150,68 +60,138 @@ const listaBloques = [
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        
-        const TELEGRAM_TOKEN = "8515273340:AAHsV3fsue-dY9CZCWlj1izG-usRtgDY64k"; 
-        const TELEGRAM_CHAT_ID = "-5100426684";
 
-        let ubicacionActual = null;
-        let marcadorOperador = null;
-        let placaOperador = "";
-        let estadoOperador = "normal";
+        const marcadoresCamiones = {};
+        const alertaGlobal = document.getElementById('alertaGlobal');
+        const contadorDisplay = document.getElementById('contadorCamiones');
+        let estadoEmergenciaAnterior = false;
 
-        // 3. ACCIONES DEL OPERADOR
-        document.getElementById('btnEntrar').addEventListener('click', async function() {
-            const inputVal = document.getElementById('placaInput').value.trim().toUpperCase();
-            if(inputVal === "") { alert("Por favor ingresa tus placas o cita."); return; }
-            
-            placaOperador = inputVal;
-            document.getElementById('modalSeguridad').style.display = 'none';
+        // VARIABLES PARA GRABACIÓN DE AUDIO
+        let grabadora;
+        let fragmentosAudio = [];
 
-            // Prevenir apagado de pantalla
-            try { if ('wakeLock' in navigator) await navigator.wakeLock.request('screen'); } catch(e){}
+        window.empezarGrabar = async function(placa) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                grabadora = new MediaRecorder(stream);
+                fragmentosAudio = [];
 
-            // Encender GPS
-            mapa.locate({setView: false, maxZoom: 17, watch: true, enableHighAccuracy: true});
-        });
+                grabadora.ondataavailable = e => fragmentosAudio.push(e.data);
+                grabadora.onstop = () => {
+                    const blobAudio = new Blob(fragmentosAudio, { type: 'audio/webm' });
+                    const lector = new FileReader();
+                    lector.readAsDataURL(blobAudio);
+                    lector.onloadend = () => {
+                        // Enviamos el audio en formato de texto a Firebase
+                        db.ref('camiones_en_patio/' + placa).update({
+                            audio_mensaje: lector.result,
+                            audio_timestamp: Date.now()
+                        });
+                    };
+                    // Apagar el micrófono de la PC al terminar
+                    stream.getTracks().forEach(track => track.stop());
+                };
 
-        mapa.on('locationfound', function(e) {
-            ubicacionActual = e.latlng;
-            
-            if (marcadorOperador) {
-                marcadorOperador.setLatLng(e.latlng);
-            } else {
-                marcadorOperador = L.circleMarker(e.latlng, {
-                    radius: 9, fillColor: "#0078ff", color: "#ffffff", weight: 3, opacity: 1, fillOpacity: 0.9
-                }).addTo(mapa).bindPopup("Tu unidad").openPopup();
+                grabadora.start();
+                const btn = document.getElementById('btn-radio-' + placa);
+                btn.innerText = "🔴 Grabando... (Suelta para enviar)";
+                btn.style.backgroundColor = "#d32f2f";
+            } catch (err) {
+                alert("Debes darle permisos de micrófono a tu navegador para usar el radio.");
+            }
+        };
+
+        window.detenerGrabar = function(placa) {
+            if (grabadora && grabadora.state === "recording") {
+                grabadora.stop();
+                const btn = document.getElementById('btn-radio-' + placa);
+                btn.innerText = "✅ Audio Enviado";
+                btn.style.backgroundColor = "#4caf50";
+                
+                setTimeout(() => {
+                    if(btn) {
+                        btn.innerText = "🎤 Mantener presionado para hablar";
+                        btn.style.backgroundColor = "#ff9800";
+                    }
+                }, 2000);
+            }
+        };
+
+        window.marcarResuelto = function(placa) {
+            db.ref('camiones_en_patio/' + placa).update({ estado: 'normal' });
+            mapa.closePopup();
+        };
+
+        const camionesRef = db.ref('camiones_en_patio');
+        camionesRef.on('value', (snapshot) => {
+            const data = snapshot.val() || {};
+            let hayEmergenciaActual = false;
+            let totalCamiones = 0;
+
+            for (const placa in data) {
+                totalCamiones++;
+                const camion = data[placa];
+                const latlng = [camion.lat, camion.lng];
+                const esEmergencia = camion.estado === "emergencia";
+                const colorPunto = esEmergencia ? "#ff0000" : "#00ff88"; 
+                if (esEmergencia) hayEmergenciaActual = true;
+
+                // Diseño del Popup con el botón de Radio
+                let contenidoPopup = `
+                    <div style="text-align: center; min-width: 180px;">
+                        <b style="font-size:16px;">UNIDAD: ${placa}</b><br><br>
+                        
+                        <button id="btn-radio-${placa}" class="btn-radio"
+                                onmousedown="empezarGrabar('${placa}')" 
+                                onmouseup="detenerGrabar('${placa}')"
+                                onmouseleave="detenerGrabar('${placa}')">
+                            🎤 Mantener presionado para hablar
+                        </button>
+                `;
+
+                if (esEmergencia) {
+                    contenidoPopup += `
+                        <div style="border-top: 2px solid #ccc; padding-top: 10px; margin-top: 10px;">
+                            <b>🚨 EMERGENCIA ACTIVA 🚨</b>
+                            <button class="btn-resolver" onclick="marcarResuelto('${placa}')">✅ Marcar Resuelto</button>
+                        </div>
+                    `;
+                }
+                contenidoPopup += `</div>`;
+
+                if (marcadoresCamiones[placa]) {
+                    marcadoresCamiones[placa].setLatLng(latlng);
+                    marcadoresCamiones[placa].setStyle({ fillColor: colorPunto });
+                    marcadoresCamiones[placa].bindPopup(contenidoPopup);
+                    if(esEmergencia && !marcadoresCamiones[placa].isPopupOpen()) marcadoresCamiones[placa].openPopup();
+                } else {
+                    marcadoresCamiones[placa] = L.circleMarker(latlng, {
+                        radius: 10, fillColor: colorPunto, color: "#ffffff", weight: 2, fillOpacity: 0.9
+                    }).addTo(mapa).bindPopup(contenidoPopup);
+                }
             }
 
-            const camionesRef = db.ref('camiones_en_patio/' + placaOperador);
-            camionesRef.set({ lat: ubicacionActual.lat, lng: ubicacionActual.lng, placa: placaOperador, estado: estadoOperador });
-            camionesRef.onDisconnect().remove();
+            for (const placa in marcadoresCamiones) {
+                if (!data[placa]) {
+                    mapa.removeLayer(marcadoresCamiones[placa]);
+                    delete marcadoresCamiones[placa];
+                }
+            }
+
+            contadorDisplay.innerText = totalCamiones;
+            alertaGlobal.style.display = hayEmergenciaActual ? "block" : "none";
+            if (hayEmergenciaActual && !estadoEmergenciaAnterior) {
+                document.getElementById('sonidoAlerta').play().catch(e => {});
+            }
+            estadoEmergenciaAnterior = hayEmergenciaActual;
         });
 
-        // 4. BOTÓN DE PÁNICO
-        const btnAyuda = document.getElementById('btnAyuda');
-        btnAyuda.addEventListener('click', function() {
-            if (!ubicacionActual) { alert("Calculando ubicación..."); return; }
-
-            btnAyuda.disabled = true;
-            btnAyuda.innerHTML = "⏳ Enviando...";
-
-            estadoOperador = "emergencia";
-            db.ref('camiones_en_patio/' + placaOperador).set({
-                lat: ubicacionActual.lat, lng: ubicacionActual.lng, placa: placaOperador, estado: "emergencia"
-            });
-
-            const msj = `🚨 *ALERTA VIAL* 🚨\nPlaca/Cita: *${placaOperador}*\n📍 https://maps.google.com/?q=${ubicacionActual.lat},${ubicacionActual.lng}`;
-            fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: msj, parse_mode: 'Markdown' })
-            }).then(() => {
-                btnAyuda.innerHTML = "✅ Alerta Enviada";
-                btnAyuda.style.backgroundColor = "#2e7d32";
-                alert("Alerta enviada a Central. Manténgase en su posición.");
-            });
+        document.getElementById('buscadorPlaca').addEventListener('input', function(e) {
+            const texto = e.target.value.toUpperCase();
+            if (texto !== "" && marcadoresCamiones[texto]) {
+                mapa.setView(marcadoresCamiones[texto].getLatLng(), 19);
+                marcadoresCamiones[texto].openPopup();
+            }
         });
     </script>
 </body>
