@@ -7,7 +7,6 @@
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 
@@ -27,10 +26,10 @@
         .emergencia-alerta { color: #ff4d4d; animation: parpadeo 1s infinite; display: none; font-weight: bold; font-size: 18px;}
         @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
 
-        /* Botones del Popup */
         .btn-resolver { background-color: #2e7d32; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; width: 100%; }
-        .btn-resolver:hover { background-color: #1b5e20; }
         .btn-radio { background-color: #ff9800; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 10px; user-select: none; }
+        .btn-eliminar { background-color: #555; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 5px; font-size: 12px; }
+        .btn-eliminar:hover { background-color: #ff4d4d; }
     </style>
 </head>
 <body>
@@ -66,14 +65,14 @@
         const contadorDisplay = document.getElementById('contadorCamiones');
         let estadoEmergenciaAnterior = false;
 
-        // VARIABLES PARA GRABACIÓN DE AUDIO
         let grabadora;
         let fragmentosAudio = [];
+        let streamActivo;
 
         window.empezarGrabar = async function(placa) {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                grabadora = new MediaRecorder(stream);
+                streamActivo = await navigator.mediaDevices.getUserMedia({ audio: true });
+                grabadora = new MediaRecorder(streamActivo);
                 fragmentosAudio = [];
 
                 grabadora.ondataavailable = e => fragmentosAudio.push(e.data);
@@ -82,14 +81,13 @@
                     const lector = new FileReader();
                     lector.readAsDataURL(blobAudio);
                     lector.onloadend = () => {
-                        // Enviamos el audio en formato de texto a Firebase
                         db.ref('camiones_en_patio/' + placa).update({
                             audio_mensaje: lector.result,
                             audio_timestamp: Date.now()
                         });
                     };
-                    // Apagar el micrófono de la PC al terminar
-                    stream.getTracks().forEach(track => track.stop());
+                    // Apagamos el micrófono para que no se quede prendido
+                    streamActivo.getTracks().forEach(track => track.stop());
                 };
 
                 grabadora.start();
@@ -97,7 +95,7 @@
                 btn.innerText = "🔴 Grabando... (Suelta para enviar)";
                 btn.style.backgroundColor = "#d32f2f";
             } catch (err) {
-                alert("Debes darle permisos de micrófono a tu navegador para usar el radio.");
+                alert("Debes darle permisos de micrófono a tu navegador.");
             }
         };
 
@@ -105,21 +103,28 @@
             if (grabadora && grabadora.state === "recording") {
                 grabadora.stop();
                 const btn = document.getElementById('btn-radio-' + placa);
-                btn.innerText = "✅ Audio Enviado";
-                btn.style.backgroundColor = "#4caf50";
-                
-                setTimeout(() => {
-                    if(btn) {
+                if(btn) {
+                    btn.innerText = "✅ Enviando...";
+                    btn.style.backgroundColor = "#4caf50";
+                    setTimeout(() => {
                         btn.innerText = "🎤 Mantener presionado para hablar";
                         btn.style.backgroundColor = "#ff9800";
-                    }
-                }, 2000);
+                    }, 1500);
+                }
             }
         };
 
         window.marcarResuelto = function(placa) {
             db.ref('camiones_en_patio/' + placa).update({ estado: 'normal' });
             mapa.closePopup();
+        };
+
+        // NUEVA FUNCIÓN: Para eliminar camiones atascados (Fantasmas)
+        window.forzarSalida = function(placa) {
+            if(confirm("¿Estás seguro de que quieres forzar la salida de la unidad " + placa + "?")) {
+                db.ref('camiones_en_patio/' + placa).remove();
+                mapa.closePopup();
+            }
         };
 
         const camionesRef = db.ref('camiones_en_patio');
@@ -136,7 +141,6 @@
                 const colorPunto = esEmergencia ? "#ff0000" : "#00ff88"; 
                 if (esEmergencia) hayEmergenciaActual = true;
 
-                // Diseño del Popup con el botón de Radio
                 let contenidoPopup = `
                     <div style="text-align: center; min-width: 180px;">
                         <b style="font-size:16px;">UNIDAD: ${placa}</b><br><br>
@@ -157,7 +161,11 @@
                         </div>
                     `;
                 }
-                contenidoPopup += `</div>`;
+                
+                // Botón para limpiar fantasmas
+                contenidoPopup += `
+                        <button class="btn-eliminar" onclick="forzarSalida('${placa}')">🗑️ Forzar Salida</button>
+                    </div>`;
 
                 if (marcadoresCamiones[placa]) {
                     marcadoresCamiones[placa].setLatLng(latlng);
