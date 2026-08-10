@@ -105,11 +105,15 @@
                     infoTiempo = `<b>Ingreso:</b> ${horaFormateada}<br><b>Tiempo en patio:</b> ${minutosAdentro} min`;
                 }
 
+                // BLINDAJE DEL TIEMPO EN VIVO: Si el popup ya está abierto, solo actualizamos el div del tiempo
+                const divTiempoActivo = document.getElementById('tiempo-info-' + placa);
+                if (divTiempoActivo) { divTiempoActivo.innerHTML = infoTiempo; }
+
                 let contenidoPopup = `
                     <div style="text-align: center; min-width: 200px;">
                         <b style="font-size:16px;">UNIDAD: ${placa}</b><br><br>
                         
-                        <div class="tiempo-info">${infoTiempo}</div>
+                        <div id="tiempo-info-${placa}" class="tiempo-info">${infoTiempo}</div>
 
                         <input type="text" id="tts-${placa}" class="input-tts" placeholder="Escribe instrucción aquí...">
                         <button id="btn-radio-${placa}" class="btn-radio" onclick="enviarTexto('${placa}')">🗣️ Enviar por Radio</button>
