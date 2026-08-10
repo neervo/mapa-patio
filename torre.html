@@ -11,37 +11,64 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 
     <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: #1a1a1a; }
-        #mapa { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: #1a1a1a; overflow: hidden; }
         
-        .header { background-color: rgba(0, 26, 51, 0.9); color: white; padding: 15px 20px; position: absolute; top: 0; left: 0; width: 100%; z-index: 1000; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #ffcc00; }
+        /* El mapa ahora deja espacio para el panel lateral */
+        #mapa { width: calc(100vw - 320px); height: calc(100vh - 65px); position: absolute; top: 65px; left: 320px; z-index: 1; }
+        
+        .header { background-color: rgba(0, 26, 51, 1); color: white; padding: 15px 20px; position: absolute; top: 0; left: 0; width: 100%; height: 65px; z-index: 1000; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #ffcc00; }
         .header h1 { margin: 0; font-size: 20px; letter-spacing: 1px; }
         .panel-derecho { display: flex; gap: 15px; align-items: center; }
         .buscador { padding: 8px 15px; border-radius: 20px; border: none; outline: none; font-weight: bold; text-transform: uppercase; width: 150px; text-align: center; }
         .contador { font-size: 16px; font-weight: bold; background: #003366; padding: 8px 15px; border-radius: 20px; }
         .emergencia-alerta { color: #ff4d4d; animation: parpadeo 1s infinite; display: none; font-weight: bold; font-size: 18px;}
+        
         @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
 
+        /* NUEVO: PANEL LATERAL DE UNIDADES */
+        .panel-lateral { width: 320px; height: calc(100vh - 65px); background-color: #222; position: absolute; top: 65px; left: 0; z-index: 100; overflow-y: auto; border-right: 2px solid #444; padding: 10px; box-sizing: border-box; }
+        .panel-lateral h2 { color: #ffcc00; font-size: 16px; text-align: center; margin-top: 5px; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        
+        /* Estilos de las tarjetas del menú lateral */
+        .tarjeta-unidad { background: #333; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; border-left: 5px solid #00ff88; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        .tarjeta-unidad:hover { background: #444; transform: translateX(3px); }
+        .tarjeta-unidad.alerta { border-left: 5px solid #ff0000; background: #551a1a; animation: parpadeo 1.5s infinite; }
+        .tarjeta-unidad .placa { font-size: 16px; font-weight: bold; margin-bottom: 5px; }
+        .tarjeta-unidad .datos { font-size: 12px; color: #ccc; display: flex; justify-content: space-between; margin-top: 5px;}
+        
+        /* Controles del Popup del Mapa */
         .input-tts { width: 100%; padding: 8px; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; font-size: 14px;}
         .btn-radio { background-color: #ff9800; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 5px; }
         .btn-resolver { background-color: #2e7d32; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px;}
         .btn-eliminar { background-color: #555; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 5px; font-size: 12px; }
         .btn-eliminar:hover { background-color: #ff4d4d; }
-        
         .tiempo-info { background-color: #e3f2fd; padding: 8px; border-radius: 5px; margin-bottom: 10px; font-size: 13px; color: #003366; text-align: left;}
+        
+        /* Scrollbar del panel lateral */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1a1a1a; }
+        ::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ffcc00; }
     </style>
 </head>
 <body>
     <audio id="sonidoAlerta" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
     <div class="header">
-        <h1>📡 TORRE DE CONTROL YMS</h1>
+        <h1>📡 TORRE YMS</h1>
         <div id="alertaGlobal" class="emergencia-alerta">🚨 ¡EMERGENCIA ACTIVA! 🚨</div>
         <div class="panel-derecho">
             <input type="text" id="buscadorPlaca" class="buscador" placeholder="Buscar Placa...">
             <div class="contador">Unidades: <span id="contadorCamiones">0</span></div>
         </div>
     </div>
+    
+    <!-- NUEVO: Contenedor del Panel Lateral -->
+    <div id="panelLateral" class="panel-lateral">
+        <h2>Unidades en Patio</h2>
+        <div id="listaUnidades"></div>
+    </div>
+
     <div id="mapa"></div>
 
     <script>
@@ -60,13 +87,21 @@
         const marcadoresCamiones = {};
         const alertaGlobal = document.getElementById('alertaGlobal');
         const contadorDisplay = document.getElementById('contadorCamiones');
+        const listaUnidades = document.getElementById('listaUnidades');
         let estadoEmergenciaAnterior = false;
+
+        // FUNCIÓN: Hacer zoom desde el menú lateral
+        window.enfocarCamion = function(placa) {
+            if (marcadoresCamiones[placa]) {
+                mapa.setView(marcadoresCamiones[placa].getLatLng(), 19);
+                marcadoresCamiones[placa].openPopup();
+            }
+        };
 
         window.enviarTexto = function(placa) {
             const input = document.getElementById('tts-' + placa);
             if(!input) return;
             const texto = input.value.trim();
-            
             if (texto !== "") {
                 db.ref('camiones_en_patio/' + placa).update({ tts_mensaje: texto, tts_timestamp: Date.now() });
                 input.value = ""; 
@@ -87,6 +122,7 @@
             const data = snapshot.val() || {};
             let hayEmergenciaActual = false;
             let totalCamiones = 0;
+            let htmlLista = ""; // Aquí guardaremos las tarjetas del panel lateral
 
             for (const placa in data) {
                 totalCamiones++;
@@ -96,25 +132,36 @@
                 const colorPunto = esEmergencia ? "#ff0000" : "#00ff88"; 
                 if (esEmergencia) hayEmergenciaActual = true;
 
-                // Calcular tiempos
-                let infoTiempo = "Sin registro de entrada";
+                let minutosAdentro = 0;
+                let infoTiempo = "Sin registro";
                 if(camion.hora_ingreso) {
                     const fechaIngreso = new Date(camion.hora_ingreso);
                     const horaFormateada = fechaIngreso.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    const minutosAdentro = Math.floor((Date.now() - camion.hora_ingreso) / 60000);
+                    minutosAdentro = Math.floor((Date.now() - camion.hora_ingreso) / 60000);
                     infoTiempo = `<b>Ingreso:</b> ${horaFormateada}<br><b>Tiempo en patio:</b> ${minutosAdentro} min`;
                 }
 
-                // BLINDAJE DEL TIEMPO EN VIVO: Si el popup ya está abierto, solo actualizamos el div del tiempo
+                const destinoDisplay = camion.destino ? camion.destino : "Sin ruta";
+
+                // 1. DIBUJAR TARJETA EN EL MENÚ LATERAL
+                htmlLista += `
+                    <div class="tarjeta-unidad ${esEmergencia ? 'alerta' : ''}" onclick="enfocarCamion('${placa}')">
+                        <div class="placa">${esEmergencia ? '🚨' : '✅'} ${placa}</div>
+                        <div class="datos">
+                            <span>📍 ${destinoDisplay}</span>
+                            <span>⏱️ ${minutosAdentro} min</span>
+                        </div>
+                    </div>
+                `;
+
+                // 2. ACTUALIZAR MAPA (Igual que antes)
                 const divTiempoActivo = document.getElementById('tiempo-info-' + placa);
                 if (divTiempoActivo) { divTiempoActivo.innerHTML = infoTiempo; }
 
                 let contenidoPopup = `
                     <div style="text-align: center; min-width: 200px;">
                         <b style="font-size:16px;">UNIDAD: ${placa}</b><br><br>
-                        
                         <div id="tiempo-info-${placa}" class="tiempo-info">${infoTiempo}</div>
-
                         <input type="text" id="tts-${placa}" class="input-tts" placeholder="Escribe instrucción aquí...">
                         <button id="btn-radio-${placa}" class="btn-radio" onclick="enviarTexto('${placa}')">🗣️ Enviar por Radio</button>
                 `;
@@ -142,9 +189,19 @@
                 }
             }
 
-            for (const placa in marcadoresCamiones) { if (!data[placa]) { mapa.removeLayer(marcadoresCamiones[placa]); delete marcadoresCamiones[placa]; } }
+            // Actualizar la lista lateral y contadores
+            listaUnidades.innerHTML = htmlLista;
             contadorDisplay.innerText = totalCamiones;
             alertaGlobal.style.display = hayEmergenciaActual ? "block" : "none";
+            
+            // Borrar los que ya salieron
+            for (const placa in marcadoresCamiones) { 
+                if (!data[placa]) { 
+                    mapa.removeLayer(marcadoresCamiones[placa]); 
+                    delete marcadoresCamiones[placa]; 
+                } 
+            }
+            
             if (hayEmergenciaActual && !estadoEmergenciaAnterior) document.getElementById('sonidoAlerta').play().catch(e => {});
             estadoEmergenciaAnterior = hayEmergenciaActual;
         });
