@@ -29,7 +29,6 @@
         <button id="btnAcción" class="btn-entrar" onclick="iniciarRastreo()">Entrar a Patio</button>
         <div id="estado">Esperando ingreso...</div>
         
-        <!-- Letrero que sale cuando el monitorista está hablando -->
         <div id="alertaRadio" class="radio-alerta">🔊 Recibiendo mensaje de Torre...</div>
 
         <button id="btnEmergencia" class="btn-emergencia" onclick="pedirAuxilio()">🚨 AUXILIO VIAL 🚨</button>
@@ -47,7 +46,7 @@
 
         let watchId = null;
         let placaActual = "";
-        let ultimoAudioReproducido = 0; // Para no repetir audios viejos
+        let ultimoAudioReproducido = 0;
 
         function iniciarRastreo() {
             placaActual = document.getElementById("placa").value.trim().toUpperCase();
@@ -56,12 +55,14 @@
             if (navigator.geolocation) {
                 document.getElementById("estado").innerText = "Conectando al radar...";
                 
+                // MAGIA: Si el celular pierde internet o cierra la pestaña, bórralo de Firebase
+                db.ref('camiones_en_patio/' + placaActual).onDisconnect().remove();
+                
                 watchId = navigator.geolocation.watchPosition(
                     (position) => {
                         const lat = position.coords.latitude;
                         const lng = position.coords.longitude;
                         
-                        // Solo actualiza posición, no borra el estado de emergencia ni el audio
                         db.ref('camiones_en_patio/' + placaActual).update({
                             lat: lat,
                             lng: lng,
@@ -79,7 +80,6 @@
 
                         document.getElementById("btnEmergencia").style.display = "block";
                         
-                        // Empezar a escuchar instrucciones de voz
                         escucharRadio();
                     },
                     (error) => {
@@ -92,29 +92,36 @@
             }
         }
 
-        // FUNCIÓN MÁGICA: Escuchar la radio
         function escucharRadio() {
             db.ref('camiones_en_patio/' + placaActual).on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data && data.audio_mensaje && data.audio_timestamp > ultimoAudioReproducido) {
-                    // Hay un mensaje de voz nuevo de la torre
                     ultimoAudioReproducido = data.audio_timestamp;
                     
                     const alertaVisual = document.getElementById("alertaRadio");
-                    alertaVisual.style.display = "block"; // Mostrar letrero
+                    alertaVisual.style.display = "block"; 
                     
                     const reproductor = new Audio(data.audio_mensaje);
-                    reproductor.play().catch(e => console.log("Navegador bloqueó el auto-play"));
                     
-                    reproductor.onended = () => {
-                        alertaVisual.style.display = "none"; // Ocultar letrero al terminar
-                    };
+                    reproductor.play().catch(e => {
+                        console.log("No se pudo reproducir", e);
+                        alertaVisual.style.display = "none"; // Ocultar si hay error
+                    });
+                    
+                    // Cuando termine de hablar, quitar el letrero
+                    reproductor.onended = () => { alertaVisual.style.display = "none"; };
+                    
+                    // Si el audio llega roto, quitar el letrero para que no se trabe
+                    reproductor.onerror = () => { alertaVisual.style.display = "none"; };
                 }
             });
         }
 
         function salirRastreo() {
             if (watchId !== null) { navigator.geolocation.clearWatch(watchId); }
+            
+            // Borrar el camión de la base de datos y cancelar la regla de desconexión
+            db.ref('camiones_en_patio/' + placaActual).onDisconnect().cancel();
             db.ref('camiones_en_patio/' + placaActual).remove();
             
             document.getElementById("estado").innerText = "Viaje finalizado. Estás fuera del radar.";
@@ -137,7 +144,6 @@
             }
         }
 
-        // Si el operador cierra la pestaña, borramos el camión
         window.addEventListener("beforeunload", function (e) {
             if (placaActual !== "") { db.ref('camiones_en_patio/' + placaActual).remove(); }
         });
