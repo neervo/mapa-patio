@@ -13,7 +13,6 @@
     <style>
         body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: #1a1a1a; overflow: hidden; }
         
-        /* El mapa ahora deja espacio para el panel lateral */
         #mapa { width: calc(100vw - 320px); height: calc(100vh - 65px); position: absolute; top: 65px; left: 320px; z-index: 1; }
         
         .header { background-color: rgba(0, 26, 51, 1); color: white; padding: 15px 20px; position: absolute; top: 0; left: 0; width: 100%; height: 65px; z-index: 1000; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #ffcc00; }
@@ -25,18 +24,15 @@
         
         @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
 
-        /* NUEVO: PANEL LATERAL DE UNIDADES */
         .panel-lateral { width: 320px; height: calc(100vh - 65px); background-color: #222; position: absolute; top: 65px; left: 0; z-index: 100; overflow-y: auto; border-right: 2px solid #444; padding: 10px; box-sizing: border-box; }
         .panel-lateral h2 { color: #ffcc00; font-size: 16px; text-align: center; margin-top: 5px; border-bottom: 1px solid #444; padding-bottom: 10px; }
         
-        /* Estilos de las tarjetas del menú lateral */
         .tarjeta-unidad { background: #333; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; border-left: 5px solid #00ff88; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
         .tarjeta-unidad:hover { background: #444; transform: translateX(3px); }
         .tarjeta-unidad.alerta { border-left: 5px solid #ff0000; background: #551a1a; animation: parpadeo 1.5s infinite; }
         .tarjeta-unidad .placa { font-size: 16px; font-weight: bold; margin-bottom: 5px; }
         .tarjeta-unidad .datos { font-size: 12px; color: #ccc; display: flex; justify-content: space-between; margin-top: 5px;}
         
-        /* Controles del Popup del Mapa */
         .input-tts { width: 100%; padding: 8px; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; font-size: 14px;}
         .btn-radio { background-color: #ff9800; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 5px; }
         .btn-resolver { background-color: #2e7d32; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px;}
@@ -44,7 +40,6 @@
         .btn-eliminar:hover { background-color: #ff4d4d; }
         .tiempo-info { background-color: #e3f2fd; padding: 8px; border-radius: 5px; margin-bottom: 10px; font-size: 13px; color: #003366; text-align: left;}
         
-        /* Scrollbar del panel lateral */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1a1a1a; }
         ::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
@@ -63,7 +58,6 @@
         </div>
     </div>
     
-    <!-- NUEVO: Contenedor del Panel Lateral -->
     <div id="panelLateral" class="panel-lateral">
         <h2>Unidades en Patio</h2>
         <div id="listaUnidades"></div>
@@ -72,9 +66,27 @@
     <div id="mapa"></div>
 
     <script>
+        // ==========================================
+        // MAPA Y CAPAS (SATÉLITE Y CALLES)
+        // ==========================================
         const mapa = L.map('mapa').setView([19.066, -104.295], 16);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mapa);
+        
+        const capaCalles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
+        const capaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
 
+        // Por defecto activamos la satelital
+        capaSatelite.addTo(mapa);
+
+        // Agregamos el menú desplegable en el mapa para alternar
+        const mapasBase = {
+            "Vista Satelital": capaSatelite,
+            "Vista de Calles": capaCalles
+        };
+        L.control.layers(mapasBase).addTo(mapa);
+
+        // ==========================================
+        // LÓGICA DE FIREBASE Y TORRE
+        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyAH7D-sLL4fCJDliP8xzuYUQGt-H5H7nXE",
             authDomain: "patio-densidad.firebaseapp.com",
@@ -90,7 +102,6 @@
         const listaUnidades = document.getElementById('listaUnidades');
         let estadoEmergenciaAnterior = false;
 
-        // FUNCIÓN: Hacer zoom desde el menú lateral
         window.enfocarCamion = function(placa) {
             if (marcadoresCamiones[placa]) {
                 mapa.setView(marcadoresCamiones[placa].getLatLng(), 19);
@@ -122,7 +133,7 @@
             const data = snapshot.val() || {};
             let hayEmergenciaActual = false;
             let totalCamiones = 0;
-            let htmlLista = ""; // Aquí guardaremos las tarjetas del panel lateral
+            let htmlLista = ""; 
 
             for (const placa in data) {
                 totalCamiones++;
@@ -143,7 +154,6 @@
 
                 const destinoDisplay = camion.destino ? camion.destino : "Sin ruta";
 
-                // 1. DIBUJAR TARJETA EN EL MENÚ LATERAL
                 htmlLista += `
                     <div class="tarjeta-unidad ${esEmergencia ? 'alerta' : ''}" onclick="enfocarCamion('${placa}')">
                         <div class="placa">${esEmergencia ? '🚨' : '✅'} ${placa}</div>
@@ -154,7 +164,6 @@
                     </div>
                 `;
 
-                // 2. ACTUALIZAR MAPA (Igual que antes)
                 const divTiempoActivo = document.getElementById('tiempo-info-' + placa);
                 if (divTiempoActivo) { divTiempoActivo.innerHTML = infoTiempo; }
 
@@ -189,12 +198,10 @@
                 }
             }
 
-            // Actualizar la lista lateral y contadores
             listaUnidades.innerHTML = htmlLista;
             contadorDisplay.innerText = totalCamiones;
             alertaGlobal.style.display = hayEmergenciaActual ? "block" : "none";
             
-            // Borrar los que ya salieron
             for (const placa in marcadoresCamiones) { 
                 if (!data[placa]) { 
                     mapa.removeLayer(marcadoresCamiones[placa]); 
