@@ -22,8 +22,7 @@
         .emergencia-alerta { color: #ff4d4d; animation: parpadeo 1s infinite; display: none; font-weight: bold; font-size: 18px;}
         @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
 
-        /* Controles del Popup */
-        .input-tts { width: 100%; padding: 8px; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
+        .input-tts { width: 100%; padding: 8px; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; font-size: 14px;}
         .btn-radio { background-color: #ff9800; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
         .btn-resolver { background-color: #2e7d32; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px;}
         .btn-eliminar { background-color: #555; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 10px; font-size: 12px; }
@@ -61,9 +60,9 @@
         const contadorDisplay = document.getElementById('contadorCamiones');
         let estadoEmergenciaAnterior = false;
 
-        // ENVIAR TEXTO A VOZ (TTS)
         window.enviarTexto = function(placa) {
             const input = document.getElementById('tts-' + placa);
+            if(!input) return;
             const texto = input.value.trim();
             
             if (texto !== "") {
@@ -72,14 +71,16 @@
                     tts_timestamp: Date.now()
                 });
                 
-                input.value = ""; // Limpiar caja
+                input.value = ""; 
                 const btn = document.getElementById('btn-radio-' + placa);
-                btn.innerText = "✅ Mensaje Enviado";
-                btn.style.backgroundColor = "#4caf50";
-                setTimeout(() => {
-                    btn.innerText = "🗣️ Enviar por Radio";
-                    btn.style.backgroundColor = "#ff9800";
-                }, 2000);
+                if(btn) {
+                    btn.innerText = "✅ Enviado";
+                    btn.style.backgroundColor = "#4caf50";
+                    setTimeout(() => {
+                        btn.innerText = "🗣️ Enviar por Radio";
+                        btn.style.backgroundColor = "#ff9800";
+                    }, 2000);
+                }
             }
         };
 
@@ -103,7 +104,7 @@
                 let contenidoPopup = `
                     <div style="text-align: center; min-width: 200px;">
                         <b style="font-size:16px;">UNIDAD: ${placa}</b><br><br>
-                        <input type="text" id="tts-${placa}" class="input-tts" placeholder="Ej: Ve al bloque G2...">
+                        <input type="text" id="tts-${placa}" class="input-tts" placeholder="Escribe instrucción aquí...">
                         <button id="btn-radio-${placa}" class="btn-radio" onclick="enviarTexto('${placa}')">🗣️ Enviar por Radio</button>
                 `;
                 if (esEmergencia) {
@@ -116,12 +117,20 @@
                 contenidoPopup += `<button class="btn-eliminar" onclick="forzarSalida('${placa}')">🗑️ Forzar Salida</button></div>`;
 
                 if (marcadoresCamiones[placa]) {
+                    // BLINDAJE: Movemos el punto, pero NO re-dibujamos el popup si el estado es el mismo
                     marcadoresCamiones[placa].setLatLng(latlng);
-                    marcadoresCamiones[placa].setStyle({ fillColor: colorPunto });
-                    marcadoresCamiones[placa].bindPopup(contenidoPopup);
+                    
+                    if (marcadoresCamiones[placa].estadoGuardado !== camion.estado) {
+                        marcadoresCamiones[placa].bindPopup(contenidoPopup);
+                        marcadoresCamiones[placa].estadoGuardado = camion.estado;
+                        marcadoresCamiones[placa].setStyle({ fillColor: colorPunto });
+                    }
+
                     if(esEmergencia && !marcadoresCamiones[placa].isPopupOpen()) marcadoresCamiones[placa].openPopup();
                 } else {
-                    marcadoresCamiones[placa] = L.circleMarker(latlng, { radius: 10, fillColor: colorPunto, color: "#ffffff", weight: 2, fillOpacity: 0.9 }).addTo(mapa).bindPopup(contenidoPopup);
+                    marcadoresCamiones[placa] = L.circleMarker(latlng, { radius: 10, fillColor: colorPunto, color: "#ffffff", weight: 2, fillOpacity: 0.9 }).addTo(mapa);
+                    marcadoresCamiones[placa].bindPopup(contenidoPopup);
+                    marcadoresCamiones[placa].estadoGuardado = camion.estado;
                 }
             }
 
