@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GPS Patio</title>
     
-    <!-- Librerías del Mapa (Volvieron para el operador) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
@@ -15,14 +14,12 @@
         body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         #mapa { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
         
-        /* Panel flotante estilo GPS (Abajo de la pantalla) */
         .panel-flotante {
             position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
             background: rgba(255, 255, 255, 0.95); padding: 15px; border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1000; width: 90%; max-width: 350px;
             text-align: center; backdrop-filter: blur(5px);
         }
-
         input { font-size: 20px; padding: 10px; width: 90%; text-transform: uppercase; text-align: center; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 10px; font-weight: bold; }
         
         .btn { font-size: 16px; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px; }
@@ -38,13 +35,11 @@
     <div id="mapa"></div>
 
     <div class="panel-flotante">
-        <!-- Pantalla Inicial -->
         <div id="vista-login">
             <input type="text" id="placa" placeholder="Placa del Tracto" required>
             <button class="btn btn-entrar" onclick="iniciarRastreo()">Entrar al Patio</button>
         </div>
 
-        <!-- Pantalla Activa (Compacta) -->
         <div id="vista-activa">
             <div id="texto-placa" class="info-placa"></div>
             <button id="btnEmergencia" class="btn btn-emergencia" onclick="pedirAuxilio()">🚨 AUXILIO VIAL</button>
@@ -53,7 +48,6 @@
     </div>
 
     <script>
-        // Inicializar el mapa del Operador
         const mapa = L.map('mapa', { zoomControl: false }).setView([19.066, -104.295], 16);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mapa);
         let marcadorPropio = null;
@@ -75,8 +69,12 @@
             placaActual = document.getElementById("placa").value.trim().toUpperCase();
             if (placaActual === "") { alert("Por favor, ingresa tu placa."); return; }
 
+            // HACK DE AUDIO: Desbloquear los permisos de voz del celular con el primer clic
+            const vozDesbloqueo = new SpeechSynthesisUtterance("Radio activado");
+            vozDesbloqueo.lang = 'es-MX';
+            window.speechSynthesis.speak(vozDesbloqueo);
+
             if (navigator.geolocation) {
-                // Cambiar vistas de la interfaz
                 document.getElementById("vista-login").style.display = "none";
                 document.getElementById("texto-placa").innerText = "UNIDAD: " + placaActual;
                 document.getElementById("texto-placa").style.display = "block";
@@ -90,10 +88,8 @@
                         const lat = position.coords.latitude;
                         const lng = position.coords.longitude;
                         
-                        // Actualizar Firebase
                         db.ref('camiones_en_patio/' + placaActual).update({ lat: lat, lng: lng, placa: placaActual });
 
-                        // Actualizar mapa del celular
                         mapa.setView([lat, lng], 18);
                         if (marcadorPropio) {
                             marcadorPropio.setLatLng([lat, lng]);
@@ -109,17 +105,16 @@
             } else { alert("GPS no soportado en este navegador."); }
         }
 
-        // TEXT TO SPEECH (Invisible para el operador)
         function escucharRadio() {
             db.ref('camiones_en_patio/' + placaActual).on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data && data.tts_mensaje && data.tts_timestamp > ultimoAudioReproducido) {
                     ultimoAudioReproducido = data.tts_timestamp;
                     
-                    // Crear la voz sintética y reproducirla automáticamente
                     const mensaje = new SpeechSynthesisUtterance(data.tts_mensaje);
-                    mensaje.lang = 'es-MX'; // Acento español de México
-                    mensaje.rate = 1.0; // Velocidad normal
+                    mensaje.lang = 'es-MX'; 
+                    mensaje.rate = 1.0;
+                    mensaje.volume = 1.0; // Aseguramos volumen máximo
                     window.speechSynthesis.speak(mensaje);
                 }
             });
@@ -141,7 +136,6 @@
             placaActual = "";
         }
 
-        // Confirmación antes de pedir auxilio
         function pedirAuxilio() {
             if (placaActual !== "") {
                 const confirmar = confirm("¿Estás seguro de solicitar AUXILIO VIAL? Se alertará a la Torre de Control inmediatamente.");
