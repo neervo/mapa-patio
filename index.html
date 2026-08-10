@@ -27,7 +27,8 @@
         .btn-salir { background-color: #555; color: white; }
         .btn-emergencia { background-color: #d32f2f; color: white; display: none; }
         
-        .info-placa { font-size: 18px; font-weight: bold; color: #003366; margin-bottom: 10px; display: none; }
+        .info-placa { font-size: 18px; font-weight: bold; color: #003366; margin-bottom: 5px; display: none; }
+        .tiempo-estadía { font-size: 14px; font-weight: bold; color: #4caf50; margin-bottom: 15px; display: none; }
     </style>
 </head>
 <body>
@@ -42,8 +43,9 @@
 
         <div id="vista-activa">
             <div id="texto-placa" class="info-placa"></div>
+            <div id="cronometro" class="tiempo-estadía">⏱️ Tiempo en terminal: 0 min</div>
             <button id="btnEmergencia" class="btn btn-emergencia" onclick="pedirAuxilio()">🚨 AUXILIO VIAL</button>
-            <button id="btnSalir" class="btn btn-salir" style="display:none;" onclick="salirRastreo()">Cerrar Viaje</button>
+            <button id="btnSalir" class="btn btn-salir" style="display:none;" onclick="salirRastreo()">Cerrar Viaje Manual</button>
         </div>
     </div>
 
@@ -64,38 +66,65 @@
         let watchId = null;
         let placaActual = "";
         let ultimoAudioReproducido = 0;
+        let horaIngreso = 0;
+        let intervaloCronometro = null;
+        
+        // Coordenadas centrales de tu patio para la GEOCERCA
+        const CENTRO_PATIO = L.latLng(19.066, -104.295); 
+        const RADIO_GEOCERCA_METROS = 500; // Si se aleja 500m, se sale automáticamente
 
         function iniciarRastreo() {
             placaActual = document.getElementById("placa").value.trim().toUpperCase();
             if (placaActual === "") { alert("Por favor, ingresa tu placa."); return; }
 
-            // HACK DE AUDIO: Desbloquear los permisos de voz del celular con el primer clic
-            const vozDesbloqueo = new SpeechSynthesisUtterance("Radio activado");
+            const vozDesbloqueo = new SpeechSynthesisUtterance("Ruta iniciada");
             vozDesbloqueo.lang = 'es-MX';
             window.speechSynthesis.speak(vozDesbloqueo);
 
             if (navigator.geolocation) {
+                horaIngreso = Date.now();
+                
                 document.getElementById("vista-login").style.display = "none";
                 document.getElementById("texto-placa").innerText = "UNIDAD: " + placaActual;
                 document.getElementById("texto-placa").style.display = "block";
+                document.getElementById("cronometro").style.display = "block";
                 document.getElementById("btnEmergencia").style.display = "block";
-                document.getElementById("btnSalir").style.display = "block";
+                // Dejamos el manual oculto o visible (opcional), lo mostramos por si la geocerca falla
+                document.getElementById("btnSalir").style.display = "block"; 
                 
                 db.ref('camiones_en_patio/' + placaActual).onDisconnect().remove();
+                
+                // Iniciar el cronómetro visual
+                intervaloCronometro = setInterval(() => {
+                    let minutos = Math.floor((Date.now() - horaIngreso) / 60000);
+                    document.getElementById("cronometro").innerText = `⏱️ Tiempo en terminal: ${minutos} min`;
+                }, 60000); // Actualiza cada minuto
                 
                 watchId = navigator.geolocation.watchPosition(
                     (position) => {
                         const lat = position.coords.latitude;
                         const lng = position.coords.longitude;
+                        const ubicacionActual = L.latLng(lat, lng);
                         
-                        db.ref('camiones_en_patio/' + placaActual).update({ lat: lat, lng: lng, placa: placaActual });
+                        // LÓGICA DE GEOCERCA AUTOMÁTICA
+                        const distancia = CENTRO_PATIO.distanceTo(ubicacionActual);
+                        if (distancia > RADIO_GEOCERCA_METROS) {
+                            alert("Has salido del perímetro de la terminal. Viaje finalizado automáticamente.");
+                            salirRastreo();
+                            return; // Detiene el código aquí
+                        }
+                        
+                        // Si sigue adentro, actualiza Firebase
+                        db.ref('camiones_en_patio/' + placaActual).update({ 
+                            lat: lat, 
+                            lng: lng, 
+                            placa: placaActual,
+                            hora_ingreso: horaIngreso // Mandamos la hora a la torre
+                        });
 
                         mapa.setView([lat, lng], 18);
-                        if (marcadorPropio) {
-                            marcadorPropio.setLatLng([lat, lng]);
-                        } else {
-                            marcadorPropio = L.marker([lat, lng]).addTo(mapa);
-                        }
+                        if (marcadorPropio) { marcadorPropio.setLatLng([lat, lng]); } 
+                        else { marcadorPropio = L.marker([lat, lng]).addTo(mapa); }
                         
                         escucharRadio();
                     },
@@ -110,11 +139,10 @@
                 const data = snapshot.val();
                 if (data && data.tts_mensaje && data.tts_timestamp > ultimoAudioReproducido) {
                     ultimoAudioReproducido = data.tts_timestamp;
-                    
                     const mensaje = new SpeechSynthesisUtterance(data.tts_mensaje);
                     mensaje.lang = 'es-MX'; 
                     mensaje.rate = 1.0;
-                    mensaje.volume = 1.0; // Aseguramos volumen máximo
+                    mensaje.volume = 1.0;
                     window.speechSynthesis.speak(mensaje);
                 }
             });
@@ -122,6 +150,8 @@
 
         function salirRastreo() {
             if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+            if (intervaloCronometro !== null) clearInterval(intervaloCronometro);
+            
             db.ref('camiones_en_patio/' + placaActual).onDisconnect().cancel();
             db.ref('camiones_en_patio/' + placaActual).remove();
             
@@ -130,6 +160,8 @@
             document.getElementById("vista-login").style.display = "block";
             document.getElementById("placa").value = "";
             document.getElementById("texto-placa").style.display = "none";
+            document.getElementById("cronometro").style.display = "none";
+            document.getElementById("cronometro").innerText = "⏱️ Tiempo en terminal: 0 min";
             document.getElementById("btnEmergencia").style.display = "none";
             document.getElementById("btnSalir").style.display = "none";
             
@@ -140,7 +172,20 @@
             if (placaActual !== "") {
                 const confirmar = confirm("¿Estás seguro de solicitar AUXILIO VIAL? Se alertará a la Torre de Control inmediatamente.");
                 if (confirmar) {
+                    // 1. Avisar a la Torre de Control en Firebase
                     db.ref('camiones_en_patio/' + placaActual).update({ estado: 'emergencia' });
+                    
+                    // 2. DISPARAR ALERTA A TELEGRAM
+                    // ¡OJO! REEMPLAZA ESTOS DATOS CON TUS CREDENCIALES REALES
+                    const token = "TU_TOKEN_DE_TELEGRAM_AQUI"; 
+                    const chat_id = "TU_CHAT_ID_AQUI"; 
+                    const textoMsg = `🚨 EMERGENCIA EN PATIO: La unidad ${placaActual} acaba de presionar el botón de Auxilio Vial.`;
+                    
+                    const urlTelegram = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=${encodeURIComponent(textoMsg)}`;
+                    
+                    fetch(urlTelegram)
+                        .then(response => console.log("Telegram enviado"))
+                        .catch(error => console.error("Error Telegram:", error));
                 }
             }
         }
