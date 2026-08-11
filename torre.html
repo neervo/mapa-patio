@@ -16,27 +16,32 @@
         .header { background-color: rgba(0, 26, 51, 1); color: white; padding: 15px 20px; position: absolute; top: 0; left: 0; width: 100%; height: 65px; z-index: 1000; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #ffcc00; }
         .header h1 { margin: 0; font-size: 20px; letter-spacing: 1px; }
         .panel-derecho { display: flex; gap: 15px; align-items: center; }
+        
         .buscador { padding: 8px 15px; border-radius: 20px; border: none; outline: none; font-weight: bold; text-transform: uppercase; width: 150px; text-align: center; }
         .contador { font-size: 16px; font-weight: bold; background: #003366; padding: 8px 15px; border-radius: 20px; }
+        .btn-excel { background-color: #2e7d32; color: white; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-excel:hover { background-color: #1b5e20; }
+        
         .emergencia-alerta { color: #ff4d4d; animation: parpadeo 1s infinite; display: none; font-weight: bold; font-size: 18px;}
         @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+
         .panel-lateral { width: 320px; height: calc(100vh - 65px); background-color: #222; position: absolute; top: 65px; left: 0; z-index: 100; overflow-y: auto; border-right: 2px solid #444; padding: 10px; box-sizing: border-box; }
         .panel-lateral h2 { color: #ffcc00; font-size: 16px; text-align: center; margin-top: 5px; border-bottom: 1px solid #444; padding-bottom: 10px; }
         .tarjeta-unidad { background: #333; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; border-left: 5px solid #00ff88; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
         .tarjeta-unidad:hover { background: #444; transform: translateX(3px); }
         .tarjeta-unidad.alerta { border-left: 5px solid #ff0000; background: #551a1a; animation: parpadeo 1.5s infinite; }
-        .tarjeta-unidad .placa { font-size: 16px; font-weight: bold; margin-bottom: 5px; }
+        .tarjeta-unidad .placa { font-size: 16px; font-weight: bold; margin-bottom: 5px; display:flex; justify-content: space-between;}
         .tarjeta-unidad .datos { font-size: 12px; color: #ccc; display: flex; justify-content: space-between; margin-top: 5px;}
+        
         .input-tts { width: 100%; padding: 8px; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; font-size: 14px;}
         .btn-radio { background-color: #ff9800; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 5px; }
         .btn-resolver { background-color: #2e7d32; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px;}
         .btn-eliminar { background-color: #555; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 5px; font-size: 12px; }
-        .btn-eliminar:hover { background-color: #ff4d4d; }
+        
         .tiempo-info { background-color: #e3f2fd; padding: 8px; border-radius: 5px; margin-bottom: 10px; font-size: 13px; color: #003366; text-align: left;}
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1a1a1a; }
         ::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #ffcc00; }
     </style>
 </head>
 <body>
@@ -46,14 +51,17 @@
         <h1>📡 TORRE YMS</h1>
         <div id="alertaGlobal" class="emergencia-alerta">🚨 ¡EMERGENCIA ACTIVA! 🚨</div>
         <div class="panel-derecho">
+            <button class="btn-excel" onclick="exportarExcel()">📊 Descargar Reporte</button>
             <input type="text" id="buscadorPlaca" class="buscador" placeholder="Buscar Placa...">
             <div class="contador">Unidades: <span id="contadorCamiones">0</span></div>
         </div>
     </div>
+    
     <div id="panelLateral" class="panel-lateral">
         <h2>Unidades en Patio</h2>
         <div id="listaUnidades"></div>
     </div>
+
     <div id="mapa"></div>
 
     <script>
@@ -63,7 +71,7 @@
         capaSatelite.addTo(mapa);
         L.control.layers({"Satelital": capaSatelite, "Calles": capaCalles}).addTo(mapa);
 
-        // Geocerca (Visual)
+        // Geocerca (Solo dibujada)
         const COORDENADAS_POLIGONO = [
             [19.070, -104.300], [19.070, -104.290], [19.060, -104.290], [19.060, -104.300]
         ];
@@ -78,6 +86,38 @@
         const contadorDisplay = document.getElementById('contadorCamiones');
         const listaUnidades = document.getElementById('listaUnidades');
         let estadoEmergenciaAnterior = false;
+
+        // =====================================
+        // GENERADOR DE REPORTES (EXCEL / CSV)
+        // =====================================
+        window.exportarExcel = function() {
+            db.ref('historial_viajes').once('value').then(snapshot => {
+                const data = snapshot.val();
+                if(!data) { alert("Aún no hay historial de viajes completados."); return; }
+                
+                let csvContent = "data:text/csv;charset=utf-8,Placa,Destino,Fecha,Hora_Ingreso,Hora_Salida,Minutos_Totales,Velocidad_Max_Kmh\n";
+                
+                for(const key in data) {
+                    const viaje = data[key];
+                    const fIngreso = new Date(viaje.hora_ingreso);
+                    const fSalida = new Date(viaje.hora_salida);
+                    const fechaStr = fIngreso.toLocaleDateString('es-MX');
+                    const hIngresoStr = fIngreso.toLocaleTimeString('es-MX');
+                    const hSalidaStr = fSalida.toLocaleTimeString('es-MX');
+                    const minutos = Math.floor((viaje.hora_salida - viaje.hora_ingreso) / 60000);
+                    
+                    csvContent += `${viaje.placa},${viaje.destino},${fechaStr},${hIngresoStr},${hSalidaStr},${minutos},${viaje.velocidad_maxima}\n`;
+                }
+                
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `Reporte_YMS_${new Date().toLocaleDateString('es-MX')}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+        };
 
         window.enfocarCamion = function(placa) { if (marcadoresCamiones[placa]) { mapa.setView(marcadoresCamiones[placa].getLatLng(), 19); marcadoresCamiones[placa].openPopup(); } };
 
@@ -94,7 +134,24 @@
         };
 
         window.marcarResuelto = function(placa) { db.ref('camiones_en_patio/' + placa).update({ estado: 'normal' }); mapa.closePopup(); };
-        window.forzarSalida = function(placa) { if(confirm("¿Forzar salida de " + placa + "?")) { db.ref('camiones_en_patio/' + placa).remove(); mapa.closePopup(); } };
+        
+        window.forzarSalida = function(placa) { 
+            if(confirm("¿Forzar salida de " + placa + "?")) { 
+                db.ref('camiones_en_patio/' + placa).once('value').then(snap => {
+                    const info = snap.val();
+                    if(info) {
+                        // Guardar en historial antes de borrar
+                        db.ref('historial_viajes').push({
+                            placa: info.placa, destino: info.destino || 'S/D', 
+                            hora_ingreso: info.hora_ingreso || Date.now(), hora_salida: Date.now(), 
+                            velocidad_maxima: info.velocidad_maxima || 0
+                        });
+                    }
+                    db.ref('camiones_en_patio/' + placa).remove(); 
+                    mapa.closePopup(); 
+                });
+            } 
+        };
 
         const camionesRef = db.ref('camiones_en_patio');
         camionesRef.on('value', (snapshot) => {
@@ -120,8 +177,19 @@
                 }
 
                 const destinoDisplay = camion.destino ? camion.destino : "Sin ruta";
+                const velocidadActual = camion.velocidad_actual || 0;
 
-                htmlLista += `<div class="tarjeta-unidad ${esEmergencia ? 'alerta' : ''}" onclick="enfocarCamion('${placa}')"><div class="placa">${esEmergencia ? '🚨' : '✅'} ${placa}</div><div class="datos"><span>📍 ${destinoDisplay}</span><span>⏱️ ${minutosAdentro} min</span></div></div>`;
+                htmlLista += `
+                    <div class="tarjeta-unidad ${esEmergencia ? 'alerta' : ''}" onclick="enfocarCamion('${placa}')">
+                        <div class="placa">
+                            <span>${esEmergencia ? '🚨' : '✅'} ${placa}</span>
+                            <span style="font-size: 12px; color: ${velocidadActual > 15 ? '#ff4d4d' : '#00ff88'};">🏎️ ${velocidadActual} km/h</span>
+                        </div>
+                        <div class="datos">
+                            <span>📍 ${destinoDisplay}</span>
+                            <span>⏱️ ${minutosAdentro} min</span>
+                        </div>
+                    </div>`;
 
                 const divTiempoActivo = document.getElementById('tiempo-info-' + placa);
                 if (divTiempoActivo) { divTiempoActivo.innerHTML = infoTiempo; }
