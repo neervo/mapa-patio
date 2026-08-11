@@ -73,21 +73,18 @@
         let horaIngreso = 0;
         let intervaloCronometro = null;
         
-        // ========================================================
-        // GEOCERCA POLIGONAL: Las esquinas de tu patio
-        // Reemplaza estas coordenadas con los verdaderos bordes de tu patio
+// ========================================================
+        // GEOCERCA POLIGONAL INVISIBLE (Solo matemática)
         // ========================================================
         const COORDENADAS_POLIGONO = [
-            [19.122882, -104.321734], // Esquina Noroeste
-            [19.126760, -104.321848], // Esquina Noreste
-            [19.125793, -104.319466], // Esquina Sureste
-            [19.124717, -104.323957]  // Esquina Suroeste
+            [19.070, -104.300], // Pega aquí tu Esquina 1
+            [19.070, -104.290], // Pega aquí tu Esquina 2
+            [19.060, -104.290], // Pega aquí tu Esquina 3
+            [19.060, -104.300]  // Pega aquí tu Esquina 4
         ];
 
-        // Dibuja la línea roja en el mapa para que veas el límite de la geocerca
-        L.polygon(COORDENADAS_POLIGONO, {color: 'red', fillOpacity: 0.1}).addTo(mapa);
-
-        // Algoritmo matemático para saber si un punto está dentro de la figura
+        // Ya NO dibujamos la línea aquí. Pasamos directo al cálculo:
+        
         function estaAdentroDelPatio(lat, lng, poligono) {
             let adentro = false;
             for (let i = 0, j = poligono.length - 1; i < poligono.length; j = i++) {
@@ -96,7 +93,7 @@
                 let intersecta = ((yi > lng) != (yj > lng)) && (lat < (xj - xi) * (lng - yi) / (yj - yi) + xi);
                 if (intersecta) adentro = !adentro;
             }
-            return true; // <- OJO: AHORA ESTÁ FORZADO A 'TRUE' PARA QUE PUEDAS HACER PRUEBAS EN TU CASA. CUANDO ESTÉS EN EL PUERTO, CAMBIA ESTO A 'return adentro;'
+            return true; // Recuerda cambiar esto a 'return adentro;' cuando vayas a probar al puerto real
         }
 
         const coordenadasBahias = {
