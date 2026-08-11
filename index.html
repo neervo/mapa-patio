@@ -3,238 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GPS Patio</title>
+    <title>Patio YMS - Operador</title>
     
+    <!-- Librerías de Mapas (Leaflet) y Firebase -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 
     <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
-        #mapa { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+        :root {
+            --bg-color: #f4f4f9;
+            --card-bg: white;
+            --text-color: #444;
+            --title-color: #003366;
+            --input-border: #ccc;
+        }
+
+        /* MODO NOCTURNO DINÁMICO */
+        body.dark-mode {
+            --bg-color: #111;
+            --card-bg: #222;
+            --text-color: #ccc;
+            --title-color: #ffcc00;
+            --input-border: #555;
+        }
+
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
         
-        .panel-flotante { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255, 255, 255, 0.95); padding: 15px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1000; width: 90%; max-width: 350px; text-align: center; backdrop-filter: blur(5px); }
-        input { font-size: 20px; padding: 10px; width: 90%; text-transform: uppercase; text-align: center; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 10px; font-weight: bold; }
+        #mapaFondo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
         
-        .btn { font-size: 16px; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px; }
-        .btn-entrar { background-color: #003366; color: white; }
-        .btn-salir { background-color: #555; color: white; }
-        .btn-emergencia { background-color: #d32f2f; color: white; display: none; }
+        .card, .panel-flotante { background-color: var(--card-bg); padding: 30px; border-radius: 15px; width: 85%; max-width: 400px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 10; text-align: center; }
+        .panel-flotante { position: absolute; bottom: 30px; background-color: rgba(255,255,255,0.95); }
+        body.dark-mode .panel-flotante { background-color: rgba(34,34,34,0.95); }
+
+        h2 { color: var(--title-color); margin-top: 0; margin-bottom: 20px; font-size: 24px; }
         
-        .info-placa { font-size: 18px; font-weight: bold; color: #003366; margin-bottom: 5px; display: none; }
-        .tiempo-estadía { font-size: 14px; font-weight: bold; color: #4caf50; margin-bottom: 15px; display: none; }
-        .icono-destino { font-size: 35px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        input { width: 90%; font-size: 18px; border: none; border-bottom: 2px solid var(--input-border); margin-bottom: 25px; padding: 10px; text-align: center; font-weight: bold; background: transparent; color: var(--text-color); outline: none; text-transform: uppercase;}
+        
+        button { font-size: 18px; font-weight: bold; border: none; border-radius: 8px; padding: 15px; width: 100%; cursor: pointer; color: white; transition: 0.3s; margin-bottom: 10px;}
+        .btn-entrar { background-color: #003366; }
+        .btn-auxilio { background-color: #d32f2f; border-radius: 30px; }
+        .btn-salir { background-color: #555; }
+        .btn-entendido { background-color: #2e7d32; margin-top: 15px; }
+
+        .texto-placa { font-size: 22px; font-weight: bold; color: var(--title-color); margin-bottom: 5px; }
+        .texto-destino { font-size: 18px; font-weight: bold; color: var(--text-color); margin-bottom: 10px; }
+        .texto-tiempo { font-size: 16px; color: #4caf50; font-weight: bold; margin-bottom: 20px; }
+
+        /* ALERTA DE MENSAJES */
+        #alertaMensaje { display: none; position: absolute; top: 50px; background-color: #ffcc00; padding: 20px; width: 85%; max-width: 400px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 100; text-align: center; }
+        .alerta-titulo { font-size: 16px; font-weight: bold; color: #003366; margin-bottom: 5px; }
+        .alerta-texto { font-size: 22px; font-weight: bold; color: #000; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
-    <div id="mapa"></div>
+    <div id="mapaFondo"></div>
 
-    <div class="panel-flotante">
-        <div id="vista-login">
-            <input type="text" id="placa" placeholder="Placa (Ej. TRACTO-5)" required>
-            <input type="text" id="posicion" placeholder="Posición (Ej. A0 03 01)" required>
-            <button class="btn btn-entrar" onclick="iniciarRastreo()">Entrar al Patio</button>
-        </div>
+    <!-- ALERTA VISUAL (BUZÓN DE MENSAJES) -->
+    <div id="alertaMensaje">
+        <div class="alerta-titulo">📩 MENSAJE DE TORRE:</div>
+        <div id="textoMensaje" class="alerta-texto">"Avanza al G2"</div>
+        <button class="btn-entendido" onclick="cerrarMensaje()">✅ ENTENDIDO</button>
+    </div>
 
-        <div id="vista-activa">
-            <div id="texto-placa" class="info-placa"></div>
-            <div id="cronometro" class="tiempo-estadía">⏱️ Tiempo en terminal: 0 min</div>
-            <button id="btnEmergencia" class="btn btn-emergencia" onclick="pedirAuxilio()">🚨 AUXILIO VIAL</button>
-            <button id="btnSalir" class="btn btn-salir" style="display:none;" onclick="salirRastreo()">Cerrar Viaje Manual</button>
-        </div>
+    <!-- PANTALLA DE INGRESO -->
+    <div class="card" id="pantallaLogin">
+        <h2>REGISTRO YMS</h2>
+        <input type="text" id="placaInput" placeholder="Placa (Ej. TRACTO-5)" oninput="this.value = this.value.toUpperCase()">
+        <input type="text" id="posicionInput" placeholder="Posición (Ej. A0 03)" oninput="this.value = this.value.toUpperCase()">
+        <button class="btn-entrar" onclick="iniciarRastreo()">Entrar al Patio</button>
+    </div>
+
+    <!-- PANEL DE VIAJE ACTIVO -->
+    <div class="panel-flotante" id="pantallaActiva" style="display: none;">
+        <div class="texto-placa" id="lblPlaca">UNIDAD: --</div>
+        <div class="texto-destino" id="lblDestino">Destino: --</div>
+        <div class="texto-tiempo" id="lblTiempo">⏱️ Tiempo: 0 min</div>
+        <button class="btn-auxilio" onclick="pedirAuxilio()">🚨 AUXILIO VIAL</button>
+        <button class="btn-salir" onclick="salirRastreo()">Cerrar Viaje Manual</button>
     </div>
 
     <script>
-        const mapa = L.map('mapa', { zoomControl: false }).setView([19.066, -104.295], 16);
-        
-        // Vista Satelital y Calles
-        const capaCalles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
-        const capaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
-        capaSatelite.addTo(mapa);
-        L.control.layers({"Satelital": capaSatelite, "Calles": capaCalles}).addTo(mapa);
-        
-        let marcadorPropio = null;
-        let marcadorDestino = null;
+        // CONFIGURAR MODO NOCTURNO AUTOMÁTICO
+        const horaActual = new Date().getHours();
+        if (horaActual >= 18 || horaActual < 6) { document.body.classList.add('dark-mode'); }
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyAH7D-sLL4fCJDliP8xzuYUQGt-H5H7nXE",
-            authDomain: "patio-densidad.firebaseapp.com",
-            databaseURL: "https://patio-densidad-default-rtdb.firebaseio.com",
-            projectId: "patio-densidad"
-        };
+        // FIREBASE SETUP
+        const firebaseConfig = { apiKey: "AIzaSyAH7D-sLL4fCJDliP8xzuYUQGt-H5H7nXE", authDomain: "patio-densidad.firebaseapp.com", databaseURL: "https://patio-densidad-default-rtdb.firebaseio.com", projectId: "patio-densidad" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        // DICCIONARIOS Y GLOBALES
+        const coordenadasBahias = { "A0 02": [19.0671, -104.2955], "A0 06": [19.0650, -104.2940], "G3 02": [19.0665, -104.2960] };
+        
+        let mapa, marcadorDestino, marcadorMia;
         let watchId = null;
-        let placaActual = "";
-        let ultimoAudioReproducido = 0;
+        let placaGlobal = "";
+        let destinoGlobal = "";
         let horaIngreso = 0;
-        let intervaloCronometro = null;
-        
-// ========================================================
-        // GEOCERCA POLIGONAL INVISIBLE (Solo matemática)
-        // ========================================================
-        const COORDENADAS_POLIGONO = [
-            [19.070, -104.300], // Pega aquí tu Esquina 1
-            [19.070, -104.290], // Pega aquí tu Esquina 2
-            [19.060, -104.290], // Pega aquí tu Esquina 3
-            [19.060, -104.300]  // Pega aquí tu Esquina 4
-        ];
+        let timerInterval = null;
+        let ultimoAudio = 0;
+        let wakeLock = null;
+        let maxSpeed = 0;
 
-        // Ya NO dibujamos la línea aquí. Pasamos directo al cálculo:
-        
-        function estaAdentroDelPatio(lat, lng, poligono) {
-            let adentro = false;
-            for (let i = 0, j = poligono.length - 1; i < poligono.length; j = i++) {
-                let xi = poligono[i][0], yi = poligono[i][1];
-                let xj = poligono[j][0], yj = poligono[j][1];
-                let intersecta = ((yi > lng) != (yj > lng)) && (lat < (xj - xi) * (lng - yi) / (yj - yi) + xi);
-                if (intersecta) adentro = !adentro;
-            }
-            return true; // Recuerda cambiar esto a 'return adentro;' cuando vayas a probar al puerto real
+        // INICIALIZAR MAPA (Modo Satélite por defecto para más impacto visual)
+        mapa = L.map('mapaFondo', { zoomControl: false }).setView([19.066, -104.295], 16);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapa);
+
+        // HACK: MANTENER PANTALLA DEL IPHONE ENCENDIDA
+        async function solicitarWakeLock() {
+            try {
+                if ('wakeLock' in navigator) { wakeLock = await navigator.wakeLock.request('screen'); }
+            } catch (err) { console.log("Wake Lock falló", err); }
         }
 
-        const coordenadasBahias = {
-            "A0 02": [19.0671, -104.2955],
-            "A0 06": [19.0650, -104.2940],
-            "G3 02": [19.0665, -104.2960]
-        };
+        function hablar(texto) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(texto);
+                utterance.lang = 'es-MX';
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function cerrarMensaje() {
+            document.getElementById('alertaMensaje').style.display = 'none';
+        }
 
         function iniciarRastreo() {
-            placaActual = document.getElementById("placa").value.trim().toUpperCase();
-            let posicionCompleta = document.getElementById("posicion").value.trim().toUpperCase();
-            
-            if (placaActual === "" || posicionCompleta === "") { alert("Ingresa tu placa y la posición del ticket."); return; }
+            const placa = document.getElementById('placaInput').value.trim();
+            const posicion = document.getElementById('posicionInput').value.trim();
 
-            const vozDesbloqueo = new SpeechSynthesisUtterance("Ruta iniciada");
-            vozDesbloqueo.lang = 'es-MX';
-            window.speechSynthesis.speak(vozDesbloqueo);
+            if (placa === "" || posicion === "") { alert("Faltan datos."); return; }
 
-            let partesPosicion = posicionCompleta.split(" ");
-            let claveBahia = "";
-            
-            if (partesPosicion.length >= 2) {
-                let bloque = partesPosicion[0];
-                let bahiaNumero = parseInt(partesPosicion[1], 10);
-                if (bahiaNumero % 2 !== 0) {
-                    if ((bahiaNumero + 1) % 4 === 0) { bahiaNumero = bahiaNumero - 1; } 
-                    else { bahiaNumero = bahiaNumero + 1; }
-                }
-                let bahiaFormateada = bahiaNumero.toString().padStart(2, '0');
-                claveBahia = bloque + " " + bahiaFormateada; 
-            } else {
-                claveBahia = posicionCompleta;
+            // Lógica inteligente de bahías
+            let partes = posicion.split(" ");
+            let destino = posicion;
+            if (partes.length >= 2) {
+                let bloque = partes[0];
+                let num = parseInt(partes[1], 10);
+                if (num % 2 !== 0) { if ((num + 1) % 4 === 0) num -= 1; else num += 1; }
+                destino = bloque + " " + num.toString().padStart(2, '0');
             }
 
-            if (coordenadasBahias[claveBahia]) {
-                const iconoBandera = L.divIcon({ html: '🏁', className: 'icono-destino', iconSize: [35, 35], iconAnchor: [17, 35] });
-                marcadorDestino = L.marker(coordenadasBahias[claveBahia], {icon: iconoBandera}).addTo(mapa);
-                marcadorDestino.bindPopup("<b>Destino:</b> " + claveBahia).openPopup();
-            }
+            placaGlobal = placa;
+            destinoGlobal = destino;
+            horaIngreso = Date.now();
+            maxSpeed = 0;
 
-            if (navigator.geolocation) {
-                horaIngreso = Date.now();
-                document.getElementById("vista-login").style.display = "none";
-                document.getElementById("texto-placa").innerText = "UNIDAD: " + placaActual + " ➔ " + claveBahia;
-                document.getElementById("texto-placa").style.display = "block";
-                document.getElementById("cronometro").style.display = "block";
-                document.getElementById("btnEmergencia").style.display = "block";
-                document.getElementById("btnSalir").style.display = "block"; 
-                
-                db.ref('camiones_en_patio/' + placaActual).onDisconnect().remove();
-                
-                intervaloCronometro = setInterval(() => {
-                    let minutos = Math.floor((Date.now() - horaIngreso) / 60000);
-                    document.getElementById("cronometro").innerText = `⏱️ Tiempo en terminal: ${minutos} min`;
-                }, 60000);
-                
-                watchId = navigator.geolocation.watchPosition(
-                    (position) => {
-                        const lat = position.coords.latitude;
-                        const lng = position.coords.longitude;
-                        
-                        // LÓGICA DE GEOCERCA POLIGONAL
-                        if (!estaAdentroDelPatio(lat, lng, COORDENADAS_POLIGONO)) {
-                            alert("Has salido de la terminal. Viaje finalizado.");
-                            salirRastreo();
-                            return; 
-                        }
-                        
-                        db.ref('camiones_en_patio/' + placaActual).update({ lat: lat, lng: lng, placa: placaActual, hora_ingreso: horaIngreso, destino: claveBahia });
+            document.getElementById('lblPlaca').innerText = "UNIDAD: " + placaGlobal;
+            document.getElementById('lblDestino').innerText = "Destino: " + destinoGlobal;
+            
+            document.getElementById('pantallaLogin').style.display = 'none';
+            document.getElementById('pantallaActiva').style.display = 'block';
 
-                        if (marcadorPropio) { marcadorPropio.setLatLng([lat, lng]); } 
-                        else { marcadorPropio = L.marker([lat, lng]).addTo(mapa); }
+            solicitarWakeLock(); // Evitar que el iPhone se apague solo
+            hablar("Ruta iniciada");
 
-                        if (marcadorDestino) {
-                            const grupo = new L.featureGroup([marcadorPropio, marcadorDestino]);
-                            mapa.fitBounds(grupo.getBounds(), { padding: [50, 50], maxZoom: 18 });
-                        } else {
-                            mapa.setView([lat, lng], 18);
-                        }
-                        
-                        escucharRadio();
-                    },
-                    (error) => { alert("Error de GPS."); },
-                    { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
-                );
-            } else { alert("GPS no soportado."); }
-        }
+            timerInterval = setInterval(() => {
+                let min = Math.floor((Date.now() - horaIngreso) / 60000);
+                document.getElementById('lblTiempo').innerText = "⏱️ Tiempo: " + min + " min";
+            }, 60000);
 
-        function escucharRadio() {
-            db.ref('camiones_en_patio/' + placaActual).on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data && data.tts_mensaje && data.tts_timestamp > ultimoAudioReproducido) {
-                    ultimoAudioReproducido = data.tts_timestamp;
-                    const mensaje = new SpeechSynthesisUtterance(data.tts_mensaje);
-                    mensaje.lang = 'es-MX'; 
-                    mensaje.rate = 1.0;
-                    window.speechSynthesis.speak(mensaje);
+            // Escuchar mensajes de la torre
+            db.ref('camiones_en_patio/' + placaGlobal).on('value', snap => {
+                const data = snap.val();
+                if (data && data.tts_mensaje && data.tts_timestamp > ultimoAudio) {
+                    ultimoAudio = data.tts_timestamp;
+                    document.getElementById('textoMensaje').innerText = `"${data.tts_mensaje}"`;
+                    document.getElementById('alertaMensaje').style.display = 'block';
+                    hablar(data.tts_mensaje);
                 }
             });
+
+            // Dibujar destino
+            if (coordenadasBahias[destinoGlobal]) {
+                if (marcadorDestino) mapa.removeLayer(marcadorDestino);
+                marcadorDestino = L.marker(coordenadasBahias[destinoGlobal]).addTo(mapa).bindPopup("Destino: " + destinoGlobal);
+            }
+
+            // Iniciar GPS
+            if ("geolocation" in navigator) {
+                watchId = navigator.geolocation.watchPosition(pos => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    let speed = pos.coords.speed || 0; 
+                    let speedKmh = (speed * 3.6).toFixed(1);
+                    
+                    if (parseFloat(speedKmh) > parseFloat(maxSpeed)) maxSpeed = speedKmh;
+
+                    if (marcadorMia) {
+                        marcadorMia.setLatLng([lat, lng]);
+                    } else {
+                        marcadorMia = L.circleMarker([lat, lng], { radius: 8, fillColor: "#007AFF", color: "white", weight: 2, fillOpacity: 1 }).addTo(mapa);
+                    }
+                    mapa.setView([lat, lng], 18);
+
+                    db.ref('camiones_en_patio/' + placaGlobal).update({
+                        lat: lat, lng: lng, placa: placaGlobal, destino: destinoGlobal,
+                        hora_ingreso: horaIngreso, velocidad_actual: speedKmh, velocidad_maxima: maxSpeed
+                    });
+
+                }, err => { alert("Error de GPS: Asegúrate de dar permisos de ubicación."); }, 
+                { enableHighAccuracy: true, maximumAge: 0 });
+            }
         }
 
         function salirRastreo() {
-            if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-            if (intervaloCronometro !== null) clearInterval(intervaloCronometro);
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+            if (timerInterval) clearInterval(timerInterval);
+            if (wakeLock) wakeLock.release().then(() => wakeLock = null);
             
-            db.ref('camiones_en_patio/' + placaActual).onDisconnect().cancel();
-            db.ref('camiones_en_patio/' + placaActual).remove();
+            if (placaGlobal !== "") {
+                // Guardar en Excel (Historial)
+                db.ref('historial_viajes').push({
+                    placa: placaGlobal, destino: destinoGlobal, hora_ingreso: horaIngreso, 
+                    hora_salida: Date.now(), velocidad_maxima: maxSpeed
+                });
+
+                db.ref('camiones_en_patio/' + placaGlobal).remove();
+                db.ref('camiones_en_patio/' + placaGlobal).off(); // Dejar de escuchar
+            }
+
+            document.getElementById('pantallaLogin').style.display = 'block';
+            document.getElementById('pantallaActiva').style.display = 'none';
+            document.getElementById('alertaMensaje').style.display = 'none';
+            document.getElementById('placaInput').value = "";
+            document.getElementById('posicionInput').value = "";
+            document.getElementById('lblTiempo').innerText = "⏱️ Tiempo: 0 min";
             
-            if (marcadorPropio) { mapa.removeLayer(marcadorPropio); marcadorPropio = null; }
-            if (marcadorDestino) { mapa.removeLayer(marcadorDestino); marcadorDestino = null; }
+            if (marcadorMia) mapa.removeLayer(marcadorMia); marcadorMia = null;
+            if (marcadorDestino) mapa.removeLayer(marcadorDestino); marcadorDestino = null;
             
-            document.getElementById("vista-login").style.display = "block";
-            document.getElementById("placa").value = "";
-            document.getElementById("posicion").value = "";
-            document.getElementById("texto-placa").style.display = "none";
-            document.getElementById("cronometro").style.display = "none";
-            document.getElementById("cronometro").innerText = "⏱️ Tiempo en terminal: 0 min";
-            document.getElementById("btnEmergencia").style.display = "none";
-            document.getElementById("btnSalir").style.display = "none";
-            
-            placaActual = "";
+            placaGlobal = "";
         }
 
         function pedirAuxilio() {
-            if (placaActual !== "") {
-                if (confirm("¿Solicitar AUXILIO VIAL? Se alertará a la Torre inmediatamente.")) {
-                    db.ref('camiones_en_patio/' + placaActual).update({ estado: 'emergencia' });
-                    
-                    const token = "8515273340:AAHsV3fsue-dY9CZCWlj1izG-usRtgDY64k"; 
-                    const chat_id = "-1005100426684"; 
-                    const textoMsg = `🚨 EMERGENCIA EN PATIO: La unidad ${placaActual} acaba de presionar el botón de Auxilio Vial.`;
-                    
-                    fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=${encodeURIComponent(textoMsg)}`)
-                        .catch(error => console.error(error));
-                }
+            if (confirm("¿Seguro que deseas pedir AUXILIO VIAL? Se alertará a la Torre.")) {
+                db.ref('camiones_en_patio/' + placaGlobal).update({ estado: 'emergencia' });
+                const msg = `🚨 EMERGENCIA EN PATIO: La unidad ${placaGlobal} pide Auxilio.`;
+                fetch(`https://api.telegram.org/bot8515273340:AAHsV3fsue-dY9CZCWlj1izG-usRtgDY64k/sendMessage?chat_id=-1005100426684&text=${encodeURIComponent(msg)}`);
             }
         }
-
-        window.addEventListener("beforeunload", function (e) {
-            if (placaActual !== "") db.ref('camiones_en_patio/' + placaActual).remove();
-        });
     </script>
 </body>
 </html>
