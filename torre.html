@@ -12,34 +12,27 @@
 
     <style>
         body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: #1a1a1a; overflow: hidden; }
-        
         #mapa { width: calc(100vw - 320px); height: calc(100vh - 65px); position: absolute; top: 65px; left: 320px; z-index: 1; }
-        
         .header { background-color: rgba(0, 26, 51, 1); color: white; padding: 15px 20px; position: absolute; top: 0; left: 0; width: 100%; height: 65px; z-index: 1000; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #ffcc00; }
         .header h1 { margin: 0; font-size: 20px; letter-spacing: 1px; }
         .panel-derecho { display: flex; gap: 15px; align-items: center; }
         .buscador { padding: 8px 15px; border-radius: 20px; border: none; outline: none; font-weight: bold; text-transform: uppercase; width: 150px; text-align: center; }
         .contador { font-size: 16px; font-weight: bold; background: #003366; padding: 8px 15px; border-radius: 20px; }
         .emergencia-alerta { color: #ff4d4d; animation: parpadeo 1s infinite; display: none; font-weight: bold; font-size: 18px;}
-        
         @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
-
         .panel-lateral { width: 320px; height: calc(100vh - 65px); background-color: #222; position: absolute; top: 65px; left: 0; z-index: 100; overflow-y: auto; border-right: 2px solid #444; padding: 10px; box-sizing: border-box; }
         .panel-lateral h2 { color: #ffcc00; font-size: 16px; text-align: center; margin-top: 5px; border-bottom: 1px solid #444; padding-bottom: 10px; }
-        
         .tarjeta-unidad { background: #333; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; border-left: 5px solid #00ff88; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
         .tarjeta-unidad:hover { background: #444; transform: translateX(3px); }
         .tarjeta-unidad.alerta { border-left: 5px solid #ff0000; background: #551a1a; animation: parpadeo 1.5s infinite; }
         .tarjeta-unidad .placa { font-size: 16px; font-weight: bold; margin-bottom: 5px; }
         .tarjeta-unidad .datos { font-size: 12px; color: #ccc; display: flex; justify-content: space-between; margin-top: 5px;}
-        
         .input-tts { width: 100%; padding: 8px; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; font-size: 14px;}
         .btn-radio { background-color: #ff9800; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 5px; }
         .btn-resolver { background-color: #2e7d32; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px;}
         .btn-eliminar { background-color: #555; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 5px; font-size: 12px; }
         .btn-eliminar:hover { background-color: #ff4d4d; }
         .tiempo-info { background-color: #e3f2fd; padding: 8px; border-radius: 5px; margin-bottom: 10px; font-size: 13px; color: #003366; text-align: left;}
-        
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1a1a1a; }
         ::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
@@ -57,56 +50,26 @@
             <div class="contador">Unidades: <span id="contadorCamiones">0</span></div>
         </div>
     </div>
-    
     <div id="panelLateral" class="panel-lateral">
         <h2>Unidades en Patio</h2>
         <div id="listaUnidades"></div>
     </div>
-
     <div id="mapa"></div>
 
     <script>
-// ==========================================
-        // MAPA Y CAPAS (SATÉLITE Y CALLES)
-        // ==========================================
         const mapa = L.map('mapa').setView([19.066, -104.295], 16);
-        
         const capaCalles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
         const capaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
         capaSatelite.addTo(mapa);
         L.control.layers({"Satelital": capaSatelite, "Calles": capaCalles}).addTo(mapa);
 
-        // ==========================================
-        // DIBUJAR LA GEOCERCA EN LA TORRE
-        // ==========================================
+        // Geocerca (Visual)
         const COORDENADAS_POLIGONO = [
-            [19.070, -104.300], // Pega aquí tu Esquina 1
-            [19.070, -104.290], // Pega aquí tu Esquina 2
-            [19.060, -104.290], // Pega aquí tu Esquina 3
-            [19.060, -104.300]  // Pega aquí tu Esquina 4
-            // Puedes agregar más esquinas si tu patio tiene forma irregular
+            [19.070, -104.300], [19.070, -104.290], [19.060, -104.290], [19.060, -104.300]
         ];
-        // Esto dibuja el polígono rojo en tu pantalla
         L.polygon(COORDENADAS_POLIGONO, {color: 'red', fillColor: '#ff0000', fillOpacity: 0.1, weight: 2}).addTo(mapa);
-        // Por defecto activamos la satelital
-        capaSatelite.addTo(mapa);
 
-        // Agregamos el menú desplegable en el mapa para alternar
-        const mapasBase = {
-            "Vista Satelital": capaSatelite,
-            "Vista de Calles": capaCalles
-        };
-        L.control.layers(mapasBase).addTo(mapa);
-
-        // ==========================================
-        // LÓGICA DE FIREBASE Y TORRE
-        // ==========================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyAH7D-sLL4fCJDliP8xzuYUQGt-H5H7nXE",
-            authDomain: "patio-densidad.firebaseapp.com",
-            databaseURL: "https://patio-densidad-default-rtdb.firebaseio.com",
-            projectId: "patio-densidad"
-        };
+        const firebaseConfig = { apiKey: "AIzaSyAH7D-sLL4fCJDliP8xzuYUQGt-H5H7nXE", authDomain: "patio-densidad.firebaseapp.com", databaseURL: "https://patio-densidad-default-rtdb.firebaseio.com", projectId: "patio-densidad" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
@@ -116,12 +79,7 @@
         const listaUnidades = document.getElementById('listaUnidades');
         let estadoEmergenciaAnterior = false;
 
-        window.enfocarCamion = function(placa) {
-            if (marcadoresCamiones[placa]) {
-                mapa.setView(marcadoresCamiones[placa].getLatLng(), 19);
-                marcadoresCamiones[placa].openPopup();
-            }
-        };
+        window.enfocarCamion = function(placa) { if (marcadoresCamiones[placa]) { mapa.setView(marcadoresCamiones[placa].getLatLng(), 19); marcadoresCamiones[placa].openPopup(); } };
 
         window.enviarTexto = function(placa) {
             const input = document.getElementById('tts-' + placa);
@@ -131,11 +89,7 @@
                 db.ref('camiones_en_patio/' + placa).update({ tts_mensaje: texto, tts_timestamp: Date.now() });
                 input.value = ""; 
                 const btn = document.getElementById('btn-radio-' + placa);
-                if(btn) {
-                    btn.innerText = "✅ Enviado";
-                    btn.style.backgroundColor = "#4caf50";
-                    setTimeout(() => { btn.innerText = "🗣️ Enviar por Radio"; btn.style.backgroundColor = "#ff9800"; }, 2000);
-                }
+                if(btn) { btn.innerText = "✅ Enviado"; btn.style.backgroundColor = "#4caf50"; setTimeout(() => { btn.innerText = "🗣️ Enviar por Radio"; btn.style.backgroundColor = "#ff9800"; }, 2000); }
             }
         };
 
@@ -161,49 +115,24 @@
                 let infoTiempo = "Sin registro";
                 if(camion.hora_ingreso) {
                     const fechaIngreso = new Date(camion.hora_ingreso);
-                    const horaFormateada = fechaIngreso.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     minutosAdentro = Math.floor((Date.now() - camion.hora_ingreso) / 60000);
-                    infoTiempo = `<b>Ingreso:</b> ${horaFormateada}<br><b>Tiempo en patio:</b> ${minutosAdentro} min`;
+                    infoTiempo = `<b>Ingreso:</b> ${fechaIngreso.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}<br><b>Tiempo en patio:</b> ${minutosAdentro} min`;
                 }
 
                 const destinoDisplay = camion.destino ? camion.destino : "Sin ruta";
 
-                htmlLista += `
-                    <div class="tarjeta-unidad ${esEmergencia ? 'alerta' : ''}" onclick="enfocarCamion('${placa}')">
-                        <div class="placa">${esEmergencia ? '🚨' : '✅'} ${placa}</div>
-                        <div class="datos">
-                            <span>📍 ${destinoDisplay}</span>
-                            <span>⏱️ ${minutosAdentro} min</span>
-                        </div>
-                    </div>
-                `;
+                htmlLista += `<div class="tarjeta-unidad ${esEmergencia ? 'alerta' : ''}" onclick="enfocarCamion('${placa}')"><div class="placa">${esEmergencia ? '🚨' : '✅'} ${placa}</div><div class="datos"><span>📍 ${destinoDisplay}</span><span>⏱️ ${minutosAdentro} min</span></div></div>`;
 
                 const divTiempoActivo = document.getElementById('tiempo-info-' + placa);
                 if (divTiempoActivo) { divTiempoActivo.innerHTML = infoTiempo; }
 
-                let contenidoPopup = `
-                    <div style="text-align: center; min-width: 200px;">
-                        <b style="font-size:16px;">UNIDAD: ${placa}</b><br><br>
-                        <div id="tiempo-info-${placa}" class="tiempo-info">${infoTiempo}</div>
-                        <input type="text" id="tts-${placa}" class="input-tts" placeholder="Escribe instrucción aquí...">
-                        <button id="btn-radio-${placa}" class="btn-radio" onclick="enviarTexto('${placa}')">🗣️ Enviar por Radio</button>
-                `;
-                if (esEmergencia) {
-                    contenidoPopup += `
-                        <div style="border-top: 1px solid #ccc; padding-top: 10px;">
-                            <b style="color:red;">🚨 EMERGENCIA 🚨</b>
-                            <button class="btn-resolver" onclick="marcarResuelto('${placa}')">✅ Marcar Resuelto</button>
-                        </div>`;
-                }
+                let contenidoPopup = `<div style="text-align: center; min-width: 200px;"><b style="font-size:16px;">UNIDAD: ${placa}</b><br><br><div id="tiempo-info-${placa}" class="tiempo-info">${infoTiempo}</div><input type="text" id="tts-${placa}" class="input-tts" placeholder="Escribe instrucción aquí..."><button id="btn-radio-${placa}" class="btn-radio" onclick="enviarTexto('${placa}')">🗣️ Enviar por Radio</button>`;
+                if (esEmergencia) contenidoPopup += `<div style="border-top: 1px solid #ccc; padding-top: 10px;"><b style="color:red;">🚨 EMERGENCIA 🚨</b><button class="btn-resolver" onclick="marcarResuelto('${placa}')">✅ Marcar Resuelto</button></div>`;
                 contenidoPopup += `<button class="btn-eliminar" onclick="forzarSalida('${placa}')">🗑️ Forzar Salida</button></div>`;
 
                 if (marcadoresCamiones[placa]) {
                     marcadoresCamiones[placa].setLatLng(latlng);
-                    if (marcadoresCamiones[placa].estadoGuardado !== camion.estado) {
-                        marcadoresCamiones[placa].bindPopup(contenidoPopup);
-                        marcadoresCamiones[placa].estadoGuardado = camion.estado;
-                        marcadoresCamiones[placa].setStyle({ fillColor: colorPunto });
-                    }
+                    if (marcadoresCamiones[placa].estadoGuardado !== camion.estado) { marcadoresCamiones[placa].bindPopup(contenidoPopup); marcadoresCamiones[placa].estadoGuardado = camion.estado; marcadoresCamiones[placa].setStyle({ fillColor: colorPunto }); }
                     if(esEmergencia && !marcadoresCamiones[placa].isPopupOpen()) marcadoresCamiones[placa].openPopup();
                 } else {
                     marcadoresCamiones[placa] = L.circleMarker(latlng, { radius: 10, fillColor: colorPunto, color: "#ffffff", weight: 2, fillOpacity: 0.9 }).addTo(mapa);
@@ -216,13 +145,7 @@
             contadorDisplay.innerText = totalCamiones;
             alertaGlobal.style.display = hayEmergenciaActual ? "block" : "none";
             
-            for (const placa in marcadoresCamiones) { 
-                if (!data[placa]) { 
-                    mapa.removeLayer(marcadoresCamiones[placa]); 
-                    delete marcadoresCamiones[placa]; 
-                } 
-            }
-            
+            for (const placa in marcadoresCamiones) { if (!data[placa]) { mapa.removeLayer(marcadoresCamiones[placa]); delete marcadoresCamiones[placa]; } }
             if (hayEmergenciaActual && !estadoEmergenciaAnterior) document.getElementById('sonidoAlerta').play().catch(e => {});
             estadoEmergenciaAnterior = hayEmergenciaActual;
         });
