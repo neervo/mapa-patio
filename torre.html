@@ -66,14 +66,28 @@
     <div id="mapa"></div>
 
     <script>
-        // ==========================================
+// ==========================================
         // MAPA Y CAPAS (SATÉLITE Y CALLES)
         // ==========================================
         const mapa = L.map('mapa').setView([19.066, -104.295], 16);
         
         const capaCalles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
         const capaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
+        capaSatelite.addTo(mapa);
+        L.control.layers({"Satelital": capaSatelite, "Calles": capaCalles}).addTo(mapa);
 
+        // ==========================================
+        // DIBUJAR LA GEOCERCA EN LA TORRE
+        // ==========================================
+        const COORDENADAS_POLIGONO = [
+            [19.070, -104.300], // Pega aquí tu Esquina 1
+            [19.070, -104.290], // Pega aquí tu Esquina 2
+            [19.060, -104.290], // Pega aquí tu Esquina 3
+            [19.060, -104.300]  // Pega aquí tu Esquina 4
+            // Puedes agregar más esquinas si tu patio tiene forma irregular
+        ];
+        // Esto dibuja el polígono rojo en tu pantalla
+        L.polygon(COORDENADAS_POLIGONO, {color: 'red', fillColor: '#ff0000', fillOpacity: 0.1, weight: 2}).addTo(mapa);
         // Por defecto activamos la satelital
         capaSatelite.addTo(mapa);
 
