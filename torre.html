@@ -19,17 +19,18 @@
         
         .panel-lateral { width: 340px; height: calc(100vh - 65px); background-color: #222; position: absolute; top: 65px; left: 0; z-index: 100; display: flex; flex-direction: column;}
         
-        /* NUEVO MÓDULO BUSCADOR Y MENSAJE GLOBAL */
         .panel-superior { padding: 15px; background: #111; border-bottom: 2px solid #333; }
         .input-buscador { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #555; background: #333; color: white; margin-bottom: 15px; box-sizing: border-box; }
         .btn-global { background-color: #d32f2f; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; }
         
-        .lista-scroll { flex: 1; overflow-y: auto; padding: 10px; }
+        .lista-scroll { flex: 1; overflow-y: auto; padding: 10px; position: relative;}
         
-        /* SEPARADORES DE PESTAÑAS */
         .titulo-seccion { font-size: 14px; text-align: center; font-weight: bold; padding: 5px; margin: 10px 0; border-radius: 4px; color: white;}
         .seccion-internos { background-color: #1e4d20; border-left: 5px solid #4caf50;}
         .seccion-foraneos { background-color: #003366; border-left: 5px solid #007AFF;}
+        
+        /* CHECKBOX PARA SELECCIÓN MÚLTIPLE */
+        .chk-multi { transform: scale(1.5); cursor: pointer; margin-right: 10px; accent-color: #ffcc00;}
         
         .panel-acciones { background-color: #111; padding: 15px; border-top: 2px solid #ffcc00; display: none; flex-direction: column; }
         .panel-acciones h3 { color: white; font-size: 16px; margin: 0 0 10px 0; text-align: center; }
@@ -37,6 +38,9 @@
         .btn-radio { background-color: #ff9800; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .btn-resolver { background-color: #2e7d32; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px;}
         .btn-eliminar { background-color: #d32f2f; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+
+        /* PANEL MULTI-SELECCIÓN (NUEVO) */
+        .panel-multi { background-color: #003366; padding: 15px; border-top: 2px solid #ffcc00; display: none; flex-direction: column; position: sticky; bottom: 0; z-index: 200; box-shadow: 0 -4px 10px rgba(0,0,0,0.5);}
 
         .tarjeta-unidad { background: #333; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
         .tarjeta-unidad.interno { border-left: 5px solid #4caf50; } 
@@ -49,8 +53,9 @@
         
         @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        .placa { font-size: 16px; font-weight: bold; margin-bottom: 5px; display:flex; justify-content: space-between;}
-        .datos { font-size: 12px; color: #ccc; display: flex; justify-content: space-between; margin-top: 5px;}
+        .placa { font-size: 16px; font-weight: bold; margin-bottom: 5px; display:flex; align-items: center;}
+        .placa span { flex: 1; }
+        .datos { font-size: 12px; color: #ccc; display: flex; justify-content: space-between; margin-top: 5px; padding-left: 28px;}
     </style>
 </head>
 <body>
@@ -62,7 +67,6 @@
     
     <div class="panel-lateral">
         
-        <!-- BUSCADOR Y RADIO GLOBAL -->
         <div class="panel-superior">
             <input type="text" id="inputBuscador" class="input-buscador" placeholder="🔍 Buscar Unidad o Destino..." onkeyup="renderLista()">
             <button class="btn-global" onclick="enviarMensajeGlobal()">📢 Transmitir Mensaje a TODOS</button>
@@ -71,7 +75,14 @@
         <div class="lista-scroll" id="listaUnidades">
             <!-- Aquí se inyectan las unidades separadas -->
         </div>
+
+        <!-- PANEL DE ACCIÓN MÚLTIPLE (NUEVO) -->
+        <div id="panelMulti" class="panel-multi">
+            <h3 id="lblMulti" style="color: white; font-size: 16px; margin: 0 0 10px 0; text-align: center;">Unidades Seleccionadas: 0</h3>
+            <button class="btn-radio" onclick="enviarMensajeMultiple()">✉️ Enviar Mensaje al Grupo</button>
+        </div>
         
+        <!-- PANEL DE ACCIÓN INDIVIDUAL -->
         <div id="panelAcciones" class="panel-acciones">
             <h3 id="tituloAccion">Selecciona Unidad</h3>
             <input type="text" id="inputVoz" class="input-tts" placeholder="Escribe mensaje a enviar...">
@@ -96,8 +107,56 @@
         
         let camionSeleccionado = null;
         let dataGlobal = {};
+        
+        // SET PARA GUARDAR LA SELECCIÓN MÚLTIPLE
+        let seleccionadosMulti = new Set();
+
+        // FUNCIÓN DEL CHECKBOX MÚLTIPLE
+        window.toggleMulti = function(placa, event) {
+            event.stopPropagation(); // Evita que se abra el panel individual al dar clic en la casilla
+            if (event.target.checked) {
+                seleccionadosMulti.add(placa);
+            } else {
+                seleccionadosMulti.delete(placa);
+            }
+            actualizarPanelMulti();
+        };
+
+        window.actualizarPanelMulti = function() {
+            const panel = document.getElementById('panelMulti');
+            const panelInd = document.getElementById('panelAcciones');
+            
+            if (seleccionadosMulti.size > 0) {
+                panel.style.display = 'flex';
+                document.getElementById('lblMulti').innerText = `Unidades Seleccionadas: ${seleccionadosMulti.size}`;
+                // Ocultar panel individual si hay selección múltiple
+                panelInd.style.display = 'none'; 
+                camionSeleccionado = null;
+                renderLista(); // Repintar para quitar bordes blancos individuales
+            } else {
+                panel.style.display = 'none';
+            }
+        };
+
+        window.enviarMensajeMultiple = function() {
+            const msj = prompt("Escribe el mensaje para el GRUPO seleccionado:");
+            if (msj && msj.trim() !== "") {
+                seleccionadosMulti.forEach(placa => {
+                    if(dataGlobal[placa]) {
+                        db.ref('camiones_en_patio/' + placa).update({ tts_mensaje: msj.trim(), tts_timestamp: Date.now() });
+                    }
+                });
+                alert("Mensaje enviado a las " + seleccionadosMulti.size + " unidades.");
+                seleccionadosMulti.clear();
+                actualizarPanelMulti();
+                renderLista();
+            }
+        };
 
         window.seleccionarCamion = function(placa, estado) {
+            // Si hay selección múltiple activa, ignorar el clic individual
+            if (seleccionadosMulti.size > 0) return;
+
             camionSeleccionado = placa;
             if (marcadoresCamiones[placa]) mapa.setView(marcadoresCamiones[placa].getLatLng(), 18);
             
@@ -123,7 +182,6 @@
             }
         };
 
-        // NUEVA FUNCIÓN: MENSAJE MASIVO (BROADCAST)
         window.enviarMensajeGlobal = function() {
             const msj = prompt("Escribe el mensaje de voz para TODAS las unidades en el patio:");
             if (msj && msj.trim() !== "") {
@@ -153,7 +211,6 @@
             }
         };
 
-        // RENDER LISTA CON BUSCADOR Y SEPARADOR
         window.renderLista = function() {
             const filtro = document.getElementById('inputBuscador').value.trim().toUpperCase();
             let htmlInternos = ""; 
@@ -167,10 +224,7 @@
                 
                 let infoRuta = tipo === 'FORANEO' ? `📍 ${camion.destino || 'S/D'}` : `🚢 ${camion.buque} | 🏗️ ${camion.sts}`;
                 
-                // Filtro buscador
-                if (filtro !== "" && !placa.includes(filtro) && !infoRuta.includes(filtro)) {
-                    continue; 
-                }
+                if (filtro !== "" && !placa.includes(filtro) && !infoRuta.includes(filtro)) continue; 
 
                 totalUnidades++;
                 
@@ -182,30 +236,28 @@
                 else if (estado === 'baño') { claseCSS = 'alerta-bano'; iconoLateral = '🚾';}
 
                 if (placa === camionSeleccionado) claseCSS += ' seleccionada';
-
+                
+                let isChecked = seleccionadosMulti.has(placa) ? 'checked' : '';
                 let tiempo = estado === 'baño' ? "🚾 BAÑO" : `⏱️ ${Math.floor((Date.now() - (camion.hora_ingreso||Date.now())) / 60000)} min`;
 
                 let tarjetaHTML = `
                     <div class="tarjeta-unidad ${claseCSS}" onclick="seleccionarCamion('${placa}', '${estado}')">
-                        <div class="placa"><span>${iconoLateral} ${placa}</span><span>🏎️ ${camion.velocidad_actual||0} km/h</span></div>
+                        <div class="placa">
+                            <input type="checkbox" class="chk-multi" ${isChecked} onclick="toggleMulti('${placa}', event)">
+                            <span>${iconoLateral} ${placa}</span>
+                            <span style="text-align: right;">🏎️ ${camion.velocidad_actual||0} km/h</span>
+                        </div>
                         <div class="datos"><span>${infoRuta}</span><span>${tiempo}</span></div>
                     </div>`;
 
-                if (tipo === 'INTERNO') { htmlInternos += tarjetaHTML; } 
-                else { htmlForaneos += tarjetaHTML; }
+                if (tipo === 'INTERNO') htmlInternos += tarjetaHTML; 
+                else htmlForaneos += tarjetaHTML; 
             }
 
-            // Construir la vista separada
             let vistaFinal = "";
-            if (htmlInternos !== "") {
-                vistaFinal += `<div class="titulo-seccion seccion-internos">🚜 UNIDADES INTERNAS</div>` + htmlInternos;
-            }
-            if (htmlForaneos !== "") {
-                vistaFinal += `<div class="titulo-seccion seccion-foraneos">🚚 UNIDADES FORÁNEAS</div>` + htmlForaneos;
-            }
-            if (vistaFinal === "") {
-                vistaFinal = `<div style="text-align:center; color:#888; padding:20px;">No hay unidades coincidentes.</div>`;
-            }
+            if (htmlInternos !== "") vistaFinal += `<div class="titulo-seccion seccion-internos">🚜 UNIDADES INTERNAS</div>` + htmlInternos;
+            if (htmlForaneos !== "") vistaFinal += `<div class="titulo-seccion seccion-foraneos">🚚 UNIDADES FORÁNEAS</div>` + htmlForaneos;
+            if (vistaFinal === "") vistaFinal = `<div style="text-align:center; color:#888; padding:20px;">No hay unidades coincidentes.</div>`;
 
             listaUnidades.innerHTML = vistaFinal;
             document.getElementById('contadorCamiones').innerText = totalUnidades;
@@ -220,7 +272,7 @@
                 const tipo = camion.tipo || 'FORANEO';
                 const estado = camion.estado || 'activo';
 
-                let colorPunto = tipo === 'INTERNO' ? '#4caf50' : '#007AFF'; // Verde o Azul
+                let colorPunto = tipo === 'INTERNO' ? '#4caf50' : '#007AFF'; 
                 if (estado === 'emergencia') colorPunto = '#ff0000';
                 else if (estado === 'pager') colorPunto = '#ff5722';
                 else if (estado === 'baño') colorPunto = '#ffcc00';
@@ -243,9 +295,15 @@
                 if (!dataGlobal[placa]) { 
                     mapa.removeLayer(marcadoresCamiones[placa]); 
                     delete marcadoresCamiones[placa]; 
+                    
+                    // Si el que se borró estaba seleccionado, limpiarlo de la memoria
                     if(camionSeleccionado === placa) {
                         camionSeleccionado = null;
                         document.getElementById('panelAcciones').style.display = 'none';
+                    }
+                    if(seleccionadosMulti.has(placa)) {
+                        seleccionadosMulti.delete(placa);
+                        actualizarPanelMulti();
                     }
                 }
             }
