@@ -11,53 +11,33 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 
     <style>
-        :root {
-            --bg-color: #f4f4f9;
-            --card-bg: white;
-            --text-color: #444;
-            --title-color: #003366;
-            --input-border: #ccc;
-        }
-
-        body.dark-mode {
-            --bg-color: #111;
-            --card-bg: #222;
-            --text-color: #ccc;
-            --title-color: #ffcc00;
-            --input-border: #555;
-        }
-
+        :root { --bg-color: #f4f4f9; --card-bg: white; --text-color: #444; --title-color: #003366; --input-border: #ccc; }
+        body.dark-mode { --bg-color: #111; --card-bg: #222; --text-color: #ccc; --title-color: #ffcc00; --input-border: #555; }
         body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
         
-        #mapaFondo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        #mapaFondo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; display: none; }
         
-        /* DISEÑO COMPACTO PARA DEJAR VER EL MAPA */
-        .card, .panel-flotante { background-color: var(--card-bg); padding: 15px 20px; border-radius: 12px; width: 90%; max-width: 350px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 10; text-align: center; }
+        .card, .panel-flotante, .panel-completo { background-color: var(--card-bg); padding: 20px; border-radius: 12px; width: 90%; max-width: 350px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 10; text-align: center; }
         .panel-flotante { position: absolute; bottom: 15px; background-color: rgba(255,255,255,0.95); }
+        .panel-completo { width: 100%; height: 100%; max-width: 100%; border-radius: 0; display: flex; flex-direction: column; justify-content: center; background-color: var(--bg-color); }
         body.dark-mode .panel-flotante { background-color: rgba(34,34,34,0.95); }
 
         h2 { color: var(--title-color); margin-top: 0; margin-bottom: 15px; font-size: 20px; }
-        
         input { width: 90%; font-size: 16px; border: none; border-bottom: 2px solid var(--input-border); margin-bottom: 15px; padding: 8px; text-align: center; font-weight: bold; background: transparent; color: var(--text-color); outline: none; text-transform: uppercase;}
         
-        button { font-size: 15px; font-weight: bold; border: none; border-radius: 8px; padding: 10px; width: 100%; cursor: pointer; color: white; transition: 0.3s; margin-bottom: 8px;}
-        .btn-entrar { background-color: #003366; margin-bottom: 0; padding: 12px;}
+        button { font-size: 15px; font-weight: bold; border: none; border-radius: 8px; padding: 12px; width: 100%; cursor: pointer; color: white; transition: 0.3s; margin-bottom: 10px;}
+        .btn-gordo { padding: 20px; border-radius: 12px; font-size: 18px; display: flex; flex-direction: column; align-items: center; }
+        .btn-atras { background-color: #555; padding: 8px; width: auto; align-self: flex-start; margin-bottom: 15px;}
+        .btn-entrar { background-color: #003366; }
         .btn-auxilio { background-color: #d32f2f; border-radius: 20px; }
         .btn-salir { background-color: #555; margin-bottom: 0; }
-        .btn-entendido { background-color: #2e7d32; margin-top: 10px; }
+        .btn-interno { margin-bottom: 10px; }
 
-        .texto-placa { font-size: 18px; font-weight: bold; color: var(--title-color); margin-bottom: 8px; }
-        
-        /* FILA PARA AHORRAR ESPACIO (Destino y Tiempo juntos) */
-        .info-row { display: flex; justify-content: space-around; align-items: center; margin-bottom: 12px; padding: 5px; background: rgba(0,0,0,0.05); border-radius: 8px;}
-        body.dark-mode .info-row { background: rgba(255,255,255,0.05); }
-        .texto-destino { font-size: 15px; font-weight: bold; color: var(--text-color); }
-        .texto-tiempo { font-size: 14px; color: #4caf50; font-weight: bold; }
+        .texto-placa { font-size: 20px; font-weight: bold; color: var(--title-color); margin-bottom: 8px; }
+        .texto-destino { font-size: 16px; font-weight: bold; color: var(--text-color); margin-bottom: 10px; }
+        .texto-tiempo { font-size: 16px; color: #4caf50; font-weight: bold; margin-bottom: 15px; }
 
-        /* ALERTA DE MENSAJES COMPACTA */
-        #alertaMensaje { display: none; position: absolute; top: 20px; background-color: #ffcc00; padding: 15px; width: 85%; max-width: 350px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 100; text-align: center; }
-        .alerta-titulo { font-size: 14px; font-weight: bold; color: #003366; margin-bottom: 5px; }
-        .alerta-texto { font-size: 18px; font-weight: bold; color: #000; margin-bottom: 10px; }
+        #alertaMensaje { display: none; position: absolute; top: 20px; background-color: #ffcc00; padding: 15px; width: 85%; max-width: 350px; border-radius: 12px; z-index: 100; text-align: center; }
     </style>
 </head>
 <body>
@@ -65,27 +45,47 @@
     <div id="mapaFondo"></div>
 
     <div id="alertaMensaje">
-        <div class="alerta-titulo">📩 MENSAJE DE TORRE:</div>
-        <div id="textoMensaje" class="alerta-texto">"Avanza al G2"</div>
-        <button class="btn-entendido" onclick="cerrarMensaje()">✅ ENTENDIDO</button>
+        <div style="color: #003366; font-weight: bold;">📩 MENSAJE DE TORRE:</div>
+        <div id="textoMensaje" style="font-size: 20px; font-weight: bold; margin: 10px 0;"></div>
+        <button style="background-color: #2e7d32;" onclick="document.getElementById('alertaMensaje').style.display = 'none';">✅ ENTENDIDO</button>
     </div>
 
-    <div class="card" id="pantallaLogin">
-        <h2>REGISTRO YMS</h2>
-        <input type="text" id="placaInput" placeholder="Placa (Ej. TRACTO-5)" oninput="this.value = this.value.toUpperCase()">
-        <input type="text" id="posicionInput" placeholder="Posición (Ej. A0 03)" oninput="this.value = this.value.toUpperCase()">
-        <button class="btn-entrar" onclick="iniciarRastreo()">Entrar al Patio</button>
+    <!-- 1. SELECCIÓN DE PERFIL -->
+    <div class="card" id="pantallaSeleccion">
+        <h2>SELECCIONA TU PERFIL</h2>
+        <button class="btn-gordo" style="background-color: #2e7d32;" onclick="seleccionarPerfil('FORANEO')">
+            🚚 FORÁNEO<span style="font-size: 12px; font-weight: normal; margin-top:5px;">Ruta a Bahía y Mapa</span>
+        </button>
+        <button class="btn-gordo" style="background-color: #003366;" onclick="seleccionarPerfil('INTERNO')">
+            🚜 INTERNO (TERMINAL)<span style="font-size: 12px; font-weight: normal; margin-top:5px;">Buque, STS y Alertas</span>
+        </button>
     </div>
 
-    <!-- PANEL SÚPER COMPACTO -->
-    <div class="panel-flotante" id="pantallaActiva" style="display: none;">
+    <!-- 2. LOGIN DINÁMICO -->
+    <div class="card" id="pantallaLogin" style="display: none;">
+        <button class="btn-atras" onclick="volverSeleccion()">⬅ Volver</button>
+        <h2 id="tituloLogin">REGISTRO</h2>
+        <input type="text" id="placaInput" placeholder="Placa / Num Eco">
+        <input type="text" id="posicionInput" placeholder="Posición (Ej. A0 03)">
+        <input type="text" id="buqueInput" placeholder="Buque Asignado" style="display:none;">
+        <input type="text" id="stsInput" placeholder="Grúa STS" style="display:none;">
+        <button class="btn-entrar" onclick="iniciarRastreo()">Iniciar Turno</button>
+    </div>
+
+    <!-- 3. PANEL ACTIVO -->
+    <div id="pantallaActiva" style="display: none;">
         <div class="texto-placa" id="lblPlaca">UNIDAD: --</div>
-        <div class="info-row">
-            <div class="texto-destino" id="lblDestino">Destino: --</div>
-            <div class="texto-tiempo" id="lblTiempo">⏱️ 0 min</div>
+        <div class="texto-destino" id="lblDestino">Destino: --</div>
+        <div class="texto-tiempo" id="lblTiempo">⏱️ 0 min</div>
+        
+        <!-- BOTONERA INTERNA -->
+        <div id="botoneraInterna" style="display: none; width: 100%;">
+            <button id="btnBano" class="btn-interno" style="background-color: #ff9800;" onclick="toggleBano()">🚾 Ir al Baño (Pausar)</button>
+            <button class="btn-interno" style="background-color: #ff5722;" onclick="cambiarEstado('pager', 'Falla de Pager')">📟 Falla de Pager</button>
         </div>
-        <button class="btn-auxilio" onclick="pedirAuxilio()">🚨 AUXILIO VIAL</button>
-        <button class="btn-salir" onclick="salirRastreo()">Cerrar Viaje Manual</button>
+
+        <button class="btn-auxilio" onclick="cambiarEstado('emergencia', 'AUXILIO REQUERIDO')">🚨 AUXILIO MECÁNICO</button>
+        <button class="btn-salir" onclick="salirRastreo()">Cerrar Turno</button>
     </div>
 
     <script>
@@ -96,71 +96,71 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        const coordenadasBahias = { "A0 02": [19.0671, -104.2955], "A0 06": [19.0650, -104.2940], "G3 02": [19.0665, -104.2960] };
-        
-        let mapa, marcadorDestino, marcadorMia;
-        let watchId = null;
-        let placaGlobal = "";
-        let destinoGlobal = "";
-        let horaIngreso = 0;
-        let timerInterval = null;
-        let ultimoAudio = 0;
-        let wakeLock = null;
-        let maxSpeed = 0;
+        let mapa, marcadorDestino, marcadorMia, watchId = null, wakeLock = null, timerInterval = null;
+        let tipoGlobal = "", placaGlobal = "", destinoGlobal = "", buqueGlobal = "", stsGlobal = "";
+        let horaIngreso = 0, maxSpeed = 0, ultimoAudio = 0, estadoOperativo = "activo";
 
         mapa = L.map('mapaFondo', { zoomControl: false }).setView([19.066, -104.295], 16);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapa);
 
-        async function solicitarWakeLock() {
-            try {
-                if ('wakeLock' in navigator) { wakeLock = await navigator.wakeLock.request('screen'); }
-            } catch (err) { console.log("Wake Lock falló", err); }
-        }
+        async function solicitarWakeLock() { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {} }
 
-        function hablar(texto) {
-            if ('speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(texto);
-                utterance.lang = 'es-MX';
-                window.speechSynthesis.speak(utterance);
+        function seleccionarPerfil(tipo) {
+            tipoGlobal = tipo;
+            document.getElementById('pantallaSeleccion').style.display = 'none';
+            document.getElementById('pantallaLogin').style.display = 'block';
+            document.getElementById('tituloLogin').innerText = "REGISTRO " + tipo;
+            
+            if(tipo === 'FORANEO') {
+                document.getElementById('placaInput').placeholder = "Placa (Ej. TRACTO-5)";
+                document.getElementById('posicionInput').style.display = 'block';
+                document.getElementById('buqueInput').style.display = 'none';
+                document.getElementById('stsInput').style.display = 'none';
+            } else {
+                document.getElementById('placaInput').placeholder = "Num Eco (Ej. ECO-12)";
+                document.getElementById('posicionInput').style.display = 'none';
+                document.getElementById('buqueInput').style.display = 'block';
+                document.getElementById('stsInput').style.display = 'block';
             }
         }
 
-        function cerrarMensaje() {
-            document.getElementById('alertaMensaje').style.display = 'none';
+        function volverSeleccion() {
+            document.getElementById('pantallaSeleccion').style.display = 'block';
+            document.getElementById('pantallaLogin').style.display = 'none';
         }
 
         function iniciarRastreo() {
-            const placa = document.getElementById('placaInput').value.trim();
-            const posicion = document.getElementById('posicionInput').value.trim();
+            placaGlobal = document.getElementById('placaInput').value.trim().toUpperCase();
+            if(placaGlobal === "") return alert("Ingresa placa/eco");
 
-            if (placa === "" || posicion === "") { alert("Faltan datos."); return; }
-
-            let partes = posicion.split(" ");
-            let destino = posicion;
-            if (partes.length >= 2) {
-                let bloque = partes[0];
-                let num = parseInt(partes[1], 10);
-                if (num % 2 !== 0) { if ((num + 1) % 4 === 0) num -= 1; else num += 1; }
-                destino = bloque + " " + num.toString().padStart(2, '0');
+            if (tipoGlobal === 'FORANEO') {
+                destinoGlobal = document.getElementById('posicionInput').value.trim().toUpperCase();
+                document.getElementById('mapaFondo').style.display = 'block';
+                document.getElementById('pantallaActiva').className = 'panel-flotante';
+                document.getElementById('botoneraInterna').style.display = 'none';
+                document.getElementById('lblDestino').innerText = "Destino: " + destinoGlobal;
+            } else {
+                buqueGlobal = document.getElementById('buqueInput').value.trim().toUpperCase();
+                stsGlobal = document.getElementById('stsInput').value.trim().toUpperCase();
+                document.getElementById('mapaFondo').style.display = 'none'; // Apagamos mapa
+                document.getElementById('pantallaActiva').className = 'panel-completo';
+                document.getElementById('botoneraInterna').style.display = 'block';
+                document.getElementById('lblDestino').innerText = "🚢 " + buqueGlobal + " | 🏗️ " + stsGlobal;
             }
 
-            placaGlobal = placa;
-            destinoGlobal = destino;
-            horaIngreso = Date.now();
-            maxSpeed = 0;
-
             document.getElementById('lblPlaca').innerText = "UNIDAD: " + placaGlobal;
-            document.getElementById('lblDestino').innerText = destinoGlobal;
-            
             document.getElementById('pantallaLogin').style.display = 'none';
-            document.getElementById('pantallaActiva').style.display = 'block';
-
+            document.getElementById('pantallaActiva').style.display = 'flex';
+            
+            horaIngreso = Date.now();
+            estadoOperativo = "activo";
             solicitarWakeLock();
-            hablar("Ruta iniciada");
 
             timerInterval = setInterval(() => {
-                let min = Math.floor((Date.now() - horaIngreso) / 60000);
-                document.getElementById('lblTiempo').innerText = "⏱️ " + min + " min";
+                if (estadoOperativo === 'activo') {
+                    let min = Math.floor((Date.now() - horaIngreso) / 60000);
+                    document.getElementById('lblTiempo').innerText = "⏱️ Tiempo: " + min + " min";
+                }
             }, 60000);
 
             db.ref('camiones_en_patio/' + placaGlobal).on('value', snap => {
@@ -169,38 +169,47 @@
                     ultimoAudio = data.tts_timestamp;
                     document.getElementById('textoMensaje').innerText = `"${data.tts_mensaje}"`;
                     document.getElementById('alertaMensaje').style.display = 'block';
-                    hablar(data.tts_mensaje);
                 }
             });
 
-            if (coordenadasBahias[destinoGlobal]) {
-                if (marcadorDestino) mapa.removeLayer(marcadorDestino);
-                marcadorDestino = L.marker(coordenadasBahias[destinoGlobal]).addTo(mapa).bindPopup("Destino: " + destinoGlobal);
-            }
-
             if ("geolocation" in navigator) {
                 watchId = navigator.geolocation.watchPosition(pos => {
-                    const lat = pos.coords.latitude;
-                    const lng = pos.coords.longitude;
-                    let speed = pos.coords.speed || 0; 
-                    let speedKmh = (speed * 3.6).toFixed(1);
-                    
+                    const lat = pos.coords.latitude; const lng = pos.coords.longitude;
+                    let speedKmh = ((pos.coords.speed || 0) * 3.6).toFixed(1);
                     if (parseFloat(speedKmh) > parseFloat(maxSpeed)) maxSpeed = speedKmh;
 
-                    if (marcadorMia) {
-                        marcadorMia.setLatLng([lat, lng]);
-                    } else {
-                        marcadorMia = L.circleMarker([lat, lng], { radius: 8, fillColor: "#007AFF", color: "white", weight: 2, fillOpacity: 1 }).addTo(mapa);
+                    if (tipoGlobal === 'FORANEO') {
+                        if (marcadorMia) marcadorMia.setLatLng([lat, lng]);
+                        else marcadorMia = L.circleMarker([lat, lng], { radius: 8, fillColor: "#007AFF", color: "white", weight: 2, fillOpacity: 1 }).addTo(mapa);
+                        mapa.setView([lat, lng], 18);
                     }
-                    mapa.setView([lat, lng], 18);
 
                     db.ref('camiones_en_patio/' + placaGlobal).update({
-                        lat: lat, lng: lng, placa: placaGlobal, destino: destinoGlobal,
-                        hora_ingreso: horaIngreso, velocidad_actual: speedKmh, velocidad_maxima: maxSpeed
+                        lat: lat, lng: lng, placa: placaGlobal, tipo: tipoGlobal, estado: estadoOperativo,
+                        destino: destinoGlobal, buque: buqueGlobal, sts: stsGlobal, hora_ingreso: horaIngreso, velocidad_actual: speedKmh
                     });
+                }, err => {}, { enableHighAccuracy: true, maximumAge: 0 });
+            }
+        }
 
-                }, err => { alert("Error de GPS: Asegúrate de dar permisos de ubicación."); }, 
-                { enableHighAccuracy: true, maximumAge: 0 });
+        function cambiarEstado(nuevoEstado, msj) {
+            estadoOperativo = nuevoEstado;
+            db.ref('camiones_en_patio/' + placaGlobal).update({ estado: nuevoEstado });
+            fetch(`https://api.telegram.org/bot8515273340:AAHsV3fsue-dY9CZCWlj1izG-usRtgDY64k/sendMessage?chat_id=-1005100426684&text=${encodeURIComponent("⚠️ ALERTA " + placaGlobal + ": " + msj)}`);
+        }
+
+        function toggleBano() {
+            const btn = document.getElementById('btnBano');
+            if (estadoOperativo === 'baño') {
+                estadoOperativo = 'activo';
+                btn.style.backgroundColor = '#ff9800'; btn.innerText = "🚾 Ir al Baño (Pausar)";
+                document.getElementById('lblTiempo').innerText = "⏱️ Tiempo: " + Math.floor((Date.now() - horaIngreso) / 60000) + " min";
+                db.ref('camiones_en_patio/' + placaGlobal).update({ estado: 'activo' });
+            } else {
+                estadoOperativo = 'baño';
+                btn.style.backgroundColor = '#4caf50'; btn.innerText = "✅ Regresar a Operar";
+                document.getElementById('lblTiempo').innerText = "⏸️ PAUSADO (En Baño)";
+                db.ref('camiones_en_patio/' + placaGlobal).update({ estado: 'baño' });
             }
         }
 
@@ -208,35 +217,8 @@
             if (watchId) navigator.geolocation.clearWatch(watchId);
             if (timerInterval) clearInterval(timerInterval);
             if (wakeLock) wakeLock.release().then(() => wakeLock = null);
-            
-            if (placaGlobal !== "") {
-                db.ref('historial_viajes').push({
-                    placa: placaGlobal, destino: destinoGlobal, hora_ingreso: horaIngreso, 
-                    hora_salida: Date.now(), velocidad_maxima: maxSpeed
-                });
-                db.ref('camiones_en_patio/' + placaGlobal).remove();
-                db.ref('camiones_en_patio/' + placaGlobal).off(); 
-            }
-
-            document.getElementById('pantallaLogin').style.display = 'block';
-            document.getElementById('pantallaActiva').style.display = 'none';
-            document.getElementById('alertaMensaje').style.display = 'none';
-            document.getElementById('placaInput').value = "";
-            document.getElementById('posicionInput').value = "";
-            document.getElementById('lblTiempo').innerText = "⏱️ 0 min";
-            
-            if (marcadorMia) mapa.removeLayer(marcadorMia); marcadorMia = null;
-            if (marcadorDestino) mapa.removeLayer(marcadorDestino); marcadorDestino = null;
-            
-            placaGlobal = "";
-        }
-
-        function pedirAuxilio() {
-            if (confirm("¿Seguro que deseas pedir AUXILIO VIAL? Se alertará a la Torre.")) {
-                db.ref('camiones_en_patio/' + placaGlobal).update({ estado: 'emergencia' });
-                const msg = `🚨 EMERGENCIA EN PATIO: La unidad ${placaGlobal} pide Auxilio.`;
-                fetch(`https://api.telegram.org/bot8515273340:AAHsV3fsue-dY9CZCWlj1izG-usRtgDY64k/sendMessage?chat_id=-1005100426684&text=${encodeURIComponent(msg)}`);
-            }
+            if (placaGlobal !== "") db.ref('camiones_en_patio/' + placaGlobal).remove();
+            window.location.reload(); // Reinicio limpio
         }
     </script>
 </body>
