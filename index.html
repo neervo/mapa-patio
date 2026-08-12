@@ -89,9 +89,15 @@
 
         const coordenadasBahias = { "A0 02": [19.0671, -104.2955], "A0 06": [19.0650, -104.2940], "G3 02": [19.0665, -104.2960] };
 
+        // VARIABLES GLOBALES (Incluidas las del Motor Histórico)
         let mapa, marcadorMia, marcadorDestino, watchId = null, wakeLock = null, timerInterval = null;
         let tipoGlobal = "", placaGlobal = "", destinoGlobal = "", buqueGlobal = "", stsGlobal = "";
         let horaIngreso = 0, maxSpeed = 0, ultimoAudio = 0, estadoOperativo = "activo";
+        
+        let latActual = null, lngActual = null, velActual = 0;
+        let historialBatch = [];
+        let tracker1Min = null;
+        let sender5Min = null;
 
         mapa = L.map('mapaFondo', { zoomControl: false }).setView([19.066, -104.295], 16);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapa);
@@ -148,6 +154,33 @@
                 document.getElementById('pantallaActiva').className = 'panel-completo';
                 document.getElementById('botoneraInterna').style.display = 'block';
                 document.getElementById('lblDestino').innerText = "🚢 " + buqueGlobal + " | 🏗️ " + stsGlobal;
+                
+                // === MOTOR HÍBRIDO DE HISTORIAL (SOLO INTERNOS) ===
+                const fechaHoy = new Date().toISOString().split('T')[0]; // Ej. 2026-08-12
+                
+                // 1. Recolector Local (Cada 1 Minuto)
+                tracker1Min = setInterval(() => {
+                    if(latActual && lngActual) {
+                        historialBatch.push({
+                            lat: latActual,
+                            lng: lngActual,
+                            vel: velActual,
+                            est: estadoOperativo,
+                            time: Date.now()
+                        });
+                    }
+                }, 60000); 
+
+                // 2. Enviador de Paquetes a Firebase (Cada 5 Minutos)
+                sender5Min = setInterval(() => {
+                    if (historialBatch.length > 0) {
+                        const refHistorial = db.ref(`historial_rutas/${fechaHoy}/${placaGlobal}`);
+                        historialBatch.forEach(punto => {
+                            refHistorial.push(punto);
+                        });
+                        historialBatch = []; // Limpiar el paquete ya enviado
+                    }
+                }, 300000);
             }
 
             document.getElementById('lblPlaca').innerText = "UNIDAD: " + placaGlobal;
@@ -166,11 +199,8 @@
                 }
             }, 60000);
 
-            // CORRECCIÓN BUG EXPULSIÓN DE LA TORRE
             db.ref('camiones_en_patio/' + placaGlobal).on('value', snap => {
                 const data = snap.val();
-                
-                // Si la data es NULA, la Torre nos eliminó (Forzar Salida)
                 if(data === null) {
                     alert("⚠️ Tu turno ha sido finalizado por la Torre de Control.");
                     window.location.reload();
@@ -197,22 +227,24 @@
 
             if ("geolocation" in navigator) {
                 watchId = navigator.geolocation.watchPosition(pos => {
-                    const lat = pos.coords.latitude; const lng = pos.coords.longitude;
-                    let speedKmh = ((pos.coords.speed || 0) * 3.6).toFixed(1);
-                    if (parseFloat(speedKmh) > parseFloat(maxSpeed)) maxSpeed = speedKmh;
+                    latActual = pos.coords.latitude; 
+                    lngActual = pos.coords.longitude;
+                    velActual = ((pos.coords.speed || 0) * 3.6).toFixed(1);
+                    if (parseFloat(velActual) > parseFloat(maxSpeed)) maxSpeed = velActual;
 
                     if (tipoGlobal === 'FORANEO') {
                         if (marcadorMia) {
-                            marcadorMia.setLatLng([lat, lng]);
+                            marcadorMia.setLatLng([latActual, lngActual]);
                         } else {
-                            marcadorMia = L.circleMarker([lat, lng], { radius: 8, fillColor: "#007AFF", color: "white", weight: 2, fillOpacity: 1 }).addTo(mapa);
-                            mapa.setView([lat, lng], 18);
+                            marcadorMia = L.circleMarker([latActual, lngActual], { radius: 8, fillColor: "#007AFF", color: "white", weight: 2, fillOpacity: 1 }).addTo(mapa);
+                            mapa.setView([latActual, lngActual], 18);
                         }
                     }
 
+                    // VISTA EN VIVO (Se envía siempre a la torre)
                     db.ref('camiones_en_patio/' + placaGlobal).update({
-                        lat: lat, lng: lng, placa: placaGlobal, tipo: tipoGlobal, estado: estadoOperativo,
-                        destino: destinoGlobal, buque: buqueGlobal, sts: stsGlobal, hora_ingreso: horaIngreso, velocidad_actual: speedKmh
+                        lat: latActual, lng: lngActual, placa: placaGlobal, tipo: tipoGlobal, estado: estadoOperativo,
+                        destino: destinoGlobal, buque: buqueGlobal, sts: stsGlobal, hora_ingreso: horaIngreso, velocidad_actual: velActual
                     });
                 }, err => {}, { enableHighAccuracy: true, maximumAge: 0 });
             }
@@ -241,7 +273,17 @@
             if(!confirm("¿Seguro que deseas cerrar tu turno/viaje?")) return;
             if (watchId) navigator.geolocation.clearWatch(watchId);
             if (timerInterval) clearInterval(timerInterval);
+            if (tracker1Min) clearInterval(tracker1Min);
+            if (sender5Min) clearInterval(sender5Min);
             if (wakeLock) wakeLock.release().then(() => wakeLock = null);
+            
+            // Forzar el envío del último paquete local antes de salir
+            if(historialBatch.length > 0 && tipoGlobal === 'INTERNO') {
+                const fechaHoy = new Date().toISOString().split('T')[0];
+                const refHistorial = db.ref(`historial_rutas/${fechaHoy}/${placaGlobal}`);
+                historialBatch.forEach(punto => refHistorial.push(punto));
+            }
+
             if (placaGlobal !== "") db.ref('camiones_en_patio/' + placaGlobal).remove();
             window.location.reload(); 
         }
