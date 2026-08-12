@@ -17,46 +17,62 @@
         .header { background-color: #001a33; color: white; padding: 15px; position: absolute; top: 0; left: 0; width: 100%; height: 65px; z-index: 1000; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #ffcc00; }
         .contador { font-size: 16px; font-weight: bold; background: #003366; padding: 8px 15px; border-radius: 20px; margin-right: 20px;}
         
-        .panel-lateral { width: 320px; height: calc(100vh - 65px); background-color: #222; position: absolute; top: 65px; left: 0; z-index: 100; overflow-y: auto; padding: 10px; box-sizing: border-box; }
-        .panel-lateral h2 { color: #ffcc00; font-size: 16px; text-align: center; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        .panel-lateral { width: 320px; height: calc(100vh - 65px); background-color: #222; position: absolute; top: 65px; left: 0; z-index: 100; display: flex; flex-direction: column;}
         
+        .lista-scroll { flex: 1; overflow-y: auto; padding: 10px; }
+        .lista-scroll h2 { color: #ffcc00; font-size: 16px; text-align: center; border-bottom: 1px solid #444; padding-bottom: 10px; margin-top: 0;}
+        
+        /* PANEL DE ACCIONES FIJO (PARA QUE NO SE CIERRE AL ESCRIBIR) */
+        .panel-acciones { background-color: #111; padding: 15px; border-top: 2px solid #ffcc00; display: none; flex-direction: column; }
+        .panel-acciones h3 { color: white; font-size: 16px; margin: 0 0 10px 0; text-align: center; }
+        .input-tts { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #555; background: #333; color: white; box-sizing: border-box;}
+        .btn-radio { background-color: #ff9800; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-resolver { background-color: #2e7d32; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px;}
+
         /* TARJETAS NORMALES */
-        .tarjeta-unidad { background: #333; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; border-left: 5px solid #00ff88; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
-        .tarjeta-unidad.interno { border-left: 5px solid #00aaff; } /* AZUL PARA INTERNOS */
+        .tarjeta-unidad { background: #333; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        .tarjeta-unidad.interno { border-left: 5px solid #4caf50; } /* VERDE PARA INTERNOS */
+        .tarjeta-unidad.foraneo { border-left: 5px solid #ffcc00; } /* AMARILLO PARA FORANEOS */
+        .tarjeta-unidad.seleccionada { border: 2px solid white; background: #444;}
         
         /* ESTADOS DE ALERTA */
         .tarjeta-unidad.alerta-emergencia { border-left: 5px solid #ff0000; background: #551a1a; animation: parpadeo 1s infinite; }
         .tarjeta-unidad.alerta-pager { border-left: 5px solid #ff5722; background: #4a2311; }
-        .tarjeta-unidad.alerta-bano { border-left: 5px solid #ffcc00; background: #4a4a11; opacity: 0.8; }
+        .tarjeta-unidad.alerta-bano { border-left: 5px solid #b38f00; background: #4a4a11; }
         
         @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
         .placa { font-size: 16px; font-weight: bold; margin-bottom: 5px; display:flex; justify-content: space-between;}
         .datos { font-size: 12px; color: #ccc; display: flex; justify-content: space-between; margin-top: 5px;}
-        
-        /* POPUP MAPA */
-        .input-tts { width: 100%; padding: 8px; margin-bottom: 5px; border-radius: 5px;}
-        .btn-radio { background-color: #ff9800; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn-resolver { background-color: #2e7d32; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 5px;}
 
-        /* ICONO CUADRADO CSS PARA LEAFLET */
-        .cuadrado-interno { background-color: #00aaff; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.5); width: 16px; height: 16px; display: block; }
-        .cuadrado-pager { background-color: #ff5722; }
-        .cuadrado-bano { background-color: #ffcc00; }
-        .cuadrado-emergencia { background-color: #ff0000; }
+        /* DISEÑO DE ICONOS PARA EL MAPA (DIVICON) */
+        .icono-base { display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.5); font-size: 18px; width: 100%; height: 100%; }
+        .icono-interno { background-color: #4caf50; } /* Tracto Verde */
+        .icono-foraneo { background-color: #ffcc00; } /* Tracto Amarillo */
+        .icono-emergencia { background-color: #ff0000; animation: parpadeo 1s infinite;}
+        .icono-pager { background-color: #ff5722; }
     </style>
 </head>
 <body>
-    <audio id="sonidoAlerta" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
     <div class="header">
         <h1>📡 TORRE YMS</h1>
         <div class="contador">Unidades: <span id="contadorCamiones">0</span></div>
     </div>
     
-    <div id="panelLateral" class="panel-lateral">
-        <h2>Unidades en Patio</h2>
-        <div id="listaUnidades"></div>
+    <div class="panel-lateral">
+        <div class="lista-scroll">
+            <h2>Unidades en Patio</h2>
+            <div id="listaUnidades"></div>
+        </div>
+        
+        <!-- ESTE ES EL NUEVO PANEL QUE NO PIERDE EL FOCO -->
+        <div id="panelAcciones" class="panel-acciones">
+            <h3 id="tituloAccion">Selecciona Unidad</h3>
+            <input type="text" id="inputVoz" class="input-tts" placeholder="Escribe mensaje a enviar...">
+            <button class="btn-radio" onclick="enviarMensajeTorre()">🗣️ Enviar Audio al Operador</button>
+            <button id="btnResolverAlerta" class="btn-resolver" style="display:none;" onclick="resolverAlertaTorre()">✅ Resolver Alerta</button>
+        </div>
     </div>
 
     <div id="mapa"></div>
@@ -71,91 +87,142 @@
 
         const marcadoresCamiones = {};
         const listaUnidades = document.getElementById('listaUnidades');
+        
+        let camionSeleccionado = null;
+        let estadoSeleccionado = 'activo';
 
-        window.enfocarCamion = function(placa) { if (marcadoresCamiones[placa]) { mapa.setView(marcadoresCamiones[placa].getLatLng(), 19); marcadoresCamiones[placa].openPopup(); } };
-        window.enviarTexto = function(placa) {
-            const input = document.getElementById('tts-' + placa);
-            if (input.value.trim() !== "") {
-                db.ref('camiones_en_patio/' + placa).update({ tts_mensaje: input.value.trim(), tts_timestamp: Date.now() });
+        // FUNCIÓN AL HACER CLIC EN UN CAMIÓN
+        window.seleccionarCamion = function(placa, estado) {
+            camionSeleccionado = placa;
+            estadoSeleccionado = estado;
+            
+            // Centrar mapa
+            if (marcadoresCamiones[placa]) {
+                mapa.setView(marcadoresCamiones[placa].getLatLng(), 18);
+            }
+            
+            // Mostrar panel de abajo
+            const panel = document.getElementById('panelAcciones');
+            panel.style.display = 'flex';
+            document.getElementById('tituloAccion').innerText = "Acciones: " + placa;
+            
+            // Mostrar botón resolver si hay falla
+            if (estado !== 'activo') {
+                document.getElementById('btnResolverAlerta').style.display = 'block';
+                document.getElementById('btnResolverAlerta').innerText = `✅ Resolver (${estado.toUpperCase()})`;
+            } else {
+                document.getElementById('btnResolverAlerta').style.display = 'none';
+            }
+
+            // Repintar lista para resaltar el seleccionado
+            renderLista();
+        };
+
+        window.enviarMensajeTorre = function() {
+            const input = document.getElementById('inputVoz');
+            if (camionSeleccionado && input.value.trim() !== "") {
+                db.ref('camiones_en_patio/' + camionSeleccionado).update({ tts_mensaje: input.value.trim(), tts_timestamp: Date.now() });
                 input.value = ""; 
+                alert("Mensaje enviado a " + camionSeleccionado);
             }
         };
-        window.marcarResuelto = function(placa) { db.ref('camiones_en_patio/' + placa).update({ estado: 'activo' }); };
 
-        db.ref('camiones_en_patio').on('value', (snapshot) => {
-            const data = snapshot.val() || {};
+        window.resolverAlertaTorre = function() {
+            if (camionSeleccionado) {
+                db.ref('camiones_en_patio/' + camionSeleccionado).update({ estado: 'activo' });
+                document.getElementById('btnResolverAlerta').style.display = 'none';
+            }
+        };
+
+        let dataGlobal = {};
+
+        function getIcono(tipo, estado) {
+            let claseFondo = tipo === 'INTERNO' ? 'icono-interno' : 'icono-foraneo';
+            let emoji = tipo === 'INTERNO' ? '🚜' : '🚚';
+            
+            if (estado === 'emergencia') claseFondo = 'icono-emergencia';
+            if (estado === 'pager') claseFondo = 'icono-pager';
+            if (estado === 'baño') { claseFondo = 'icono-interno'; emoji = '🚾'; }
+
+            return L.divIcon({
+                className: '',
+                html: `<div class="icono-base ${claseFondo}">${emoji}</div>`,
+                iconSize: [34, 34],
+                iconAnchor: [17, 17]
+            });
+        }
+
+        function renderLista() {
             let htmlLista = ""; 
             let totalUnidades = 0;
 
-            for (const placa in data) {
+            for (const placa in dataGlobal) {
                 totalUnidades++;
-                const camion = data[placa];
-                const latlng = [camion.lat, camion.lng];
+                const camion = dataGlobal[placa];
                 const tipo = camion.tipo || 'FORANEO';
                 const estado = camion.estado || 'activo';
                 
-                // Determinar Clase CSS y Color del Marcador según el estado
-                let claseCSS = tipo === 'INTERNO' ? 'interno' : '';
-                let colorPunto = tipo === 'INTERNO' ? '#00aaff' : '#00ff88'; // Azul interno, Verde foráneo
-                let colorCuadradoExtra = '';
+                let claseCSS = tipo === 'INTERNO' ? 'interno' : 'foraneo';
+                let iconoLateral = tipo === 'INTERNO' ? '🚜' : '🚚';
 
-                if (estado === 'emergencia') { claseCSS = 'alerta-emergencia'; colorPunto = '#ff0000'; colorCuadradoExtra = 'cuadrado-emergencia'; }
-                else if (estado === 'pager') { claseCSS = 'alerta-pager'; colorPunto = '#ff5722'; colorCuadradoExtra = 'cuadrado-pager'; }
-                else if (estado === 'baño') { claseCSS = 'alerta-bano'; colorPunto = '#ffcc00'; colorCuadradoExtra = 'cuadrado-bano'; }
+                if (estado === 'emergencia') { claseCSS = 'alerta-emergencia'; iconoLateral = '🚨';}
+                else if (estado === 'pager') { claseCSS = 'alerta-pager'; iconoLateral = '📟';}
+                else if (estado === 'baño') { claseCSS = 'alerta-bano'; iconoLateral = '🚾';}
+
+                if (placa === camionSeleccionado) claseCSS += ' seleccionada';
 
                 let infoRuta = tipo === 'FORANEO' ? `📍 ${camion.destino || 'S/D'}` : `🚢 ${camion.buque} | 🏗️ ${camion.sts}`;
-                let tiempo = estado === 'baño' ? "⏸️ PAUSADO" : `⏱️ ${Math.floor((Date.now() - (camion.hora_ingreso||Date.now())) / 60000)} min`;
+                let tiempo = estado === 'baño' ? "🚾 BAÑO" : `⏱️ ${Math.floor((Date.now() - (camion.hora_ingreso||Date.now())) / 60000)} min`;
 
-                // Construir la tarjeta del panel lateral
                 htmlLista += `
-                    <div class="tarjeta-unidad ${claseCSS}" onclick="enfocarCamion('${placa}')">
-                        <div class="placa"><span>${tipo==='INTERNO'?'🚜':'🚚'} ${placa}</span><span>🏎️ ${camion.velocidad_actual||0} km/h</span></div>
+                    <div class="tarjeta-unidad ${claseCSS}" onclick="seleccionarCamion('${placa}', '${estado}')">
+                        <div class="placa"><span>${iconoLateral} ${placa}</span><span>🏎️ ${camion.velocidad_actual||0} km/h</span></div>
                         <div class="datos"><span>${infoRuta}</span><span>${tiempo}</span></div>
                     </div>`;
-
-                // Construir el PopUp del mapa
-                let popupHtml = `<div style="text-align: center;"><b>${placa} (${tipo})</b><br><small>${infoRuta}</small><br><br>
-                    <input type="text" id="tts-${placa}" class="input-tts" placeholder="Mensaje..."><button class="btn-radio" onclick="enviarTexto('${placa}')">🗣️ Enviar Mensaje</button>`;
-                
-                if (estado !== 'activo') {
-                    popupHtml += `<button class="btn-resolver" onclick="marcarResuelto('${placa}')">✅ Resolver Alerta (${estado.toUpperCase()})</button>`;
-                }
-                popupHtml += `</div>`;
-
-                // Actualizar o Crear Marcador en el Mapa
-                if (marcadoresCamiones[placa]) {
-                    marcadoresCamiones[placa].setLatLng(latlng).setPopupContent(popupHtml);
-                    
-                    // Si cambió el estado o el tipo, redibujamos el ícono
-                    if (marcadoresCamiones[placa].estadoGuardado !== estado) {
-                        if (tipo === 'INTERNO') {
-                            marcadoresCamiones[placa].setIcon(L.divIcon({ className: `cuadrado-interno ${colorCuadradoExtra}`, iconSize: [16, 16] }));
-                        } else {
-                            marcadoresCamiones[placa].setStyle({ fillColor: colorPunto });
-                        }
-                        marcadoresCamiones[placa].estadoGuardado = estado;
-                    }
-                } else {
-                    if (tipo === 'INTERNO') {
-                        // DIBUJAR CUADRADO AZUL (O color de alerta)
-                        const iconCuadrado = L.divIcon({ className: `cuadrado-interno ${colorCuadradoExtra}`, iconSize: [16, 16], iconAnchor: [8,8] });
-                        marcadoresCamiones[placa] = L.marker(latlng, { icon: iconCuadrado }).addTo(mapa);
-                    } else {
-                        // DIBUJAR CÍRCULO VERDE (O color de alerta)
-                        marcadoresCamiones[placa] = L.circleMarker(latlng, { radius: 9, fillColor: colorPunto, color: "white", weight: 2, fillOpacity: 1 }).addTo(mapa);
-                    }
-                    marcadoresCamiones[placa].bindPopup(popupHtml);
-                    marcadoresCamiones[placa].estadoGuardado = estado;
-                }
             }
 
             listaUnidades.innerHTML = htmlLista;
             document.getElementById('contadorCamiones').innerText = totalUnidades;
+        }
+
+        db.ref('camiones_en_patio').on('value', (snapshot) => {
+            dataGlobal = snapshot.val() || {};
+            
+            for (const placa in dataGlobal) {
+                const camion = dataGlobal[placa];
+                const latlng = [camion.lat, camion.lng];
+                const tipo = camion.tipo || 'FORANEO';
+                const estado = camion.estado || 'activo';
+
+                if (marcadoresCamiones[placa]) {
+                    marcadoresCamiones[placa].setLatLng(latlng);
+                    
+                    if (marcadoresCamiones[placa].estadoGuardado !== estado) {
+                        marcadoresCamiones[placa].setIcon(getIcono(tipo, estado));
+                        marcadoresCamiones[placa].estadoGuardado = estado;
+                        // Actualizar botón si el seleccionado cambió de estado
+                        if(camionSeleccionado === placa) seleccionarCamion(placa, estado);
+                    }
+                } else {
+                    marcadoresCamiones[placa] = L.marker(latlng, { icon: getIcono(tipo, estado) }).addTo(mapa);
+                    marcadoresCamiones[placa].estadoGuardado = estado;
+                    // Que el mapa también sea clickeable
+                    marcadoresCamiones[placa].on('click', () => seleccionarCamion(placa, estado));
+                }
+            }
 
             // Limpiar los que ya salieron
             for (const placa in marcadoresCamiones) {
-                if (!data[placa]) { mapa.removeLayer(marcadoresCamiones[placa]); delete marcadoresCamiones[placa]; }
+                if (!dataGlobal[placa]) { 
+                    mapa.removeLayer(marcadoresCamiones[placa]); 
+                    delete marcadoresCamiones[placa]; 
+                    if(camionSeleccionado === placa) {
+                        camionSeleccionado = null;
+                        document.getElementById('panelAcciones').style.display = 'none';
+                    }
+                }
             }
+            renderLista();
         });
     </script>
 </body>
