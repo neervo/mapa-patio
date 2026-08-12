@@ -22,20 +22,18 @@
         .lista-scroll { flex: 1; overflow-y: auto; padding: 10px; }
         .lista-scroll h2 { color: #ffcc00; font-size: 16px; text-align: center; border-bottom: 1px solid #444; padding-bottom: 10px; margin-top: 0;}
         
-        /* PANEL DE ACCIONES FIJO (PARA QUE NO SE CIERRE AL ESCRIBIR) */
         .panel-acciones { background-color: #111; padding: 15px; border-top: 2px solid #ffcc00; display: none; flex-direction: column; }
         .panel-acciones h3 { color: white; font-size: 16px; margin: 0 0 10px 0; text-align: center; }
         .input-tts { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #555; background: #333; color: white; box-sizing: border-box;}
         .btn-radio { background-color: #ff9800; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .btn-resolver { background-color: #2e7d32; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px;}
+        .btn-eliminar { background-color: #d32f2f; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
 
-        /* TARJETAS NORMALES */
         .tarjeta-unidad { background: #333; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
-        .tarjeta-unidad.interno { border-left: 5px solid #4caf50; } /* VERDE PARA INTERNOS */
-        .tarjeta-unidad.foraneo { border-left: 5px solid #ffcc00; } /* AMARILLO PARA FORANEOS */
+        .tarjeta-unidad.interno { border-left: 5px solid #4caf50; } 
+        .tarjeta-unidad.foraneo { border-left: 5px solid #007AFF; } 
         .tarjeta-unidad.seleccionada { border: 2px solid white; background: #444;}
         
-        /* ESTADOS DE ALERTA */
         .tarjeta-unidad.alerta-emergencia { border-left: 5px solid #ff0000; background: #551a1a; animation: parpadeo 1s infinite; }
         .tarjeta-unidad.alerta-pager { border-left: 5px solid #ff5722; background: #4a2311; }
         .tarjeta-unidad.alerta-bano { border-left: 5px solid #b38f00; background: #4a4a11; }
@@ -44,13 +42,6 @@
 
         .placa { font-size: 16px; font-weight: bold; margin-bottom: 5px; display:flex; justify-content: space-between;}
         .datos { font-size: 12px; color: #ccc; display: flex; justify-content: space-between; margin-top: 5px;}
-
-        /* DISEÑO DE ICONOS PARA EL MAPA (DIVICON) */
-        .icono-base { display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.5); font-size: 18px; width: 100%; height: 100%; }
-        .icono-interno { background-color: #4caf50; } /* Tracto Verde */
-        .icono-foraneo { background-color: #ffcc00; } /* Tracto Amarillo */
-        .icono-emergencia { background-color: #ff0000; animation: parpadeo 1s infinite;}
-        .icono-pager { background-color: #ff5722; }
     </style>
 </head>
 <body>
@@ -66,12 +57,12 @@
             <div id="listaUnidades"></div>
         </div>
         
-        <!-- ESTE ES EL NUEVO PANEL QUE NO PIERDE EL FOCO -->
         <div id="panelAcciones" class="panel-acciones">
             <h3 id="tituloAccion">Selecciona Unidad</h3>
             <input type="text" id="inputVoz" class="input-tts" placeholder="Escribe mensaje a enviar...">
             <button class="btn-radio" onclick="enviarMensajeTorre()">🗣️ Enviar Audio al Operador</button>
             <button id="btnResolverAlerta" class="btn-resolver" style="display:none;" onclick="resolverAlertaTorre()">✅ Resolver Alerta</button>
+            <button class="btn-eliminar" onclick="forzarSalidaTorre()">🛑 Finalizar Viaje Forzado</button>
         </div>
     </div>
 
@@ -89,32 +80,21 @@
         const listaUnidades = document.getElementById('listaUnidades');
         
         let camionSeleccionado = null;
-        let estadoSeleccionado = 'activo';
 
-        // FUNCIÓN AL HACER CLIC EN UN CAMIÓN
         window.seleccionarCamion = function(placa, estado) {
             camionSeleccionado = placa;
-            estadoSeleccionado = estado;
+            if (marcadoresCamiones[placa]) mapa.setView(marcadoresCamiones[placa].getLatLng(), 18);
             
-            // Centrar mapa
-            if (marcadoresCamiones[placa]) {
-                mapa.setView(marcadoresCamiones[placa].getLatLng(), 18);
-            }
-            
-            // Mostrar panel de abajo
             const panel = document.getElementById('panelAcciones');
             panel.style.display = 'flex';
             document.getElementById('tituloAccion').innerText = "Acciones: " + placa;
             
-            // Mostrar botón resolver si hay falla
             if (estado !== 'activo') {
                 document.getElementById('btnResolverAlerta').style.display = 'block';
                 document.getElementById('btnResolverAlerta').innerText = `✅ Resolver (${estado.toUpperCase()})`;
             } else {
                 document.getElementById('btnResolverAlerta').style.display = 'none';
             }
-
-            // Repintar lista para resaltar el seleccionado
             renderLista();
         };
 
@@ -134,23 +114,18 @@
             }
         };
 
+        // NUEVO BOTÓN: ELIMINAR TRACTO DESDE LA TORRE
+        window.forzarSalidaTorre = function() {
+            if (camionSeleccionado) {
+                if(confirm("¿Seguro que deseas FINALIZAR el viaje de " + camionSeleccionado + "? Se borrará del patio.")) {
+                    db.ref('camiones_en_patio/' + camionSeleccionado).remove();
+                    document.getElementById('panelAcciones').style.display = 'none';
+                    camionSeleccionado = null;
+                }
+            }
+        };
+
         let dataGlobal = {};
-
-        function getIcono(tipo, estado) {
-            let claseFondo = tipo === 'INTERNO' ? 'icono-interno' : 'icono-foraneo';
-            let emoji = tipo === 'INTERNO' ? '🚜' : '🚚';
-            
-            if (estado === 'emergencia') claseFondo = 'icono-emergencia';
-            if (estado === 'pager') claseFondo = 'icono-pager';
-            if (estado === 'baño') { claseFondo = 'icono-interno'; emoji = '🚾'; }
-
-            return L.divIcon({
-                className: '',
-                html: `<div class="icono-base ${claseFondo}">${emoji}</div>`,
-                iconSize: [34, 34],
-                iconAnchor: [17, 17]
-            });
-        }
 
         function renderLista() {
             let htmlLista = ""; 
@@ -180,7 +155,6 @@
                         <div class="datos"><span>${infoRuta}</span><span>${tiempo}</span></div>
                     </div>`;
             }
-
             listaUnidades.innerHTML = htmlLista;
             document.getElementById('contadorCamiones').innerText = totalUnidades;
         }
@@ -194,24 +168,27 @@
                 const tipo = camion.tipo || 'FORANEO';
                 const estado = camion.estado || 'activo';
 
+                // LÓGICA DE COLORES DE LOS PUNTOS
+                let colorPunto = tipo === 'INTERNO' ? '#4caf50' : '#007AFF'; // Verde o Azul
+                if (estado === 'emergencia') colorPunto = '#ff0000';
+                else if (estado === 'pager') colorPunto = '#ff5722';
+                else if (estado === 'baño') colorPunto = '#ffcc00';
+
                 if (marcadoresCamiones[placa]) {
                     marcadoresCamiones[placa].setLatLng(latlng);
-                    
                     if (marcadoresCamiones[placa].estadoGuardado !== estado) {
-                        marcadoresCamiones[placa].setIcon(getIcono(tipo, estado));
+                        marcadoresCamiones[placa].setStyle({ fillColor: colorPunto });
                         marcadoresCamiones[placa].estadoGuardado = estado;
-                        // Actualizar botón si el seleccionado cambió de estado
                         if(camionSeleccionado === placa) seleccionarCamion(placa, estado);
                     }
                 } else {
-                    marcadoresCamiones[placa] = L.marker(latlng, { icon: getIcono(tipo, estado) }).addTo(mapa);
-                    marcadoresCamiones[placa].estadoGuardado = estado;
-                    // Que el mapa también sea clickeable
+                    // CÍRCULOS LIMPIOS Y SENCILLOS
+                    marcadoresCamiones[placa] = L.circleMarker(latlng, { radius: 9, fillColor: colorPunto, color: "white", weight: 2, fillOpacity: 1 }).addTo(mapa);
                     marcadoresCamiones[placa].on('click', () => seleccionarCamion(placa, estado));
+                    marcadoresCamiones[placa].estadoGuardado = estado;
                 }
             }
 
-            // Limpiar los que ya salieron
             for (const placa in marcadoresCamiones) {
                 if (!dataGlobal[placa]) { 
                     mapa.removeLayer(marcadoresCamiones[placa]); 
