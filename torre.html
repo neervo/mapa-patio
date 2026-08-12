@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Torre de Control - Patio Logística</title>
+    <title>Torre de Control - Patio YMS</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -11,37 +11,39 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 
     <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: #1a1a1a; overflow: hidden; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #1a1a1a; overflow: hidden; }
         #mapa { width: calc(100vw - 320px); height: calc(100vh - 65px); position: absolute; top: 65px; left: 320px; z-index: 1; }
-        .header { background-color: rgba(0, 26, 51, 1); color: white; padding: 15px 20px; position: absolute; top: 0; left: 0; width: 100%; height: 65px; z-index: 1000; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #ffcc00; }
-        .header h1 { margin: 0; font-size: 20px; letter-spacing: 1px; }
-        .panel-derecho { display: flex; gap: 15px; align-items: center; }
         
-        .buscador { padding: 8px 15px; border-radius: 20px; border: none; outline: none; font-weight: bold; text-transform: uppercase; width: 150px; text-align: center; }
-        .contador { font-size: 16px; font-weight: bold; background: #003366; padding: 8px 15px; border-radius: 20px; }
-        .btn-excel { background-color: #2e7d32; color: white; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-excel:hover { background-color: #1b5e20; }
+        .header { background-color: #001a33; color: white; padding: 15px; position: absolute; top: 0; left: 0; width: 100%; height: 65px; z-index: 1000; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #ffcc00; }
+        .contador { font-size: 16px; font-weight: bold; background: #003366; padding: 8px 15px; border-radius: 20px; margin-right: 20px;}
         
-        .emergencia-alerta { color: #ff4d4d; animation: parpadeo 1s infinite; display: none; font-weight: bold; font-size: 18px;}
-        @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+        .panel-lateral { width: 320px; height: calc(100vh - 65px); background-color: #222; position: absolute; top: 65px; left: 0; z-index: 100; overflow-y: auto; padding: 10px; box-sizing: border-box; }
+        .panel-lateral h2 { color: #ffcc00; font-size: 16px; text-align: center; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        
+        /* TARJETAS NORMALES */
+        .tarjeta-unidad { background: #333; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; border-left: 5px solid #00ff88; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        .tarjeta-unidad.interno { border-left: 5px solid #00aaff; } /* AZUL PARA INTERNOS */
+        
+        /* ESTADOS DE ALERTA */
+        .tarjeta-unidad.alerta-emergencia { border-left: 5px solid #ff0000; background: #551a1a; animation: parpadeo 1s infinite; }
+        .tarjeta-unidad.alerta-pager { border-left: 5px solid #ff5722; background: #4a2311; }
+        .tarjeta-unidad.alerta-bano { border-left: 5px solid #ffcc00; background: #4a4a11; opacity: 0.8; }
+        
+        @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        .panel-lateral { width: 320px; height: calc(100vh - 65px); background-color: #222; position: absolute; top: 65px; left: 0; z-index: 100; overflow-y: auto; border-right: 2px solid #444; padding: 10px; box-sizing: border-box; }
-        .panel-lateral h2 { color: #ffcc00; font-size: 16px; text-align: center; margin-top: 5px; border-bottom: 1px solid #444; padding-bottom: 10px; }
-        .tarjeta-unidad { background: #333; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; border-left: 5px solid #00ff88; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
-        .tarjeta-unidad:hover { background: #444; transform: translateX(3px); }
-        .tarjeta-unidad.alerta { border-left: 5px solid #ff0000; background: #551a1a; animation: parpadeo 1.5s infinite; }
-        .tarjeta-unidad .placa { font-size: 16px; font-weight: bold; margin-bottom: 5px; display:flex; justify-content: space-between;}
-        .tarjeta-unidad .datos { font-size: 12px; color: #ccc; display: flex; justify-content: space-between; margin-top: 5px;}
+        .placa { font-size: 16px; font-weight: bold; margin-bottom: 5px; display:flex; justify-content: space-between;}
+        .datos { font-size: 12px; color: #ccc; display: flex; justify-content: space-between; margin-top: 5px;}
         
-        .input-tts { width: 100%; padding: 8px; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; font-size: 14px;}
-        .btn-radio { background-color: #ff9800; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 5px; }
-        .btn-resolver { background-color: #2e7d32; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px;}
-        .btn-eliminar { background-color: #555; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 5px; font-size: 12px; }
-        
-        .tiempo-info { background-color: #e3f2fd; padding: 8px; border-radius: 5px; margin-bottom: 10px; font-size: 13px; color: #003366; text-align: left;}
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1a1a1a; }
-        ::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+        /* POPUP MAPA */
+        .input-tts { width: 100%; padding: 8px; margin-bottom: 5px; border-radius: 5px;}
+        .btn-radio { background-color: #ff9800; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-resolver { background-color: #2e7d32; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 5px;}
+
+        /* ICONO CUADRADO CSS PARA LEAFLET */
+        .cuadrado-interno { background-color: #00aaff; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.5); width: 16px; height: 16px; display: block; }
+        .cuadrado-pager { background-color: #ff5722; }
+        .cuadrado-bano { background-color: #ffcc00; }
+        .cuadrado-emergencia { background-color: #ff0000; }
     </style>
 </head>
 <body>
@@ -49,12 +51,7 @@
 
     <div class="header">
         <h1>📡 TORRE YMS</h1>
-        <div id="alertaGlobal" class="emergencia-alerta">🚨 ¡EMERGENCIA ACTIVA! 🚨</div>
-        <div class="panel-derecho">
-            <button class="btn-excel" onclick="exportarExcel()">📊 Descargar Reporte</button>
-            <input type="text" id="buscadorPlaca" class="buscador" placeholder="Buscar Placa...">
-            <div class="contador">Unidades: <span id="contadorCamiones">0</span></div>
-        </div>
+        <div class="contador">Unidades: <span id="contadorCamiones">0</span></div>
     </div>
     
     <div id="panelLateral" class="panel-lateral">
@@ -66,161 +63,99 @@
 
     <script>
         const mapa = L.map('mapa').setView([19.066, -104.295], 16);
-        const capaCalles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
-        const capaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
-        capaSatelite.addTo(mapa);
-        L.control.layers({"Satelital": capaSatelite, "Calles": capaCalles}).addTo(mapa);
-
-        // Geocerca (Solo dibujada)
-        const COORDENADAS_POLIGONO = [
-            [19.070, -104.300], [19.070, -104.290], [19.060, -104.290], [19.060, -104.300]
-        ];
-        L.polygon(COORDENADAS_POLIGONO, {color: 'red', fillColor: '#ff0000', fillOpacity: 0.1, weight: 2}).addTo(mapa);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapa);
 
         const firebaseConfig = { apiKey: "AIzaSyAH7D-sLL4fCJDliP8xzuYUQGt-H5H7nXE", authDomain: "patio-densidad.firebaseapp.com", databaseURL: "https://patio-densidad-default-rtdb.firebaseio.com", projectId: "patio-densidad" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
         const marcadoresCamiones = {};
-        const alertaGlobal = document.getElementById('alertaGlobal');
-        const contadorDisplay = document.getElementById('contadorCamiones');
         const listaUnidades = document.getElementById('listaUnidades');
-        let estadoEmergenciaAnterior = false;
-
-        // =====================================
-        // GENERADOR DE REPORTES (EXCEL / CSV)
-        // =====================================
-        window.exportarExcel = function() {
-            db.ref('historial_viajes').once('value').then(snapshot => {
-                const data = snapshot.val();
-                if(!data) { alert("Aún no hay historial de viajes completados."); return; }
-                
-                let csvContent = "data:text/csv;charset=utf-8,Placa,Destino,Fecha,Hora_Ingreso,Hora_Salida,Minutos_Totales,Velocidad_Max_Kmh\n";
-                
-                for(const key in data) {
-                    const viaje = data[key];
-                    const fIngreso = new Date(viaje.hora_ingreso);
-                    const fSalida = new Date(viaje.hora_salida);
-                    const fechaStr = fIngreso.toLocaleDateString('es-MX');
-                    const hIngresoStr = fIngreso.toLocaleTimeString('es-MX');
-                    const hSalidaStr = fSalida.toLocaleTimeString('es-MX');
-                    const minutos = Math.floor((viaje.hora_salida - viaje.hora_ingreso) / 60000);
-                    
-                    csvContent += `${viaje.placa},${viaje.destino},${fechaStr},${hIngresoStr},${hSalidaStr},${minutos},${viaje.velocidad_maxima}\n`;
-                }
-                
-                const encodedUri = encodeURI(csvContent);
-                const link = document.createElement("a");
-                link.setAttribute("href", encodedUri);
-                link.setAttribute("download", `Reporte_YMS_${new Date().toLocaleDateString('es-MX')}.csv`);
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            });
-        };
 
         window.enfocarCamion = function(placa) { if (marcadoresCamiones[placa]) { mapa.setView(marcadoresCamiones[placa].getLatLng(), 19); marcadoresCamiones[placa].openPopup(); } };
-
         window.enviarTexto = function(placa) {
             const input = document.getElementById('tts-' + placa);
-            if(!input) return;
-            const texto = input.value.trim();
-            if (texto !== "") {
-                db.ref('camiones_en_patio/' + placa).update({ tts_mensaje: texto, tts_timestamp: Date.now() });
+            if (input.value.trim() !== "") {
+                db.ref('camiones_en_patio/' + placa).update({ tts_mensaje: input.value.trim(), tts_timestamp: Date.now() });
                 input.value = ""; 
-                const btn = document.getElementById('btn-radio-' + placa);
-                if(btn) { btn.innerText = "✅ Enviado"; btn.style.backgroundColor = "#4caf50"; setTimeout(() => { btn.innerText = "🗣️ Enviar por Radio"; btn.style.backgroundColor = "#ff9800"; }, 2000); }
             }
         };
+        window.marcarResuelto = function(placa) { db.ref('camiones_en_patio/' + placa).update({ estado: 'activo' }); };
 
-        window.marcarResuelto = function(placa) { db.ref('camiones_en_patio/' + placa).update({ estado: 'normal' }); mapa.closePopup(); };
-        
-        window.forzarSalida = function(placa) { 
-            if(confirm("¿Forzar salida de " + placa + "?")) { 
-                db.ref('camiones_en_patio/' + placa).once('value').then(snap => {
-                    const info = snap.val();
-                    if(info) {
-                        // Guardar en historial antes de borrar
-                        db.ref('historial_viajes').push({
-                            placa: info.placa, destino: info.destino || 'S/D', 
-                            hora_ingreso: info.hora_ingreso || Date.now(), hora_salida: Date.now(), 
-                            velocidad_maxima: info.velocidad_maxima || 0
-                        });
-                    }
-                    db.ref('camiones_en_patio/' + placa).remove(); 
-                    mapa.closePopup(); 
-                });
-            } 
-        };
-
-        const camionesRef = db.ref('camiones_en_patio');
-        camionesRef.on('value', (snapshot) => {
+        db.ref('camiones_en_patio').on('value', (snapshot) => {
             const data = snapshot.val() || {};
-            let hayEmergenciaActual = false;
-            let totalCamiones = 0;
             let htmlLista = ""; 
+            let totalUnidades = 0;
 
             for (const placa in data) {
-                totalCamiones++;
+                totalUnidades++;
                 const camion = data[placa];
                 const latlng = [camion.lat, camion.lng];
-                const esEmergencia = camion.estado === "emergencia";
-                const colorPunto = esEmergencia ? "#ff0000" : "#00ff88"; 
-                if (esEmergencia) hayEmergenciaActual = true;
+                const tipo = camion.tipo || 'FORANEO';
+                const estado = camion.estado || 'activo';
+                
+                // Determinar Clase CSS y Color del Marcador según el estado
+                let claseCSS = tipo === 'INTERNO' ? 'interno' : '';
+                let colorPunto = tipo === 'INTERNO' ? '#00aaff' : '#00ff88'; // Azul interno, Verde foráneo
+                let colorCuadradoExtra = '';
 
-                let minutosAdentro = 0;
-                let infoTiempo = "Sin registro";
-                if(camion.hora_ingreso) {
-                    const fechaIngreso = new Date(camion.hora_ingreso);
-                    minutosAdentro = Math.floor((Date.now() - camion.hora_ingreso) / 60000);
-                    infoTiempo = `<b>Ingreso:</b> ${fechaIngreso.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}<br><b>Tiempo en patio:</b> ${minutosAdentro} min`;
-                }
+                if (estado === 'emergencia') { claseCSS = 'alerta-emergencia'; colorPunto = '#ff0000'; colorCuadradoExtra = 'cuadrado-emergencia'; }
+                else if (estado === 'pager') { claseCSS = 'alerta-pager'; colorPunto = '#ff5722'; colorCuadradoExtra = 'cuadrado-pager'; }
+                else if (estado === 'baño') { claseCSS = 'alerta-bano'; colorPunto = '#ffcc00'; colorCuadradoExtra = 'cuadrado-bano'; }
 
-                const destinoDisplay = camion.destino ? camion.destino : "Sin ruta";
-                const velocidadActual = camion.velocidad_actual || 0;
+                let infoRuta = tipo === 'FORANEO' ? `📍 ${camion.destino || 'S/D'}` : `🚢 ${camion.buque} | 🏗️ ${camion.sts}`;
+                let tiempo = estado === 'baño' ? "⏸️ PAUSADO" : `⏱️ ${Math.floor((Date.now() - (camion.hora_ingreso||Date.now())) / 60000)} min`;
 
+                // Construir la tarjeta del panel lateral
                 htmlLista += `
-                    <div class="tarjeta-unidad ${esEmergencia ? 'alerta' : ''}" onclick="enfocarCamion('${placa}')">
-                        <div class="placa">
-                            <span>${esEmergencia ? '🚨' : '✅'} ${placa}</span>
-                            <span style="font-size: 12px; color: ${velocidadActual > 15 ? '#ff4d4d' : '#00ff88'};">🏎️ ${velocidadActual} km/h</span>
-                        </div>
-                        <div class="datos">
-                            <span>📍 ${destinoDisplay}</span>
-                            <span>⏱️ ${minutosAdentro} min</span>
-                        </div>
+                    <div class="tarjeta-unidad ${claseCSS}" onclick="enfocarCamion('${placa}')">
+                        <div class="placa"><span>${tipo==='INTERNO'?'🚜':'🚚'} ${placa}</span><span>🏎️ ${camion.velocidad_actual||0} km/h</span></div>
+                        <div class="datos"><span>${infoRuta}</span><span>${tiempo}</span></div>
                     </div>`;
 
-                const divTiempoActivo = document.getElementById('tiempo-info-' + placa);
-                if (divTiempoActivo) { divTiempoActivo.innerHTML = infoTiempo; }
+                // Construir el PopUp del mapa
+                let popupHtml = `<div style="text-align: center;"><b>${placa} (${tipo})</b><br><small>${infoRuta}</small><br><br>
+                    <input type="text" id="tts-${placa}" class="input-tts" placeholder="Mensaje..."><button class="btn-radio" onclick="enviarTexto('${placa}')">🗣️ Enviar Mensaje</button>`;
+                
+                if (estado !== 'activo') {
+                    popupHtml += `<button class="btn-resolver" onclick="marcarResuelto('${placa}')">✅ Resolver Alerta (${estado.toUpperCase()})</button>`;
+                }
+                popupHtml += `</div>`;
 
-                let contenidoPopup = `<div style="text-align: center; min-width: 200px;"><b style="font-size:16px;">UNIDAD: ${placa}</b><br><br><div id="tiempo-info-${placa}" class="tiempo-info">${infoTiempo}</div><input type="text" id="tts-${placa}" class="input-tts" placeholder="Escribe instrucción aquí..."><button id="btn-radio-${placa}" class="btn-radio" onclick="enviarTexto('${placa}')">🗣️ Enviar por Radio</button>`;
-                if (esEmergencia) contenidoPopup += `<div style="border-top: 1px solid #ccc; padding-top: 10px;"><b style="color:red;">🚨 EMERGENCIA 🚨</b><button class="btn-resolver" onclick="marcarResuelto('${placa}')">✅ Marcar Resuelto</button></div>`;
-                contenidoPopup += `<button class="btn-eliminar" onclick="forzarSalida('${placa}')">🗑️ Forzar Salida</button></div>`;
-
+                // Actualizar o Crear Marcador en el Mapa
                 if (marcadoresCamiones[placa]) {
-                    marcadoresCamiones[placa].setLatLng(latlng);
-                    if (marcadoresCamiones[placa].estadoGuardado !== camion.estado) { marcadoresCamiones[placa].bindPopup(contenidoPopup); marcadoresCamiones[placa].estadoGuardado = camion.estado; marcadoresCamiones[placa].setStyle({ fillColor: colorPunto }); }
-                    if(esEmergencia && !marcadoresCamiones[placa].isPopupOpen()) marcadoresCamiones[placa].openPopup();
+                    marcadoresCamiones[placa].setLatLng(latlng).setPopupContent(popupHtml);
+                    
+                    // Si cambió el estado o el tipo, redibujamos el ícono
+                    if (marcadoresCamiones[placa].estadoGuardado !== estado) {
+                        if (tipo === 'INTERNO') {
+                            marcadoresCamiones[placa].setIcon(L.divIcon({ className: `cuadrado-interno ${colorCuadradoExtra}`, iconSize: [16, 16] }));
+                        } else {
+                            marcadoresCamiones[placa].setStyle({ fillColor: colorPunto });
+                        }
+                        marcadoresCamiones[placa].estadoGuardado = estado;
+                    }
                 } else {
-                    marcadoresCamiones[placa] = L.circleMarker(latlng, { radius: 10, fillColor: colorPunto, color: "#ffffff", weight: 2, fillOpacity: 0.9 }).addTo(mapa);
-                    marcadoresCamiones[placa].bindPopup(contenidoPopup);
-                    marcadoresCamiones[placa].estadoGuardado = camion.estado;
+                    if (tipo === 'INTERNO') {
+                        // DIBUJAR CUADRADO AZUL (O color de alerta)
+                        const iconCuadrado = L.divIcon({ className: `cuadrado-interno ${colorCuadradoExtra}`, iconSize: [16, 16], iconAnchor: [8,8] });
+                        marcadoresCamiones[placa] = L.marker(latlng, { icon: iconCuadrado }).addTo(mapa);
+                    } else {
+                        // DIBUJAR CÍRCULO VERDE (O color de alerta)
+                        marcadoresCamiones[placa] = L.circleMarker(latlng, { radius: 9, fillColor: colorPunto, color: "white", weight: 2, fillOpacity: 1 }).addTo(mapa);
+                    }
+                    marcadoresCamiones[placa].bindPopup(popupHtml);
+                    marcadoresCamiones[placa].estadoGuardado = estado;
                 }
             }
 
             listaUnidades.innerHTML = htmlLista;
-            contadorDisplay.innerText = totalCamiones;
-            alertaGlobal.style.display = hayEmergenciaActual ? "block" : "none";
-            
-            for (const placa in marcadoresCamiones) { if (!data[placa]) { mapa.removeLayer(marcadoresCamiones[placa]); delete marcadoresCamiones[placa]; } }
-            if (hayEmergenciaActual && !estadoEmergenciaAnterior) document.getElementById('sonidoAlerta').play().catch(e => {});
-            estadoEmergenciaAnterior = hayEmergenciaActual;
-        });
+            document.getElementById('contadorCamiones').innerText = totalUnidades;
 
-        document.getElementById('buscadorPlaca').addEventListener('input', function(e) {
-            const texto = e.target.value.toUpperCase();
-            if (texto !== "" && marcadoresCamiones[texto]) { mapa.setView(marcadoresCamiones[texto].getLatLng(), 19); marcadoresCamiones[texto].openPopup(); }
+            // Limpiar los que ya salieron
+            for (const placa in marcadoresCamiones) {
+                if (!data[placa]) { mapa.removeLayer(marcadoresCamiones[placa]); delete marcadoresCamiones[placa]; }
+            }
         });
     </script>
 </body>
