@@ -17,27 +17,27 @@
         
         #mapaFondo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; display: none; }
         
-        .card, .panel-flotante, .panel-completo { background-color: var(--card-bg); padding: 20px; border-radius: 12px; width: 90%; max-width: 350px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 10; text-align: center; }
+        .card, .panel-flotante, .panel-completo { background-color: var(--card-bg); padding: 25px; border-radius: 12px; width: 90%; max-width: 350px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 10; text-align: center; }
         .panel-flotante { position: absolute; bottom: 15px; background-color: rgba(255,255,255,0.95); }
         .panel-completo { width: 100%; height: 100%; max-width: 100%; border-radius: 0; display: flex; flex-direction: column; justify-content: center; background-color: var(--bg-color); }
         body.dark-mode .panel-flotante { background-color: rgba(34,34,34,0.95); }
 
-        h2 { color: var(--title-color); margin-top: 0; margin-bottom: 15px; font-size: 20px; }
-        input { width: 90%; font-size: 16px; border: none; border-bottom: 2px solid var(--input-border); margin-bottom: 15px; padding: 8px; text-align: center; font-weight: bold; background: transparent; color: var(--text-color); outline: none; text-transform: uppercase;}
+        h2 { color: var(--title-color); margin-top: 0; margin-bottom: 20px; font-size: 22px; }
+        input { width: 90%; font-size: 16px; border: none; border-bottom: 2px solid var(--input-border); margin-bottom: 20px; padding: 10px; text-align: center; font-weight: bold; background: transparent; color: var(--text-color); outline: none; text-transform: uppercase;}
         
-        button { font-size: 15px; font-weight: bold; border: none; border-radius: 8px; padding: 12px; width: 100%; cursor: pointer; color: white; transition: 0.3s; margin-bottom: 10px;}
-        .btn-gordo { padding: 20px; border-radius: 12px; font-size: 18px; display: flex; flex-direction: column; align-items: center; }
-        .btn-atras { background-color: #555; padding: 8px; width: auto; align-self: flex-start; margin-bottom: 15px;}
+        button { font-size: 16px; font-weight: bold; border: none; border-radius: 8px; padding: 15px; width: 100%; cursor: pointer; color: white; transition: 0.3s; margin-bottom: 12px;}
+        .btn-gordo { padding: 25px; border-radius: 12px; font-size: 20px; }
+        .btn-atras { background-color: #555; padding: 10px; width: auto; align-self: flex-start; margin-bottom: 20px;}
         .btn-entrar { background-color: #003366; }
         .btn-auxilio { background-color: #d32f2f; border-radius: 20px; }
         .btn-salir { background-color: #555; margin-bottom: 0; }
-        .btn-interno { margin-bottom: 10px; }
+        .btn-interno { margin-bottom: 15px; }
 
-        .texto-placa { font-size: 20px; font-weight: bold; color: var(--title-color); margin-bottom: 8px; }
-        .texto-destino { font-size: 16px; font-weight: bold; color: var(--text-color); margin-bottom: 10px; }
-        .texto-tiempo { font-size: 16px; color: #4caf50; font-weight: bold; margin-bottom: 15px; }
+        .texto-placa { font-size: 22px; font-weight: bold; color: var(--title-color); margin-bottom: 10px; }
+        .texto-destino { font-size: 18px; font-weight: bold; color: var(--text-color); margin-bottom: 15px; }
+        .texto-tiempo { font-size: 18px; color: #4caf50; font-weight: bold; margin-bottom: 20px; }
 
-        #alertaMensaje { display: none; position: absolute; top: 20px; background-color: #ffcc00; padding: 15px; width: 85%; max-width: 350px; border-radius: 12px; z-index: 100; text-align: center; }
+        #alertaMensaje { display: none; position: absolute; top: 20px; background-color: #ffcc00; padding: 20px; width: 85%; max-width: 350px; border-radius: 12px; z-index: 100; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5);}
     </style>
 </head>
 <body>
@@ -45,20 +45,16 @@
     <div id="mapaFondo"></div>
 
     <div id="alertaMensaje">
-        <div style="color: #003366; font-weight: bold;">📩 MENSAJE DE TORRE:</div>
-        <div id="textoMensaje" style="font-size: 20px; font-weight: bold; margin: 10px 0;"></div>
-        <button style="background-color: #2e7d32;" onclick="document.getElementById('alertaMensaje').style.display = 'none';">✅ ENTENDIDO</button>
+        <div style="color: #003366; font-weight: bold; font-size:14px;">📩 MENSAJE DE TORRE:</div>
+        <div id="textoMensaje" style="font-size: 22px; font-weight: bold; margin: 15px 0; color: #000;"></div>
+        <button style="background-color: #2e7d32; padding:10px;" onclick="document.getElementById('alertaMensaje').style.display = 'none';">✅ ENTENDIDO</button>
     </div>
 
     <!-- 1. SELECCIÓN DE PERFIL -->
     <div class="card" id="pantallaSeleccion">
         <h2>SELECCIONA TU PERFIL</h2>
-        <button class="btn-gordo" style="background-color: #2e7d32;" onclick="seleccionarPerfil('FORANEO')">
-            🚚 FORÁNEO<span style="font-size: 12px; font-weight: normal; margin-top:5px;">Ruta a Bahía y Mapa</span>
-        </button>
-        <button class="btn-gordo" style="background-color: #003366;" onclick="seleccionarPerfil('INTERNO')">
-            🚜 INTERNO (TERMINAL)<span style="font-size: 12px; font-weight: normal; margin-top:5px;">Buque, STS y Alertas</span>
-        </button>
+        <button class="btn-gordo" style="background-color: #ffcc00; color: black;" onclick="seleccionarPerfil('FORANEO')">🚚 FORÁNEO</button>
+        <button class="btn-gordo" style="background-color: #4caf50;" onclick="seleccionarPerfil('INTERNO')">🚜 INTERNO</button>
     </div>
 
     <!-- 2. LOGIN DINÁMICO -->
@@ -69,7 +65,7 @@
         <input type="text" id="posicionInput" placeholder="Posición (Ej. A0 03)">
         <input type="text" id="buqueInput" placeholder="Buque Asignado" style="display:none;">
         <input type="text" id="stsInput" placeholder="Grúa STS" style="display:none;">
-        <button class="btn-entrar" onclick="iniciarRastreo()">Iniciar Turno</button>
+        <button class="btn-entrar" id="btnIngresar" onclick="iniciarRastreo()">Iniciar Turno</button>
     </div>
 
     <!-- 3. PANEL ACTIVO -->
@@ -80,7 +76,7 @@
         
         <!-- BOTONERA INTERNA -->
         <div id="botoneraInterna" style="display: none; width: 100%;">
-            <button id="btnBano" class="btn-interno" style="background-color: #ff9800;" onclick="toggleBano()">🚾 Ir al Baño (Pausar)</button>
+            <button id="btnBano" class="btn-interno" style="background-color: #ff9800;" onclick="toggleBano()">🚾 Ir al Baño</button>
             <button class="btn-interno" style="background-color: #ff5722;" onclick="cambiarEstado('pager', 'Falla de Pager')">📟 Falla de Pager</button>
         </div>
 
@@ -96,7 +92,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let mapa, marcadorDestino, marcadorMia, watchId = null, wakeLock = null, timerInterval = null;
+        let mapa, marcadorMia, watchId = null, wakeLock = null, timerInterval = null;
         let tipoGlobal = "", placaGlobal = "", destinoGlobal = "", buqueGlobal = "", stsGlobal = "";
         let horaIngreso = 0, maxSpeed = 0, ultimoAudio = 0, estadoOperativo = "activo";
 
@@ -105,6 +101,14 @@
 
         async function solicitarWakeLock() { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {} }
 
+        function hablar(texto) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(texto);
+                utterance.lang = 'es-MX';
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
         function seleccionarPerfil(tipo) {
             tipoGlobal = tipo;
             document.getElementById('pantallaSeleccion').style.display = 'none';
@@ -112,11 +116,13 @@
             document.getElementById('tituloLogin').innerText = "REGISTRO " + tipo;
             
             if(tipo === 'FORANEO') {
+                document.getElementById('btnIngresar').innerText = "Ingreso a Patio";
                 document.getElementById('placaInput').placeholder = "Placa (Ej. TRACTO-5)";
                 document.getElementById('posicionInput').style.display = 'block';
                 document.getElementById('buqueInput').style.display = 'none';
                 document.getElementById('stsInput').style.display = 'none';
             } else {
+                document.getElementById('btnIngresar').innerText = "Iniciar Turno";
                 document.getElementById('placaInput').placeholder = "Num Eco (Ej. ECO-12)";
                 document.getElementById('posicionInput').style.display = 'none';
                 document.getElementById('buqueInput').style.display = 'block';
@@ -131,7 +137,7 @@
 
         function iniciarRastreo() {
             placaGlobal = document.getElementById('placaInput').value.trim().toUpperCase();
-            if(placaGlobal === "") return alert("Ingresa placa/eco");
+            if(placaGlobal === "") return alert("Ingresa datos");
 
             if (tipoGlobal === 'FORANEO') {
                 destinoGlobal = document.getElementById('posicionInput').value.trim().toUpperCase();
@@ -142,7 +148,7 @@
             } else {
                 buqueGlobal = document.getElementById('buqueInput').value.trim().toUpperCase();
                 stsGlobal = document.getElementById('stsInput').value.trim().toUpperCase();
-                document.getElementById('mapaFondo').style.display = 'none'; // Apagamos mapa
+                document.getElementById('mapaFondo').style.display = 'none';
                 document.getElementById('pantallaActiva').className = 'panel-completo';
                 document.getElementById('botoneraInterna').style.display = 'block';
                 document.getElementById('lblDestino').innerText = "🚢 " + buqueGlobal + " | 🏗️ " + stsGlobal;
@@ -155,6 +161,9 @@
             horaIngreso = Date.now();
             estadoOperativo = "activo";
             solicitarWakeLock();
+            
+            // Activar el motor de audio con una frase invisible
+            hablar("Ingreso registrado");
 
             timerInterval = setInterval(() => {
                 if (estadoOperativo === 'activo') {
@@ -163,12 +172,28 @@
                 }
             }, 60000);
 
+            // Escuchar Mensajes y Sincronizar Cambios de Estado de la Torre
             db.ref('camiones_en_patio/' + placaGlobal).on('value', snap => {
                 const data = snap.val();
-                if (data && data.tts_mensaje && data.tts_timestamp > ultimoAudio) {
+                if(!data) return;
+
+                // Lógica de Mensaje de Voz
+                if (data.tts_mensaje && data.tts_timestamp > ultimoAudio) {
                     ultimoAudio = data.tts_timestamp;
                     document.getElementById('textoMensaje').innerText = `"${data.tts_mensaje}"`;
                     document.getElementById('alertaMensaje').style.display = 'block';
+                    hablar(data.tts_mensaje);
+                }
+
+                // Sincronizar Estado (Si la Torre lo resuelve, el celular se entera)
+                if (data.estado && data.estado !== estadoOperativo) {
+                    estadoOperativo = data.estado;
+                    if(estadoOperativo === 'activo') {
+                        document.getElementById('btnBano').style.backgroundColor = '#ff9800'; 
+                        document.getElementById('btnBano').innerText = "🚾 Ir al Baño";
+                        let min = Math.floor((Date.now() - horaIngreso) / 60000);
+                        document.getElementById('lblTiempo').innerText = "⏱️ Tiempo: " + min + " min";
+                    }
                 }
             });
 
@@ -201,15 +226,13 @@
         function toggleBano() {
             const btn = document.getElementById('btnBano');
             if (estadoOperativo === 'baño') {
-                estadoOperativo = 'activo';
-                btn.style.backgroundColor = '#ff9800'; btn.innerText = "🚾 Ir al Baño (Pausar)";
+                cambiarEstado('activo', null);
+                btn.style.backgroundColor = '#ff9800'; btn.innerText = "🚾 Ir al Baño";
                 document.getElementById('lblTiempo').innerText = "⏱️ Tiempo: " + Math.floor((Date.now() - horaIngreso) / 60000) + " min";
-                db.ref('camiones_en_patio/' + placaGlobal).update({ estado: 'activo' });
             } else {
-                estadoOperativo = 'baño';
+                cambiarEstado('baño', 'Operador fue al baño');
                 btn.style.backgroundColor = '#4caf50'; btn.innerText = "✅ Regresar a Operar";
-                document.getElementById('lblTiempo').innerText = "⏸️ PAUSADO (En Baño)";
-                db.ref('camiones_en_patio/' + placaGlobal).update({ estado: 'baño' });
+                document.getElementById('lblTiempo').innerText = "🚾 BAÑO";
             }
         }
 
@@ -218,7 +241,7 @@
             if (timerInterval) clearInterval(timerInterval);
             if (wakeLock) wakeLock.release().then(() => wakeLock = null);
             if (placaGlobal !== "") db.ref('camiones_en_patio/' + placaGlobal).remove();
-            window.location.reload(); // Reinicio limpio
+            window.location.reload(); 
         }
     </script>
 </body>
