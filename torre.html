@@ -49,6 +49,8 @@
         .tarjeta-unidad.alerta-emergencia { border-left: 5px solid #ff0000; background: #551a1a; animation: parpadeo 1s infinite; }
         .tarjeta-unidad.alerta-pager { border-left: 5px solid #ff5722; background: #4a2311; }
         .tarjeta-unidad.alerta-bano { border-left: 5px solid #b38f00; background: #4a4a11; }
+        /* NUEVA ALERTA MORADA PARA OCIO */
+        .tarjeta-unidad.alerta-ocio { border-left: 5px solid #9c27b0; background: #3b0d42; animation: parpadeo 1s infinite; }
         
         @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
@@ -56,15 +58,14 @@
         .placa span { flex: 1; }
         .datos { font-size: 12px; color: #ccc; display: flex; justify-content: space-between; margin-top: 5px; padding-left: 28px;}
 
-        /* DISEÑO DE ICONOS */
         .icono-base { display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.5); font-size: 18px; width: 100%; height: 100%; }
         .icono-interno { background-color: #4caf50; } 
         .icono-foraneo { background-color: #007AFF; } 
         .icono-emergencia { background-color: #ff0000; animation: parpadeo 1s infinite;}
         .icono-pager { background-color: #ff5722; }
+        .icono-ocio { background-color: #9c27b0; animation: parpadeo 1s infinite; }
         .icono-fantasma { background-color: white; border-color: #333; color: #000; font-size: 20px;}
 
-        /* REPRODUCTOR DE RUTAS (TIMELINE) */
         .reproductor-rutas { position: absolute; bottom: 25px; left: 365px; width: calc(100vw - 410px); background: rgba(0, 26, 51, 0.95); padding: 15px 25px; border-radius: 12px; z-index: 1000; display: none; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.7); border: 2px solid #ffcc00; box-sizing: border-box;}
         .reproductor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 10px;}
         .reproductor-datos { display: flex; justify-content: space-around; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; font-size: 15px; font-weight: bold; margin-bottom: 15px;}
@@ -84,7 +85,6 @@
     </div>
     
     <div class="panel-lateral">
-        
         <div class="panel-superior">
             <input type="text" id="inputBuscador" class="input-buscador" placeholder="🔍 Buscar Unidad o Destino..." onkeyup="renderLista()">
             <button class="btn-global" onclick="enviarMensajeGlobal()">📢 Transmitir Mensaje a TODOS</button>
@@ -109,7 +109,6 @@
 
     <div id="mapa"></div>
 
-    <!-- PANEL REPRODUCTOR DE RUTAS -->
     <div id="reproductorRutas" class="reproductor-rutas">
         <div class="reproductor-header">
             <h2 style="margin:0; font-size: 18px;" id="repPlaca">Historial: --</h2>
@@ -144,14 +143,12 @@
         let dataGlobal = {};
         let seleccionadosMulti = new Set();
 
-        // VARIABLES REPRODUCTOR DE RUTAS
         let datosHistorial = [];
         let polylineHistorial = null;
         let marcadorHistorial = null;
         let timerHistorial = null;
 
         // ---------------- LOGICA DE REPRODUCTOR DE RUTAS ----------------
-
         window.abrirReproductor = function() {
             if (!camionSeleccionado) return;
             document.getElementById('reproductorRutas').style.display = 'block';
@@ -177,9 +174,7 @@
                     return;
                 }
                 
-                // Convertir y ordenar cronológicamente
                 datosHistorial = Object.values(data).sort((a,b) => a.time - b.time);
-                
                 if(datosHistorial.length === 0) return;
 
                 document.getElementById('sliderRep').max = datosHistorial.length - 1;
@@ -192,14 +187,9 @@
 
         function dibujarLineaHistorial() {
             const puntosLatLng = datosHistorial.map(p => [p.lat, p.lng]);
-            
-            // Dibujar la línea
             polylineHistorial = L.polyline(puntosLatLng, {color: '#ffcc00', weight: 4, opacity: 0.8, dashArray: '10, 10'}).addTo(mapa);
-            
-            // Centrar la cámara en toda la ruta
             mapa.fitBounds(polylineHistorial.getBounds(), {padding: [50, 50]});
             
-            // Crear el marcador fantasma
             const ghostIcon = L.divIcon({ className: '', html: `<div class="icono-base icono-fantasma">🕒</div>`, iconSize: [34, 34], iconAnchor: [17, 17] });
             marcadorHistorial = L.marker(puntosLatLng[0], {icon: ghostIcon, zIndexOffset: 1000}).addTo(mapa);
         }
@@ -207,7 +197,6 @@
         window.actualizarDatosSlider = function(index) {
             if(datosHistorial.length === 0) return;
             const punto = datosHistorial[index];
-            
             marcadorHistorial.setLatLng([punto.lat, punto.lng]);
             
             const fechaObj = new Date(punto.time);
@@ -218,6 +207,7 @@
             if(punto.est === 'baño') estFormateado = "🚾 BAÑO";
             if(punto.est === 'pager') estFormateado = "📟 PAGER";
             if(punto.est === 'emergencia') estFormateado = "🚨 AUXILIO";
+            if(punto.est === 'ocio') estFormateado = "⏳ OCIO";
             
             document.getElementById('repInfoEst').innerText = estFormateado;
         };
@@ -246,7 +236,7 @@
                         timerHistorial = null;
                         btn.innerText = "▶️ Play";
                     }
-                }, 800); // Velocidad de reproducción (0.8 segundos por punto)
+                }, 800);
             }
         };
 
@@ -264,10 +254,8 @@
             limpiarRutaMapa();
             document.getElementById('reproductorRutas').style.display = 'none';
             datosHistorial = [];
-            // Regresar cámara al patio central
             mapa.setView([19.066, -104.295], 16);
         };
-
         // ---------------- FIN LÓGICA REPRODUCTOR ----------------
 
 
@@ -308,7 +296,6 @@
 
         window.seleccionarCamion = function(placa, estado) {
             if (seleccionadosMulti.size > 0) return;
-
             camionSeleccionado = placa;
             if (marcadoresCamiones[placa]) mapa.setView(marcadoresCamiones[placa].getLatLng(), 18);
             
@@ -370,13 +357,10 @@
             if (estado === 'emergencia') claseFondo = 'icono-emergencia';
             if (estado === 'pager') claseFondo = 'icono-pager';
             if (estado === 'baño') { claseFondo = 'icono-interno'; emoji = '🚾'; }
+            // NUEVO ICONO OCIO
+            if (estado === 'ocio') { claseFondo = 'icono-ocio'; emoji = '⏳'; }
 
-            return L.divIcon({
-                className: '',
-                html: `<div class="icono-base ${claseFondo}">${emoji}</div>`,
-                iconSize: [34, 34],
-                iconAnchor: [17, 17]
-            });
+            return L.divIcon({ className: '', html: `<div class="icono-base ${claseFondo}">${emoji}</div>`, iconSize: [34, 34], iconAnchor: [17, 17] });
         }
 
         window.renderLista = function() {
@@ -390,7 +374,8 @@
                 const tipo = camion.tipo || 'FORANEO';
                 const estado = camion.estado || 'activo';
                 
-                let infoRuta = tipo === 'FORANEO' ? `📍 ${camion.destino || 'S/D'}` : `🚢 ${camion.buque} | 🏗️ ${camion.sts}`;
+                // SE AGREGA EMPLEADO AL PANEL
+                let infoRuta = tipo === 'FORANEO' ? `📍 ${camion.destino || 'S/D'}` : `🚢 ${camion.buque} | 🏗️ ${camion.sts} | 👤 ${camion.empleado || 'S/D'}`;
                 
                 if (filtro !== "" && !placa.includes(filtro) && !infoRuta.includes(filtro)) continue; 
 
@@ -402,11 +387,17 @@
                 if (estado === 'emergencia') { claseCSS = 'alerta-emergencia'; iconoLateral = '🚨';}
                 else if (estado === 'pager') { claseCSS = 'alerta-pager'; iconoLateral = '📟';}
                 else if (estado === 'baño') { claseCSS = 'alerta-bano'; iconoLateral = '🚾';}
+                // NUEVA CLASE PARA OCIO
+                else if (estado === 'ocio') { claseCSS = 'alerta-ocio'; iconoLateral = '⏳';}
 
                 if (placa === camionSeleccionado) claseCSS += ' seleccionada';
                 
                 let isChecked = seleccionadosMulti.has(placa) ? 'checked' : '';
-                let tiempo = estado === 'baño' ? "🚾 BAÑO" : `⏱️ ${Math.floor((Date.now() - (camion.hora_ingreso||Date.now())) / 60000)} min`;
+                
+                // TIEMPOS Y ALERTAS EN LA LISTA
+                let tiempo = `⏱️ ${Math.floor((Date.now() - (camion.hora_ingreso||Date.now())) / 60000)} min`;
+                if(estado === 'baño') tiempo = "🚾 BAÑO";
+                if(estado === 'ocio') tiempo = "⏳ DETENIDO";
 
                 let tarjetaHTML = `
                     <div class="tarjeta-unidad ${claseCSS}" onclick="seleccionarCamion('${placa}', '${estado}')">
