@@ -59,7 +59,6 @@
         <input type="text" id="placaInput" placeholder="Placa / Num Eco">
         <input type="text" id="posicionInput" placeholder="Posición (Ej. A0 03)">
         
-        <!-- NUEVOS CAMPOS INTERNOS -->
         <input type="text" id="empleadoInput" placeholder="Num Empleado (Ej. EMP-123)" style="display:none;">
         <input type="text" id="buqueInput" placeholder="Buque Asignado" style="display:none;">
         <input type="text" id="stsInput" placeholder="Grúa STS" style="display:none;">
@@ -100,9 +99,10 @@
         let latActual = null, lngActual = null, velActual = 0;
         let historialBatch = [];
         let tracker1Min = null, sender5Min = null;
-        
-        // VARIABLES PARA ALARMA DE OCIO
         let ultimaVezMovimiento = Date.now();
+        
+        // CANDADO ANTI-FANTASMAS
+        let expulsado = false; 
 
         mapa = L.map('mapaFondo', { zoomControl: false }).setView([19.066, -104.295], 16);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapa);
@@ -141,6 +141,8 @@
         function iniciarRastreo() {
             placaGlobal = document.getElementById('placaInput').value.trim().toUpperCase();
             if(placaGlobal === "") return alert("Ingresa datos");
+            
+            expulsado = false; // Reiniciar candado al entrar
 
             if (tipoGlobal === 'FORANEO') {
                 destinoGlobal = document.getElementById('posicionInput').value.trim().toUpperCase();
@@ -165,13 +167,13 @@
                 
                 const fechaHoy = new Date().toISOString().split('T')[0];
                 tracker1Min = setInterval(() => {
-                    if(latActual && lngActual) {
+                    if(latActual && lngActual && !expulsado) {
                         historialBatch.push({ lat: latActual, lng: lngActual, vel: velActual, est: estadoOperativo, time: Date.now() });
                     }
                 }, 60000); 
 
                 sender5Min = setInterval(() => {
-                    if (historialBatch.length > 0) {
+                    if (historialBatch.length > 0 && !expulsado) {
                         const refHistorial = db.ref(`historial_rutas/${fechaHoy}/${placaGlobal}`);
                         historialBatch.forEach(punto => refHistorial.push(punto));
                         historialBatch = []; 
@@ -184,21 +186,22 @@
             document.getElementById('pantallaActiva').style.display = 'flex';
             
             horaIngreso = Date.now();
-            ultimaVezMovimiento = Date.now(); // Iniciar reloj de Ocio
+            ultimaVezMovimiento = Date.now();
             estadoOperativo = "activo";
             solicitarWakeLock();
             hablar("Ingreso registrado");
 
             timerInterval = setInterval(() => {
+                if (expulsado) return;
+                
                 let min = Math.floor((Date.now() - horaIngreso) / 60000);
                 if (estadoOperativo === 'activo') {
                     document.getElementById('lblTiempo').innerText = "⏱️ Tiempo: " + min + " min";
                 }
                 
-                // === ALARMA DE OCIO (3 MINUTOS) ===
                 if (tipoGlobal === 'INTERNO' && estadoOperativo === 'activo') {
                     let tiempoDetenido = Date.now() - ultimaVezMovimiento;
-                    if (tiempoDetenido >= (3 * 60 * 1000)) { // 3 Minutos exactos
+                    if (tiempoDetenido >= (3 * 60 * 1000)) { 
                         cambiarEstado('ocio', '⚠️ Detenido por más de 3 minutos');
                     }
                 }
@@ -206,7 +209,15 @@
 
             db.ref('camiones_en_patio/' + placaGlobal).on('value', snap => {
                 const data = snap.val();
-                if(data === null) {
+                
+                // SISTEMA ANTI-FANTASMAS
+                if(data === null && placaGlobal !== "") {
+                    expulsado = true;
+                    if (watchId) navigator.geolocation.clearWatch(watchId);
+                    if (timerInterval) clearInterval(timerInterval);
+                    if (tracker1Min) clearInterval(tracker1Min);
+                    if (sender5Min) clearInterval(sender5Min);
+                    
                     alert("⚠️ Tu turno ha sido finalizado por la Torre de Control.");
                     window.location.reload();
                     return;
@@ -224,23 +235,23 @@
                     if(estadoOperativo === 'activo') {
                         document.getElementById('btnBano').style.backgroundColor = '#ff9800'; 
                         document.getElementById('btnBano').innerText = "🚾 Ir al Baño";
-                        ultimaVezMovimiento = Date.now(); // Reiniciar reloj al volver a activo
+                        ultimaVezMovimiento = Date.now(); 
                     }
                 }
             });
 
             if ("geolocation" in navigator) {
                 watchId = navigator.geolocation.watchPosition(pos => {
+                    if (expulsado) return; // BLOQUEO DEL GPS SI NOS SACARON
+
                     latActual = pos.coords.latitude; 
                     lngActual = pos.coords.longitude;
                     velActual = ((pos.coords.speed || 0) * 3.6).toFixed(1);
                     
                     if (parseFloat(velActual) > parseFloat(maxSpeed)) maxSpeed = velActual;
                     
-                    // REINICIAR RELOJ SI SE MUEVE (> 2 km/h)
                     if (parseFloat(velActual) > 2.0) {
                         ultimaVezMovimiento = Date.now();
-                        // Si estaba en ocio y arrancó, se quita la alarma solita
                         if (estadoOperativo === 'ocio') {
                             cambiarEstado('activo', null);
                         }
@@ -263,6 +274,7 @@
         }
 
         function cambiarEstado(nuevoEstado, msj) {
+            if (expulsado) return;
             estadoOperativo = nuevoEstado;
             db.ref('camiones_en_patio/' + placaGlobal).update({ estado: nuevoEstado });
             if (msj) {
@@ -271,6 +283,7 @@
         }
 
         function toggleBano() {
+            if (expulsado) return;
             const btn = document.getElementById('btnBano');
             if (estadoOperativo === 'baño') {
                 cambiarEstado('activo', null);
@@ -285,6 +298,7 @@
 
         function salirRastreo() {
             if(!confirm("¿Seguro que deseas cerrar tu turno/viaje?")) return;
+            expulsado = true;
             if (watchId) navigator.geolocation.clearWatch(watchId);
             if (timerInterval) clearInterval(timerInterval);
             if (tracker1Min) clearInterval(tracker1Min);
