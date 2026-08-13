@@ -22,16 +22,16 @@
         .panel-completo { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: var(--bg-color); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; z-index: 10; overflow: hidden;}
         
         h2 { color: var(--title-color); margin-top: 0; margin-bottom: 20px; font-size: 22px; }
-        input { width: 100%; font-size: 16px; border: none; border-bottom: 2px solid var(--input-border); margin-bottom: 20px; padding: 10px; text-align: center; font-weight: bold; background: transparent; color: var(--text-color); outline: none; text-transform: uppercase; box-sizing: border-box;}
-        button { font-size: 16px; font-weight: bold; border: none; border-radius: 8px; padding: 15px; width: 100%; cursor: pointer; color: white; transition: 0.3s; margin-bottom: 12px; box-sizing: border-box;}
-        .btn-gordo { padding: 25px; border-radius: 12px; font-size: 20px; }
-        .btn-atras { background-color: #555; padding: 10px; width: auto; align-self: flex-start; margin-bottom: 20px;}
+        input { width: 100%; font-size: 16px; border: none; border-bottom: 2px solid var(--input-border); margin-bottom: 15px; padding: 10px; text-align: center; font-weight: bold; background: transparent; color: var(--text-color); outline: none; text-transform: uppercase; box-sizing: border-box;}
+        button { font-size: 16px; font-weight: bold; border: none; border-radius: 8px; padding: 15px; width: 100%; cursor: pointer; color: white; transition: 0.3s; margin-bottom: 10px; box-sizing: border-box;}
+        .btn-gordo { padding: 25px; border-radius: 12px; font-size: 20px; margin-bottom: 15px;}
+        .btn-atras { background-color: #555; padding: 10px; width: auto; align-self: flex-start; margin-bottom: 15px;}
         .btn-entrar { background-color: #003366; }
         .btn-auxilio { background-color: #d32f2f; border-radius: 20px; }
         .btn-salir { background-color: #555; margin-bottom: 0; }
 
         .texto-placa { font-size: 22px; font-weight: bold; color: var(--title-color); margin-bottom: 10px; }
-        .texto-destino { font-size: 18px; font-weight: bold; color: var(--text-color); margin-bottom: 15px; }
+        .texto-destino { font-size: 16px; font-weight: bold; color: var(--text-color); margin-bottom: 15px; }
         .texto-tiempo { font-size: 18px; color: #4caf50; font-weight: bold; margin-bottom: 20px; }
 
         #alertaMensaje { display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background-color: #ffcc00; padding: 20px; width: 90%; max-width: 350px; border-radius: 12px; z-index: 100; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); box-sizing: border-box;}
@@ -53,14 +53,18 @@
         <button class="btn-gordo" style="background-color: #4caf50;" onclick="seleccionarPerfil('INTERNO')">🚜 INTERNO</button>
     </div>
 
-    <div class="card" id="pantallaLogin" style="display: none;">
+    <div class="card" id="pantallaLogin" style="display: none; overflow-y: auto; max-height: 90vh;">
         <button class="btn-atras" onclick="volverSeleccion()">⬅ Volver</button>
         <h2 id="tituloLogin">REGISTRO</h2>
         <input type="text" id="placaInput" placeholder="Placa / Num Eco">
         <input type="text" id="posicionInput" placeholder="Posición (Ej. A0 03)">
+        
+        <!-- NUEVOS CAMPOS INTERNOS -->
+        <input type="text" id="empleadoInput" placeholder="Num Empleado (Ej. EMP-123)" style="display:none;">
         <input type="text" id="buqueInput" placeholder="Buque Asignado" style="display:none;">
         <input type="text" id="stsInput" placeholder="Grúa STS" style="display:none;">
-        <button class="btn-entrar" id="btnIngresar" onclick="iniciarRastreo()">Ingreso a Patio</button>
+        
+        <button class="btn-entrar" id="btnIngresar" onclick="iniciarRastreo()">Ingresar</button>
     </div>
 
     <div id="pantallaActiva" style="display: none;">
@@ -89,15 +93,16 @@
 
         const coordenadasBahias = { "A0 02": [19.0671, -104.2955], "A0 06": [19.0650, -104.2940], "G3 02": [19.0665, -104.2960] };
 
-        // VARIABLES GLOBALES (Incluidas las del Motor Histórico)
         let mapa, marcadorMia, marcadorDestino, watchId = null, wakeLock = null, timerInterval = null;
-        let tipoGlobal = "", placaGlobal = "", destinoGlobal = "", buqueGlobal = "", stsGlobal = "";
+        let tipoGlobal = "", placaGlobal = "", destinoGlobal = "", buqueGlobal = "", stsGlobal = "", empleadoGlobal = "";
         let horaIngreso = 0, maxSpeed = 0, ultimoAudio = 0, estadoOperativo = "activo";
         
         let latActual = null, lngActual = null, velActual = 0;
         let historialBatch = [];
-        let tracker1Min = null;
-        let sender5Min = null;
+        let tracker1Min = null, sender5Min = null;
+        
+        // VARIABLES PARA ALARMA DE OCIO
+        let ultimaVezMovimiento = Date.now();
 
         mapa = L.map('mapaFondo', { zoomControl: false }).setView([19.066, -104.295], 16);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapa);
@@ -115,12 +120,14 @@
                 document.getElementById('btnIngresar').innerText = "Ingreso a Patio";
                 document.getElementById('placaInput').placeholder = "Placa (Ej. TRACTO-5)";
                 document.getElementById('posicionInput').style.display = 'block';
+                document.getElementById('empleadoInput').style.display = 'none';
                 document.getElementById('buqueInput').style.display = 'none';
                 document.getElementById('stsInput').style.display = 'none';
             } else {
                 document.getElementById('btnIngresar').innerText = "Iniciar Turno";
                 document.getElementById('placaInput').placeholder = "Num Eco (Ej. ECO-12)";
                 document.getElementById('posicionInput').style.display = 'none';
+                document.getElementById('empleadoInput').style.display = 'block';
                 document.getElementById('buqueInput').style.display = 'block';
                 document.getElementById('stsInput').style.display = 'block';
             }
@@ -148,37 +155,26 @@
                     marcadorDestino = L.marker(coordenadasBahias[destinoGlobal]).addTo(mapa).bindPopup("Destino: " + destinoGlobal);
                 }
             } else {
+                empleadoGlobal = document.getElementById('empleadoInput').value.trim().toUpperCase();
                 buqueGlobal = document.getElementById('buqueInput').value.trim().toUpperCase();
                 stsGlobal = document.getElementById('stsInput').value.trim().toUpperCase();
                 document.getElementById('mapaFondo').style.display = 'none';
                 document.getElementById('pantallaActiva').className = 'panel-completo';
                 document.getElementById('botoneraInterna').style.display = 'block';
-                document.getElementById('lblDestino').innerText = "🚢 " + buqueGlobal + " | 🏗️ " + stsGlobal;
+                document.getElementById('lblDestino').innerText = `👤 ${empleadoGlobal} | 🚢 ${buqueGlobal} | 🏗️ ${stsGlobal}`;
                 
-                // === MOTOR HÍBRIDO DE HISTORIAL (SOLO INTERNOS) ===
-                const fechaHoy = new Date().toISOString().split('T')[0]; // Ej. 2026-08-12
-                
-                // 1. Recolector Local (Cada 1 Minuto)
+                const fechaHoy = new Date().toISOString().split('T')[0];
                 tracker1Min = setInterval(() => {
                     if(latActual && lngActual) {
-                        historialBatch.push({
-                            lat: latActual,
-                            lng: lngActual,
-                            vel: velActual,
-                            est: estadoOperativo,
-                            time: Date.now()
-                        });
+                        historialBatch.push({ lat: latActual, lng: lngActual, vel: velActual, est: estadoOperativo, time: Date.now() });
                     }
                 }, 60000); 
 
-                // 2. Enviador de Paquetes a Firebase (Cada 5 Minutos)
                 sender5Min = setInterval(() => {
                     if (historialBatch.length > 0) {
                         const refHistorial = db.ref(`historial_rutas/${fechaHoy}/${placaGlobal}`);
-                        historialBatch.forEach(punto => {
-                            refHistorial.push(punto);
-                        });
-                        historialBatch = []; // Limpiar el paquete ya enviado
+                        historialBatch.forEach(punto => refHistorial.push(punto));
+                        historialBatch = []; 
                     }
                 }, 300000);
             }
@@ -188,14 +184,23 @@
             document.getElementById('pantallaActiva').style.display = 'flex';
             
             horaIngreso = Date.now();
+            ultimaVezMovimiento = Date.now(); // Iniciar reloj de Ocio
             estadoOperativo = "activo";
             solicitarWakeLock();
             hablar("Ingreso registrado");
 
             timerInterval = setInterval(() => {
+                let min = Math.floor((Date.now() - horaIngreso) / 60000);
                 if (estadoOperativo === 'activo') {
-                    let min = Math.floor((Date.now() - horaIngreso) / 60000);
                     document.getElementById('lblTiempo').innerText = "⏱️ Tiempo: " + min + " min";
+                }
+                
+                // === ALARMA DE OCIO (3 MINUTOS) ===
+                if (tipoGlobal === 'INTERNO' && estadoOperativo === 'activo') {
+                    let tiempoDetenido = Date.now() - ultimaVezMovimiento;
+                    if (tiempoDetenido >= (3 * 60 * 1000)) { // 3 Minutos exactos
+                        cambiarEstado('ocio', '⚠️ Detenido por más de 3 minutos');
+                    }
                 }
             }, 60000);
 
@@ -219,8 +224,7 @@
                     if(estadoOperativo === 'activo') {
                         document.getElementById('btnBano').style.backgroundColor = '#ff9800'; 
                         document.getElementById('btnBano').innerText = "🚾 Ir al Baño";
-                        let min = Math.floor((Date.now() - horaIngreso) / 60000);
-                        document.getElementById('lblTiempo').innerText = "⏱️ Tiempo: " + min + " min";
+                        ultimaVezMovimiento = Date.now(); // Reiniciar reloj al volver a activo
                     }
                 }
             });
@@ -230,21 +234,29 @@
                     latActual = pos.coords.latitude; 
                     lngActual = pos.coords.longitude;
                     velActual = ((pos.coords.speed || 0) * 3.6).toFixed(1);
+                    
                     if (parseFloat(velActual) > parseFloat(maxSpeed)) maxSpeed = velActual;
+                    
+                    // REINICIAR RELOJ SI SE MUEVE (> 2 km/h)
+                    if (parseFloat(velActual) > 2.0) {
+                        ultimaVezMovimiento = Date.now();
+                        // Si estaba en ocio y arrancó, se quita la alarma solita
+                        if (estadoOperativo === 'ocio') {
+                            cambiarEstado('activo', null);
+                        }
+                    }
 
                     if (tipoGlobal === 'FORANEO') {
-                        if (marcadorMia) {
-                            marcadorMia.setLatLng([latActual, lngActual]);
-                        } else {
+                        if (marcadorMia) marcadorMia.setLatLng([latActual, lngActual]);
+                        else {
                             marcadorMia = L.circleMarker([latActual, lngActual], { radius: 8, fillColor: "#007AFF", color: "white", weight: 2, fillOpacity: 1 }).addTo(mapa);
                             mapa.setView([latActual, lngActual], 18);
                         }
                     }
 
-                    // VISTA EN VIVO (Se envía siempre a la torre)
                     db.ref('camiones_en_patio/' + placaGlobal).update({
                         lat: latActual, lng: lngActual, placa: placaGlobal, tipo: tipoGlobal, estado: estadoOperativo,
-                        destino: destinoGlobal, buque: buqueGlobal, sts: stsGlobal, hora_ingreso: horaIngreso, velocidad_actual: velActual
+                        destino: destinoGlobal, buque: buqueGlobal, sts: stsGlobal, empleado: empleadoGlobal, hora_ingreso: horaIngreso, velocidad_actual: velActual
                     });
                 }, err => {}, { enableHighAccuracy: true, maximumAge: 0 });
             }
@@ -253,7 +265,9 @@
         function cambiarEstado(nuevoEstado, msj) {
             estadoOperativo = nuevoEstado;
             db.ref('camiones_en_patio/' + placaGlobal).update({ estado: nuevoEstado });
-            fetch(`https://api.telegram.org/bot8515273340:AAHsV3fsue-dY9CZCWlj1izG-usRtgDY64k/sendMessage?chat_id=-1005100426684&text=${encodeURIComponent("⚠️ ALERTA " + placaGlobal + ": " + msj)}`);
+            if (msj) {
+                fetch(`https://api.telegram.org/bot8515273340:AAHsV3fsue-dY9CZCWlj1izG-usRtgDY64k/sendMessage?chat_id=-1005100426684&text=${encodeURIComponent("⚠️ ALERTA " + placaGlobal + ": " + msj)}`);
+            }
         }
 
         function toggleBano() {
@@ -261,7 +275,7 @@
             if (estadoOperativo === 'baño') {
                 cambiarEstado('activo', null);
                 btn.style.backgroundColor = '#ff9800'; btn.innerText = "🚾 Ir al Baño";
-                document.getElementById('lblTiempo').innerText = "⏱️ Tiempo: " + Math.floor((Date.now() - horaIngreso) / 60000) + " min";
+                ultimaVezMovimiento = Date.now();
             } else {
                 cambiarEstado('baño', 'Operador fue al baño');
                 btn.style.backgroundColor = '#4caf50'; btn.innerText = "✅ Regresar a Operar";
@@ -277,13 +291,11 @@
             if (sender5Min) clearInterval(sender5Min);
             if (wakeLock) wakeLock.release().then(() => wakeLock = null);
             
-            // Forzar el envío del último paquete local antes de salir
             if(historialBatch.length > 0 && tipoGlobal === 'INTERNO') {
                 const fechaHoy = new Date().toISOString().split('T')[0];
                 const refHistorial = db.ref(`historial_rutas/${fechaHoy}/${placaGlobal}`);
                 historialBatch.forEach(punto => refHistorial.push(punto));
             }
-
             if (placaGlobal !== "") db.ref('camiones_en_patio/' + placaGlobal).remove();
             window.location.reload(); 
         }
