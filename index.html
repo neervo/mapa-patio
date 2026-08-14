@@ -3,38 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Patio YMS - Operador</title>
+    <title>Horizon YMS - Operador</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+    
+    <!-- Tipografía Corporativa -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        :root { --bg-color: #f4f4f9; --card-bg: white; --text-color: #444; --title-color: #003366; --input-border: #ccc; }
-        body.dark-mode { --bg-color: #111; --card-bg: #222; --text-color: #ccc; --title-color: #ffcc00; --input-border: #555; }
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); width: 100vw; height: 100vh; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; position: fixed;}
+        /* PALETA LUMINOUS HORIZON OPTIMIZADA PARA MÓVIL (Sin lag) */
+        :root { 
+            --bg-base: #fff9ee; 
+            --surface: #ffffff; 
+            --border-thin: rgba(137, 114, 107, 0.2);
+            --primary: #FF5E3A; 
+            --primary-shadow: rgba(255, 94, 58, 0.25);
+            --secondary: #a4c900; 
+            --tertiary: #38BDF8;
+            --danger: #ba1a1a;
+            --text-primary: #1d1c15;
+            --text-muted: #56423c;
+        }
+
+        body { margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-base); width: 100vw; height: 100vh; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; position: fixed;}
         
         #mapaFondo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; display: none; }
-        .card { background-color: var(--card-bg); padding: 25px; border-radius: 12px; width: 90%; max-width: 350px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 10; text-align: center; box-sizing: border-box; }
-        .panel-flotante { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: rgba(255,255,255,0.95); padding: 20px; border-radius: 12px; width: 90%; max-width: 350px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10; text-align: center; box-sizing: border-box; }
-        body.dark-mode .panel-flotante { background-color: rgba(34,34,34,0.95); }
-        .panel-completo { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: var(--bg-color); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; z-index: 10; overflow: hidden;}
         
-        h2 { color: var(--title-color); margin-top: 0; margin-bottom: 20px; font-size: 22px; }
-        input { width: 100%; font-size: 16px; border: none; border-bottom: 2px solid var(--input-border); margin-bottom: 15px; padding: 10px; text-align: center; font-weight: bold; background: transparent; color: var(--text-color); outline: none; text-transform: uppercase; box-sizing: border-box;}
-        button { font-size: 16px; font-weight: bold; border: none; border-radius: 8px; padding: 15px; width: 100%; cursor: pointer; color: white; transition: 0.3s; margin-bottom: 10px; box-sizing: border-box;}
-        .btn-gordo { padding: 25px; border-radius: 12px; font-size: 20px; margin-bottom: 15px;}
-        .btn-atras { background-color: #555; padding: 10px; width: auto; align-self: flex-start; margin-bottom: 15px;}
-        .btn-entrar { background-color: #003366; }
-        .btn-auxilio { background-color: #d32f2f; border-radius: 20px; }
-        .btn-salir { background-color: #555; margin-bottom: 0; }
+        /* TARJETAS PREMIUM (Rápidas, sin blur pesado) */
+        .card { background-color: rgba(255, 255, 255, 0.98); padding: 32px 24px; border-radius: 32px; width: 90%; max-width: 380px; box-shadow: 0 12px 40px rgba(159, 65, 34, 0.08); z-index: 10; text-align: center; box-sizing: border-box; border: 1px solid var(--border-thin);}
+        
+        .panel-flotante { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); background-color: rgba(255, 255, 255, 0.98); padding: 24px; border-radius: 32px; width: 90%; max-width: 380px; box-shadow: 0 12px 40px rgba(0,0,0,0.12); z-index: 10; text-align: center; box-sizing: border-box; border: 1px solid var(--border-thin);}
+        
+        .panel-completo { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: var(--bg-base); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px; box-sizing: border-box; z-index: 10; overflow: hidden;}
+        
+        h2 { color: var(--text-primary); margin-top: 0; margin-bottom: 24px; font-size: 24px; font-weight: 800; letter-spacing: -0.02em;}
+        
+        /* INPUTS PILL-SHAPE */
+        input { width: 100%; font-size: 16px; border: 1px solid var(--border-thin); border-radius: 9999px; margin-bottom: 16px; padding: 16px; text-align: center; font-weight: 600; background: var(--surface); color: var(--text-primary); outline: none; text-transform: uppercase; box-sizing: border-box; font-family: 'Plus Jakarta Sans'; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);}
+        input:focus { border-color: var(--primary); }
+        
+        /* BOTONES TOUCH-FRIENDLY */
+        button { font-size: 16px; font-weight: 700; border: none; border-radius: 9999px; padding: 18px; width: 100%; cursor: pointer; color: white; transition: 0.2s; margin-bottom: 12px; box-sizing: border-box; font-family: 'Plus Jakarta Sans';}
+        button:active { transform: scale(0.98); }
+        
+        .btn-gordo { padding: 20px; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 10px;}
+        .btn-foraneo { background-color: var(--tertiary); color: white; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);}
+        .btn-interno { background-color: var(--secondary); color: white; box-shadow: 0 4px 15px rgba(164, 201, 0, 0.3);}
+        
+        .btn-atras { background-color: transparent; color: var(--text-muted); border: 1px solid var(--border-thin); padding: 12px; width: auto; align-self: flex-start; margin-bottom: 20px; font-size: 14px;}
+        .btn-entrar { background: linear-gradient(135deg, #FF5E3A 0%, #ff8a65 100%); box-shadow: 0 6px 20px var(--primary-shadow);}
+        
+        .btn-auxilio { background-color: var(--danger); box-shadow: 0 4px 15px rgba(186, 26, 26, 0.3); }
+        .btn-salir { background-color: transparent; color: var(--danger); border: 1px solid var(--border-thin); margin-bottom: 0; padding: 14px;}
 
-        .texto-placa { font-size: 22px; font-weight: bold; color: var(--title-color); margin-bottom: 10px; }
-        .texto-destino { font-size: 16px; font-weight: bold; color: var(--text-color); margin-bottom: 15px; }
-        .texto-tiempo { font-size: 18px; color: #4caf50; font-weight: bold; margin-bottom: 20px; }
+        /* TEXTOS DEL PANEL ACTIVO */
+        .texto-placa { font-size: 24px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px; letter-spacing: -0.02em;}
+        .texto-destino { font-size: 15px; font-weight: 600; color: var(--text-muted); margin-bottom: 16px; background: rgba(0,0,0,0.03); padding: 8px 16px; border-radius: 9999px; display: inline-block;}
+        .texto-tiempo { font-size: 18px; color: var(--secondary); font-weight: 800; margin-bottom: 24px; }
 
-        #alertaMensaje { display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background-color: #ffcc00; padding: 20px; width: 90%; max-width: 350px; border-radius: 12px; z-index: 100; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); box-sizing: border-box;}
+        /* ALERTA DE MENSAJES (Súper limpia) */
+        #alertaMensaje { display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background-color: #ffca28; padding: 24px; width: 90%; max-width: 380px; border-radius: 24px; z-index: 100; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.15); box-sizing: border-box; border: 2px solid white;}
     </style>
 </head>
 <body>
@@ -42,20 +73,20 @@
     <div id="mapaFondo"></div>
 
     <div id="alertaMensaje">
-        <div style="color: #003366; font-weight: bold; font-size:14px;">📩 MENSAJE DE TORRE:</div>
-        <div id="textoMensaje" style="font-size: 22px; font-weight: bold; margin: 15px 0; color: #000;"></div>
-        <button style="background-color: #2e7d32; padding:10px;" onclick="document.getElementById('alertaMensaje').style.display = 'none';">✅ ENTENDIDO</button>
+        <div style="color: #752305; font-weight: 800; font-size:12px; text-transform: uppercase; letter-spacing: 0.1em;">📩 Torre de Control:</div>
+        <div id="textoMensaje" style="font-size: 20px; font-weight: 800; margin: 16px 0; color: #1d1c15; letter-spacing: -0.02em;"></div>
+        <button style="background-color: var(--text-primary); padding:14px;" onclick="document.getElementById('alertaMensaje').style.display = 'none';">✅ ENTENDIDO</button>
     </div>
 
     <div class="card" id="pantallaSeleccion">
-        <h2>SELECCIONA TU PERFIL</h2>
-        <button class="btn-gordo" style="background-color: #007AFF;" onclick="seleccionarPerfil('FORANEO')">🚚 FORÁNEO</button>
-        <button class="btn-gordo" style="background-color: #4caf50;" onclick="seleccionarPerfil('INTERNO')">🚜 INTERNO</button>
+        <h2>Selecciona tu Perfil</h2>
+        <button class="btn-gordo btn-foraneo" onclick="seleccionarPerfil('FORANEO')">🚚 FORÁNEO</button>
+        <button class="btn-gordo btn-interno" onclick="seleccionarPerfil('INTERNO')">🚜 INTERNO</button>
     </div>
 
     <div class="card" id="pantallaLogin" style="display: none; overflow-y: auto; max-height: 90vh;">
         <button class="btn-atras" onclick="volverSeleccion()">⬅ Volver</button>
-        <h2 id="tituloLogin">REGISTRO</h2>
+        <h2 id="tituloLogin">Registro</h2>
         <input type="text" id="placaInput" placeholder="Placa / Num Eco">
         <input type="text" id="posicionInput" placeholder="Posición (Ej. A0 03)">
         
@@ -73,19 +104,17 @@
             <div class="texto-tiempo" id="lblTiempo">⏱️ 0 min</div>
             
             <div id="botoneraInterna" style="display: none; width: 100%;">
-                <button id="btnBano" style="background-color: #ff9800;" onclick="toggleBano()">🚾 Ir al Baño</button>
-                <button style="background-color: #ff5722;" onclick="cambiarEstado('pager', 'Falla de Pager')">📟 Falla de Pager</button>
+                <button id="btnBano" style="background-color: #ffca28; color: #752305; box-shadow: 0 4px 15px rgba(255, 202, 40, 0.3);" onclick="toggleBano()">🚾 Pausa (Baño)</button>
+                <button style="background-color: #f57f17; box-shadow: 0 4px 15px rgba(245, 127, 23, 0.3);" onclick="cambiarEstado('pager', 'Falla de Pager')">📟 Falla de Pager</button>
             </div>
 
-            <button class="btn-auxilio" onclick="cambiarEstado('emergencia', 'AUXILIO REQUERIDO')">🚨 AUXILIO</button>
-            <button class="btn-salir" onclick="salirRastreo()">Cerrar Turno</button>
+            <button class="btn-auxilio" onclick="cambiarEstado('emergencia', 'AUXILIO REQUERIDO')">🚨 Auxilio</button>
+            <button class="btn-salir" onclick="salirRastreo()">Finalizar Turno</button>
         </div>
     </div>
 
     <script>
-        const horaActual = new Date().getHours();
-        if (horaActual >= 18 || horaActual < 6) { document.body.classList.add('dark-mode'); }
-
+        // CONFIGURACIÓN DE FIREBASE Y VARIABLES GLOBALES
         const firebaseConfig = { apiKey: "AIzaSyAH7D-sLL4fCJDliP8xzuYUQGt-H5H7nXE", authDomain: "patio-densidad.firebaseapp.com", databaseURL: "https://patio-densidad-default-rtdb.firebaseio.com", projectId: "patio-densidad" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
@@ -101,9 +130,9 @@
         let tracker1Min = null, sender5Min = null;
         let ultimaVezMovimiento = Date.now();
         
-        // CANDADO ANTI-FANTASMAS
         let expulsado = false; 
 
+        // INICIALIZAR MAPA (Sin controles de zoom para el operador)
         mapa = L.map('mapaFondo', { zoomControl: false }).setView([19.066, -104.295], 16);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapa);
 
@@ -114,17 +143,15 @@
             tipoGlobal = tipo;
             document.getElementById('pantallaSeleccion').style.display = 'none';
             document.getElementById('pantallaLogin').style.display = 'block';
-            document.getElementById('tituloLogin').innerText = "REGISTRO " + tipo;
+            document.getElementById('tituloLogin').innerText = "Ingreso " + tipo;
             
             if(tipo === 'FORANEO') {
-                document.getElementById('btnIngresar').innerText = "Ingreso a Patio";
-                document.getElementById('placaInput').placeholder = "Placa (Ej. TRACTO-5)";
+                document.getElementById('placaInput').placeholder = "Placa (Ej. TR-5)";
                 document.getElementById('posicionInput').style.display = 'block';
                 document.getElementById('empleadoInput').style.display = 'none';
                 document.getElementById('buqueInput').style.display = 'none';
                 document.getElementById('stsInput').style.display = 'none';
             } else {
-                document.getElementById('btnIngresar').innerText = "Iniciar Turno";
                 document.getElementById('placaInput').placeholder = "Num Eco (Ej. ECO-12)";
                 document.getElementById('posicionInput').style.display = 'none';
                 document.getElementById('empleadoInput').style.display = 'block';
@@ -140,9 +167,9 @@
 
         function iniciarRastreo() {
             placaGlobal = document.getElementById('placaInput').value.trim().toUpperCase();
-            if(placaGlobal === "") return alert("Ingresa datos");
+            if(placaGlobal === "") return alert("Faltan datos de ingreso.");
             
-            expulsado = false; // Reiniciar candado al entrar
+            expulsado = false; 
 
             if (tipoGlobal === 'FORANEO') {
                 destinoGlobal = document.getElementById('posicionInput').value.trim().toUpperCase();
@@ -150,11 +177,11 @@
                 setTimeout(() => { mapa.invalidateSize(); }, 300);
                 document.getElementById('pantallaActiva').className = 'panel-flotante';
                 document.getElementById('botoneraInterna').style.display = 'none';
-                document.getElementById('lblDestino').innerText = "Destino: " + destinoGlobal;
+                document.getElementById('lblDestino').innerText = "📍 " + destinoGlobal;
                 
                 if (coordenadasBahias[destinoGlobal]) {
                     if(marcadorDestino) mapa.removeLayer(marcadorDestino);
-                    marcadorDestino = L.marker(coordenadasBahias[destinoGlobal]).addTo(mapa).bindPopup("Destino: " + destinoGlobal);
+                    marcadorDestino = L.marker(coordenadasBahias[destinoGlobal]).addTo(mapa).bindPopup("Destino");
                 }
             } else {
                 empleadoGlobal = document.getElementById('empleadoInput').value.trim().toUpperCase();
@@ -165,6 +192,7 @@
                 document.getElementById('botoneraInterna').style.display = 'block';
                 document.getElementById('lblDestino').innerText = `👤 ${empleadoGlobal} | 🚢 ${buqueGlobal} | 🏗️ ${stsGlobal}`;
                 
+                // MOTOR HISTÓRICO
                 const fechaHoy = new Date().toISOString().split('T')[0];
                 tracker1Min = setInterval(() => {
                     if(latActual && lngActual && !expulsado) {
@@ -181,7 +209,7 @@
                 }, 300000);
             }
 
-            document.getElementById('lblPlaca').innerText = "UNIDAD: " + placaGlobal;
+            document.getElementById('lblPlaca').innerText = placaGlobal;
             document.getElementById('pantallaLogin').style.display = 'none';
             document.getElementById('pantallaActiva').style.display = 'flex';
             
@@ -191,26 +219,27 @@
             solicitarWakeLock();
             hablar("Ingreso registrado");
 
+            // RELOJ DE TIEMPO Y ALARMA DE OCIO
             timerInterval = setInterval(() => {
                 if (expulsado) return;
                 
                 let min = Math.floor((Date.now() - horaIngreso) / 60000);
                 if (estadoOperativo === 'activo') {
-                    document.getElementById('lblTiempo').innerText = "⏱️ Tiempo: " + min + " min";
+                    document.getElementById('lblTiempo').innerText = "Flujo Activo: " + min + " min";
                 }
                 
                 if (tipoGlobal === 'INTERNO' && estadoOperativo === 'activo') {
                     let tiempoDetenido = Date.now() - ultimaVezMovimiento;
                     if (tiempoDetenido >= (3 * 60 * 1000)) { 
-                        cambiarEstado('ocio', '⚠️ Detenido por más de 3 minutos');
+                        cambiarEstado('ocio', 'Detenido por más de 3 minutos');
                     }
                 }
             }, 60000);
 
+            // ESCUCHAR INSTRUCCIONES DE LA TORRE
             db.ref('camiones_en_patio/' + placaGlobal).on('value', snap => {
                 const data = snap.val();
                 
-                // SISTEMA ANTI-FANTASMAS
                 if(data === null && placaGlobal !== "") {
                     expulsado = true;
                     if (watchId) navigator.geolocation.clearWatch(watchId);
@@ -218,7 +247,7 @@
                     if (tracker1Min) clearInterval(tracker1Min);
                     if (sender5Min) clearInterval(sender5Min);
                     
-                    alert("⚠️ Tu turno ha sido finalizado por la Torre de Control.");
+                    alert("⚠️ Turno finalizado por la Torre de Control.");
                     window.location.reload();
                     return;
                 }
@@ -233,16 +262,18 @@
                 if (data.estado && data.estado !== estadoOperativo) {
                     estadoOperativo = data.estado;
                     if(estadoOperativo === 'activo') {
-                        document.getElementById('btnBano').style.backgroundColor = '#ff9800'; 
-                        document.getElementById('btnBano').innerText = "🚾 Ir al Baño";
+                        document.getElementById('btnBano').style.backgroundColor = '#ffca28'; 
+                        document.getElementById('btnBano').style.color = '#752305'; 
+                        document.getElementById('btnBano').innerText = "🚾 Pausa (Baño)";
                         ultimaVezMovimiento = Date.now(); 
                     }
                 }
             });
 
+            // TRACKING GPS
             if ("geolocation" in navigator) {
                 watchId = navigator.geolocation.watchPosition(pos => {
-                    if (expulsado) return; // BLOQUEO DEL GPS SI NOS SACARON
+                    if (expulsado) return;
 
                     latActual = pos.coords.latitude; 
                     lngActual = pos.coords.longitude;
@@ -258,9 +289,10 @@
                     }
 
                     if (tipoGlobal === 'FORANEO') {
-                        if (marcadorMia) marcadorMia.setLatLng([latActual, lngActual]);
-                        else {
-                            marcadorMia = L.circleMarker([latActual, lngActual], { radius: 8, fillColor: "#007AFF", color: "white", weight: 2, fillOpacity: 1 }).addTo(mapa);
+                        if (marcadorMia) {
+                            marcadorMia.setLatLng([latActual, lngActual]);
+                        } else {
+                            marcadorMia = L.circleMarker([latActual, lngActual], { radius: 8, fillColor: "#38BDF8", color: "white", weight: 2, fillOpacity: 1 }).addTo(mapa);
                             mapa.setView([latActual, lngActual], 18);
                         }
                     }
@@ -287,17 +319,21 @@
             const btn = document.getElementById('btnBano');
             if (estadoOperativo === 'baño') {
                 cambiarEstado('activo', null);
-                btn.style.backgroundColor = '#ff9800'; btn.innerText = "🚾 Ir al Baño";
+                btn.style.backgroundColor = '#ffca28'; 
+                btn.style.color = '#752305'; 
+                btn.innerText = "🚾 Pausa (Baño)";
                 ultimaVezMovimiento = Date.now();
             } else {
-                cambiarEstado('baño', 'Operador fue al baño');
-                btn.style.backgroundColor = '#4caf50'; btn.innerText = "✅ Regresar a Operar";
-                document.getElementById('lblTiempo').innerText = "🚾 BAÑO";
+                cambiarEstado('baño', 'Operador en Baño');
+                btn.style.backgroundColor = '#a4c900'; 
+                btn.style.color = 'white'; 
+                btn.innerText = "✅ Regresar a Operar";
+                document.getElementById('lblTiempo').innerText = "🚾 EN PAUSA";
             }
         }
 
         function salirRastreo() {
-            if(!confirm("¿Seguro que deseas cerrar tu turno/viaje?")) return;
+            if(!confirm("¿Seguro que deseas finalizar el turno?")) return;
             expulsado = true;
             if (watchId) navigator.geolocation.clearWatch(watchId);
             if (timerInterval) clearInterval(timerInterval);
