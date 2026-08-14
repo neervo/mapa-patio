@@ -3,168 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Horizon YMS - Torre de Control</title>
+    <title>YMS - Torre de Control</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
     
-    <!-- Tipografía Plus Jakarta Sans (Luminous Horizon) -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        /* PALETA DE COLORES "LUMINOUS HORIZON" */
         :root {
             --bg-base: #fff9ee;
-            --surface-glass: rgba(255, 249, 238, 0.85);
-            --card-glass: rgba(255, 255, 255, 0.65);
-            --border-thin: rgba(137, 114, 107, 0.2);
+            --surface-glass: rgba(255, 249, 238, 0.95);
+            --card-glass: rgba(255, 255, 255, 0.9);
+            --border-thin: rgba(137, 114, 107, 0.3);
             
-            --primary: #FF5E3A; /* Warm Orange Action */
+            --primary: #FF5E3A; 
             --primary-container: #ffdbd0;
-            --on-primary-container: #752305;
             
             --secondary: #5a6c00; 
-            --secondary-container: #d6ed7a; /* Pale Lime */
+            --secondary-container: #d6ed7a; 
             
             --tertiary: #326578;
-            --tertiary-container: #bbe9ff; /* Soft Cyan */
+            --tertiary-container: #bbe9ff; 
             
             --danger: #ba1a1a;
             --danger-container: #ffdad6;
             
             --text-primary: #1d1c15;
             --text-secondary: #56423c;
-            
-            --shadow-glow: 0 12px 40px rgba(159, 65, 34, 0.06);
         }
 
         body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-base); color: var(--text-primary); overflow: hidden; }
         
-        /* EL MAPA AHORA ESTÁ DE FONDO COMPLETO PARA EL EFECTO CRISTAL */
         #mapa { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
         
-        /* HEADER FLOTANTE GLASSMORPHISM */
-        .header { background: var(--surface-glass); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-bottom: 1px solid var(--border-thin); padding: 0 40px; position: absolute; top: 0; left: 0; width: 100%; height: 80px; z-index: 1000; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-glow);}
-        .header h1 { font-size: 24px; font-weight: 800; margin: 0; letter-spacing: -0.02em; color: var(--text-primary);}
-        .contador { font-size: 14px; font-weight: 700; background: var(--secondary-container); border: 1px solid rgba(255,255,255,0.5); padding: 8px 24px; border-radius: 9999px; color: var(--secondary); margin-right: 20px;}
+        /* HEADER COMPACTO */
+        .header { background: var(--surface-glass); border-bottom: 1px solid var(--border-thin); padding: 0 20px; position: absolute; top: 0; left: 0; width: 100%; height: 60px; z-index: 1000; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 20px; font-weight: 800; margin: 0; letter-spacing: -0.02em; color: var(--text-primary);}
+        .contador { font-size: 12px; font-weight: 700; background: var(--secondary-container); border: 1px solid rgba(255,255,255,0.5); padding: 6px 16px; border-radius: 9999px; color: var(--secondary); margin-right: 20px;}
         
-        /* PANEL LATERAL FLOTANTE */
-        .panel-lateral { width: 400px; height: calc(100vh - 100px); background: var(--surface-glass); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid var(--border-thin); border-radius: 32px; position: absolute; top: 90px; left: 20px; z-index: 100; display: flex; flex-direction: column; box-shadow: var(--shadow-glow); overflow: hidden;}
+        /* PANEL LATERAL FLOTANTE (Menos blur para mayor velocidad) */
+        .panel-lateral { width: 340px; height: calc(100vh - 80px); background: var(--surface-glass); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid var(--border-thin); border-radius: 20px; position: absolute; top: 70px; left: 15px; z-index: 100; display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden;}
         
         /* PESTAÑAS */
-        .tabs-header { display: flex; border-bottom: 1px solid var(--border-thin); background: rgba(255,255,255,0.3); padding: 10px 10px 0 10px;}
-        .tab-btn { flex: 1; padding: 15px 0; background: transparent; color: var(--text-secondary); border: none; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.3s; border-radius: 16px 16px 0 0; margin: 0 5px;}
-        .tab-btn:hover { background: rgba(255,255,255,0.5); }
+        .tabs-header { display: flex; border-bottom: 1px solid var(--border-thin); background: rgba(255,255,255,0.5); }
+        .tab-btn { flex: 1; padding: 12px 0; background: transparent; color: var(--text-secondary); border: none; cursor: pointer; font-weight: 700; font-size: 13px; margin: 0;}
         .tab-btn.activo { color: var(--primary); background: var(--card-glass); border-bottom: 3px solid var(--primary); }
         
-        .tab-content { display: none; flex-direction: column; height: 100%; overflow-y: auto; padding-bottom: 20px;}
+        .tab-content { display: none; flex-direction: column; height: 100%; overflow-y: auto; padding-bottom: 10px;}
         .tab-content.activo { display: flex; }
 
-        /* MONITOREO Y BUSCADOR (Pill shapes) */
-        .panel-superior { padding: 24px; border-bottom: 1px solid var(--border-thin); }
-        .input-buscador { width: 100%; padding: 16px 24px; border-radius: 9999px; border: 1px solid var(--border-thin); background: var(--card-glass); color: var(--text-primary); margin-bottom: 15px; box-sizing: border-box; font-family: 'Plus Jakarta Sans'; font-size: 16px; font-weight: 500; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);}
+        /* MONITOREO Y BUSCADOR COMPACTO */
+        .panel-superior { padding: 15px; border-bottom: 1px solid var(--border-thin); }
+        .input-buscador { width: 100%; padding: 10px 15px; border-radius: 9999px; border: 1px solid var(--border-thin); background: var(--card-glass); color: var(--text-primary); margin-bottom: 10px; box-sizing: border-box; font-family: 'Plus Jakarta Sans'; font-size: 13px; font-weight: 500;}
         .input-buscador:focus { outline: none; border-color: var(--primary); background: #ffffff;}
         
-        .btn-global { background: var(--danger-container); color: var(--danger); border: none; padding: 14px; width: 100%; border-radius: 9999px; cursor: pointer; font-weight: 700; transition: 0.3s; font-family: 'Plus Jakarta Sans'; font-size: 14px;}
-        .btn-global:hover { background: var(--danger); color: white; transform: translateY(-2px);}
+        .btn-global { background: var(--danger-container); color: var(--danger); border: none; padding: 10px; width: 100%; border-radius: 9999px; cursor: pointer; font-weight: 700; font-family: 'Plus Jakarta Sans'; font-size: 12px;}
         
-        .lista-scroll { flex: 1; overflow-y: auto; padding: 10px 24px; position: relative;}
+        .lista-scroll { flex: 1; overflow-y: auto; padding: 5px 15px; position: relative;}
         
-        .titulo-seccion { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 800; padding: 0; margin: 24px 0 12px 0; color: var(--text-secondary); text-align: left;}
+        .titulo-seccion { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 800; padding: 0; margin: 15px 0 8px 0; color: var(--text-secondary); text-align: left;}
         
-        /* TARJETAS DE UNIDADES (Glassy, Large Radius) */
-        .tarjeta-unidad { background: var(--card-glass); border: 1px solid var(--border-thin); padding: 20px; border-radius: 24px; margin-bottom: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.02);}
-        .tarjeta-unidad:hover { background: #ffffff; transform: translateY(-3px); box-shadow: var(--shadow-glow); }
+        /* TARJETAS DE UNIDADES SÚPER COMPACTAS (Sin animaciones para evitar Lag) */
+        .tarjeta-unidad { background: var(--card-glass); border: 1px solid var(--border-thin); padding: 10px 12px; border-radius: 12px; margin-bottom: 8px; cursor: pointer; position: relative; overflow: hidden;}
         .tarjeta-unidad.seleccionada { border-color: var(--primary); background: var(--primary-container);}
         
-        /* CHIPS INDICADORES EN VEZ DE BORDES FEOS */
-        .chip-estado { display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;}
-        .chip-interno { background: var(--secondary-container); color: var(--secondary); }
-        .chip-foraneo { background: var(--tertiary-container); color: var(--tertiary); }
-        .chip-emergencia { background: var(--danger); color: white; animation: pulse 1.5s infinite;}
-        .chip-pager { background: var(--primary); color: white; }
+        .tarjeta-unidad.interno { border-left: 4px solid var(--secondary); } 
+        .tarjeta-unidad.foraneo { border-left: 4px solid var(--tertiary); } 
+        .tarjeta-unidad.alerta-emergencia { border-left: 4px solid var(--danger); background: rgba(255,0,0,0.05); }
+        .tarjeta-unidad.alerta-pager { border-left: 4px solid #f57f17; }
+        .tarjeta-unidad.alerta-bano { border-left: 4px solid #fbc02d; }
+        .tarjeta-unidad.alerta-ocio { border-left: 4px solid #8e24aa; background: rgba(176, 102, 255, 0.05); }
+        
+        /* CHIPS SOLO PARA ALERTAS (Pequeños) */
+        .chip-estado { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 9px; font-weight: 800; text-transform: uppercase; margin-bottom: 4px;}
+        .chip-emergencia { background: var(--danger); color: white; animation: pulse 1s infinite;}
+        .chip-pager { background: #f57f17; color: white; }
         .chip-bano { background: #ffe082; color: #f57f17; }
         .chip-ocio { background: #e1bee7; color: #6a1b9a; }
-        
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        .chk-multi { accent-color: var(--primary); cursor: pointer; margin-right: 12px; width: 18px; height: 18px;}
-        .placa { font-size: 18px; font-weight: 700; margin-bottom: 8px; display:flex; align-items: center; color: var(--text-primary);}
+        .chk-multi { accent-color: var(--primary); cursor: pointer; margin-right: 8px; width: 14px; height: 14px;}
+        .placa { font-size: 14px; font-weight: 800; margin-bottom: 4px; display:flex; align-items: center; color: var(--text-primary);}
         .placa span { flex: 1; }
-        .datos { font-size: 14px; color: var(--text-secondary); display: flex; justify-content: space-between; font-weight: 500;}
+        .datos { font-size: 11px; color: var(--text-secondary); display: flex; justify-content: space-between; font-weight: 600; padding-left: 22px;}
         
-        /* PANELES DE ACCIÓN (Glassmorphism Bottom) */
-        .panel-acciones, .panel-multi { background: rgba(255, 249, 238, 0.95); backdrop-filter: blur(24px); padding: 24px; border-top: 1px solid var(--border-thin); display: none; flex-direction: column; position: sticky; bottom: 0; z-index: 200; border-radius: 0 0 32px 32px; box-shadow: 0 -10px 40px rgba(0,0,0,0.05);}
-        .panel-acciones h3, .panel-multi h3 { color: var(--text-primary); font-size: 18px; margin: 0 0 15px 0; font-weight: 800; letter-spacing: -0.02em;}
-        .input-tts { width: 100%; padding: 16px; margin-bottom: 12px; border-radius: 9999px; border: 1px solid var(--border-thin); background: #ffffff; color: var(--text-primary); box-sizing: border-box; font-family: 'Plus Jakarta Sans'; font-size: 14px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);}
+        /* PANELES DE ACCIÓN COMPACTOS */
+        .panel-acciones, .panel-multi { background: var(--surface-glass); padding: 15px; border-top: 1px solid var(--border-thin); display: none; flex-direction: column; position: sticky; bottom: 0; z-index: 200; border-radius: 0 0 20px 20px;}
+        .panel-acciones h3, .panel-multi h3 { color: var(--text-primary); font-size: 13px; margin: 0 0 10px 0; font-weight: 800;}
+        .input-tts { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 9999px; border: 1px solid var(--border-thin); background: #ffffff; color: var(--text-primary); box-sizing: border-box; font-family: 'Plus Jakarta Sans'; font-size: 12px;}
         
-        /* BOTONES PREMIUM (Pill shaped) */
-        .btn-radio { background: linear-gradient(135deg, #FF5E3A 0%, #ff8a65 100%); color: white; border: none; padding: 16px; border-radius: 9999px; cursor: pointer; font-weight: 700; margin-bottom: 12px; font-size: 14px; font-family: 'Plus Jakarta Sans'; box-shadow: 0 4px 15px rgba(255, 94, 58, 0.3); transition: 0.3s;}
-        .btn-radio:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 94, 58, 0.4);}
-        
-        .btn-historial { background-color: var(--tertiary-container); color: var(--tertiary); border: none; padding: 14px; border-radius: 9999px; cursor: pointer; font-weight: 700; margin-bottom: 12px; font-size: 14px; transition: 0.3s;}
-        .btn-historial:hover { background-color: var(--tertiary); color: white;}
-        
-        .btn-resolver { background-color: transparent; color: var(--primary); border: 2px solid var(--primary); padding: 14px; border-radius: 9999px; cursor: pointer; font-weight: 700; margin-bottom: 12px; font-size: 14px;}
-        .btn-eliminar { background-color: transparent; color: var(--danger); padding: 14px; border-radius: 9999px; cursor: pointer; font-weight: 600; font-size: 14px; border: none; text-decoration: underline;}
+        /* BOTONES COMPACTOS */
+        .btn-radio { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 9999px; cursor: pointer; font-weight: 700; margin-bottom: 8px; font-size: 12px; font-family: 'Plus Jakarta Sans';}
+        .btn-historial { background-color: var(--tertiary-container); color: var(--tertiary); border: none; padding: 10px; border-radius: 9999px; cursor: pointer; font-weight: 700; margin-bottom: 8px; font-size: 12px;}
+        .btn-resolver { background-color: transparent; color: var(--primary); border: 2px solid var(--primary); padding: 10px; border-radius: 9999px; cursor: pointer; font-weight: 700; margin-bottom: 8px; font-size: 12px;}
+        .btn-eliminar { background-color: transparent; color: var(--danger); padding: 8px; border-radius: 9999px; cursor: pointer; font-weight: 600; font-size: 11px; border: none; text-decoration: underline;}
 
         /* DASHBOARD */
-        .dash-container { padding: 30px; display: flex; flex-direction: column; gap: 24px;}
-        .dash-card { background: var(--card-glass); border: 1px solid var(--border-thin); padding: 32px; border-radius: 32px; display: flex; flex-direction: column; gap: 8px; box-shadow: var(--shadow-glow);}
-        .dash-title { font-size: 13px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700;}
-        .dash-value { font-size: 56px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.04em;}
+        .dash-container { padding: 20px; display: flex; flex-direction: column; gap: 15px;}
+        .dash-card { background: var(--card-glass); border: 1px solid var(--border-thin); padding: 20px; border-radius: 16px; display: flex; flex-direction: column; gap: 5px;}
+        .dash-title { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; font-weight: 800;}
+        .dash-value { font-size: 40px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.04em;}
         .val-orange { color: var(--primary); }
         .val-cyan { color: var(--tertiary); }
 
-        /* AJUSTES */
-        .ajustes-seccion { padding: 30px; }
-        .ajustes-seccion h3 { color: var(--text-primary); margin-top: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.02em;}
-        .texto-ayuda { color: var(--text-secondary); font-size: 15px; margin-bottom: 24px; line-height: 1.6; }
-        .btn-ajuste { background-color: #ffffff; color: var(--text-primary); border: 1px solid var(--border-thin); padding: 16px; width: 100%; border-radius: 9999px; cursor: pointer; font-weight: 700; margin-bottom: 12px; font-size: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.02);}
-        .btn-guardar-geo { background-color: var(--secondary-container); color: var(--secondary); border: none; padding: 16px; width: 100%; border-radius: 9999px; cursor: pointer; font-weight: 800; display: none; font-size: 14px;}
+        /* AJUSTES Y LISTA DE GEOCERCAS */
+        .ajustes-seccion { padding: 20px; border-bottom: 1px solid var(--border-thin); }
+        .ajustes-seccion h3 { color: var(--text-primary); margin-top: 0; font-size: 14px; font-weight: 800;}
+        .texto-ayuda { color: var(--text-secondary); font-size: 12px; margin-bottom: 15px; line-height: 1.4; }
+        .btn-ajuste { background-color: #ffffff; color: var(--text-primary); border: 1px solid var(--border-thin); padding: 10px; width: 100%; border-radius: 9999px; cursor: pointer; font-weight: 700; margin-bottom: 10px; font-size: 12px;}
+        .btn-guardar-geo { background-color: var(--secondary-container); color: var(--secondary); border: none; padding: 10px; width: 100%; border-radius: 9999px; cursor: pointer; font-weight: 800; display: none; font-size: 12px;}
+        
+        .item-geo { display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; border: 1px solid var(--border-thin); font-size: 12px; font-weight: 700;}
+        .item-geo button { background: transparent; border: none; cursor: pointer; font-size: 14px;}
 
-        /* ICONOS DEL MAPA (Limpios y Modernos) */
-        .icono-base { display: block; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); width: 18px; height: 18px; }
-        .icono-interno { background-color: #a4c900; } /* Un verde más visible en el mapa */
+        /* ICONOS DEL MAPA */
+        .icono-base { display: block; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.5); width: 14px; height: 14px; }
+        .icono-interno { background-color: #a4c900; } 
         .icono-foraneo { background-color: #38BDF8; } 
-        .icono-emergencia { background-color: var(--danger); animation: pulse 1.5s infinite;}
-        .icono-pager { background-color: var(--primary); }
-        .icono-bano { background-color: #ffca28; }
+        .icono-emergencia { background-color: var(--danger); animation: pulse 1s infinite;}
+        .icono-pager { background-color: #f57f17; }
+        .icono-bano { background-color: #fbc02d; }
         .icono-ocio { background-color: #ba68c8; }
-        
-        .icono-fantasma { display: flex; justify-content: center; align-items: center; background-color: white; border: 2px solid var(--primary); width: 16px; height: 16px; box-shadow: 0 0 15px var(--primary);}
+        .icono-fantasma { display: flex; justify-content: center; align-items: center; background-color: white; border: 2px solid var(--primary); width: 12px; height: 12px;}
 
-        /* REPRODUCTOR DE RUTAS (Estilo Flotante Premium) */
-        .reproductor-rutas { position: absolute; bottom: 40px; left: 450px; width: calc(100vw - 500px); max-width: 900px; background: var(--surface-glass); backdrop-filter: blur(30px); padding: 32px; border-radius: 32px; z-index: 1000; display: none; color: var(--text-primary); box-shadow: 0 20px 50px rgba(0,0,0,0.1); border: 1px solid var(--border-thin); box-sizing: border-box;}
-        .reproductor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;}
-        .reproductor-header h2 { margin:0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em;}
-        .reproductor-datos { display: flex; justify-content: space-around; background: #ffffff; padding: 20px; border-radius: 20px; font-size: 15px; color: var(--text-secondary); margin-bottom: 24px; border: 1px solid var(--border-thin); font-weight: 500;}
+        /* REPRODUCTOR DE RUTAS */
+        .reproductor-rutas { position: absolute; bottom: 20px; left: 380px; width: calc(100vw - 420px); max-width: 800px; background: rgba(255, 249, 238, 0.95); backdrop-filter: blur(10px); padding: 20px; border-radius: 20px; z-index: 1000; display: none; color: var(--text-primary); border: 1px solid var(--border-thin); box-sizing: border-box;}
+        .reproductor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;}
+        .reproductor-header h2 { margin:0; font-size: 16px; font-weight: 800;}
+        .reproductor-datos { display: flex; justify-content: space-around; background: #ffffff; padding: 12px; border-radius: 12px; font-size: 12px; color: var(--text-secondary); margin-bottom: 15px; border: 1px solid var(--border-thin); font-weight: 600;}
         .reproductor-datos span { color: var(--primary); margin-left: 5px; font-weight: 800;}
-        .reproductor-controles { display: flex; align-items: center; gap: 20px; }
-        .slider-tiempo { flex: 1; accent-color: var(--primary); cursor: pointer; height: 6px; border-radius: 10px;}
-        .btn-play { background: var(--primary); color: white; padding: 14px 24px; border: none; border-radius: 9999px; font-weight: 700; cursor: pointer; font-size: 14px; min-width: 120px; font-family: 'Plus Jakarta Sans';}
-        .btn-cerrar-rep { background-color: transparent; color: var(--text-secondary); border: 1px solid var(--border-thin); padding: 10px 20px; border-radius: 9999px; font-weight: 600; cursor: pointer; font-size: 13px;}
-        .input-fecha { padding: 10px 16px; border-radius: 9999px; border: 1px solid var(--border-thin); font-weight: 600; background: #ffffff; color: var(--text-primary); font-family: 'Plus Jakarta Sans';}
+        .reproductor-controles { display: flex; align-items: center; gap: 15px; }
+        .slider-tiempo { flex: 1; accent-color: var(--primary); cursor: pointer; height: 6px;}
+        .btn-play { background: var(--primary); color: white; padding: 10px 20px; border: none; border-radius: 9999px; font-weight: 700; cursor: pointer; font-size: 12px; min-width: 100px; font-family: 'Plus Jakarta Sans';}
+        .btn-cerrar-rep { background-color: transparent; color: var(--text-secondary); border: 1px solid var(--border-thin); padding: 8px 15px; border-radius: 9999px; font-weight: 700; cursor: pointer; font-size: 11px;}
+        .input-fecha { padding: 8px 12px; border-radius: 9999px; border: 1px solid var(--border-thin); font-weight: 600; background: #ffffff; color: var(--text-primary); font-family: 'Plus Jakarta Sans'; font-size: 11px;}
         
-        /* Personalizar el Tooltip de Geocercas */
-        .geo-tooltip { background: rgba(255,255,255,0.9); border: none; border-radius: 9999px; padding: 5px 15px; color: var(--primary); font-family: 'Plus Jakarta Sans'; font-weight: 800; box-shadow: 0 4px 10px rgba(0,0,0,0.1); font-size: 12px; letter-spacing: 0.05em;}
+        .geo-tooltip { background: rgba(255,255,255,0.9); border: none; border-radius: 9999px; padding: 4px 10px; color: var(--primary); font-family: 'Plus Jakarta Sans'; font-weight: 800; font-size: 11px;}
     </style>
 </head>
 <body>
 
-    <!-- MAPA DE FONDO COMPLETO -->
     <div id="mapa"></div>
 
     <div class="header">
-        <h1>Horizon YMS</h1>
-        <div class="contador">Unidades en Patio: <span id="contadorCamiones">0</span></div>
+        <h1>YMS</h1>
+        <div class="contador">Unidades: <span id="contadorCamiones">0</span></div>
     </div>
     
     <div class="panel-lateral">
         
-        <!-- PESTAÑAS (Horizon Style) -->
         <div class="tabs-header">
             <button class="tab-btn activo" id="btnTabMonitoreo" onclick="cambiarTab('monitoreo')">Señales</button>
             <button class="tab-btn" id="btnTabDashboard" onclick="cambiarTab('dashboard')">Métricas</button>
@@ -174,22 +164,22 @@
         <!-- TAB 1: MONITOREO -->
         <div id="tab-monitoreo" class="tab-content activo">
             <div class="panel-superior">
-                <input type="text" id="inputBuscador" class="input-buscador" placeholder="Buscar unidad, buque..." onkeyup="renderLista()">
-                <button class="btn-global" onclick="enviarMensajeGlobal()">Detener / Transmitir a Todos</button>
+                <input type="text" id="inputBuscador" class="input-buscador" placeholder="Buscar unidad o buque..." onkeyup="renderLista()">
+                <button class="btn-global" onclick="enviarMensajeGlobal()">Transmitir Alerta Global</button>
             </div>
 
             <div class="lista-scroll" id="listaUnidades"></div>
 
             <div id="panelMulti" class="panel-multi">
-                <h3 id="lblMulti">Unidades Seleccionadas: 0</h3>
-                <button class="btn-radio" onclick="enviarMensajeMultiple()">Enviar Instrucción al Grupo</button>
+                <h3 id="lblMulti">Unidades: 0</h3>
+                <button class="btn-radio" onclick="enviarMensajeMultiple()">Enviar Mensaje al Grupo</button>
             </div>
             
             <div id="panelAcciones" class="panel-acciones">
                 <h3 id="tituloAccion">Unidad: Seleccionada</h3>
-                <input type="text" id="inputVoz" class="input-tts" placeholder="Dictar instrucción al operador...">
-                <button class="btn-radio" onclick="enviarMensajeTorre()">Transmitir Señal</button>
-                <button class="btn-historial" onclick="abrirReproductor()">Ver Auditoría de Ruta</button>
+                <input type="text" id="inputVoz" class="input-tts" placeholder="Dictar instrucción...">
+                <button class="btn-radio" onclick="enviarMensajeTorre()">Enviar Mensaje</button>
+                <button class="btn-historial" onclick="abrirReproductor()">Historial Ruta</button>
                 <button id="btnResolverAlerta" class="btn-resolver" style="display:none;" onclick="resolverAlertaTorre()">Resolver Alerta</button>
                 <button class="btn-eliminar" onclick="forzarSalidaTorre()">Forzar expulsión del sistema</button>
             </div>
@@ -207,7 +197,7 @@
                     <div class="dash-value" id="dashOcio" style="color: #9c27b0;">0</div>
                 </div>
                 <div class="dash-card">
-                    <div class="dash-title">Operadores en Pausa (Baño)</div>
+                    <div class="dash-title">Operadores en Baño</div>
                     <div class="dash-value val-cyan" id="dashBano">0</div>
                 </div>
             </div>
@@ -216,10 +206,14 @@
         <!-- TAB 3: AJUSTES -->
         <div id="tab-ajustes" class="tab-content">
             <div class="ajustes-seccion">
-                <h3>Control de Geocercas</h3>
-                <p class="texto-ayuda">Dibuja áreas de interés directamente en el mapa (Ej. Bloque A, Zona LCL) para un control visual impecable.</p>
-                <button id="btnDibujarGeo" class="btn-ajuste" onclick="iniciarDibujoGeocerca()">Definir Nueva Geocerca</button>
+                <h3>Geocercas</h3>
+                <p class="texto-ayuda">Dibuja áreas en el mapa para control visual.</p>
+                <button id="btnDibujarGeo" class="btn-ajuste" onclick="iniciarDibujoGeocerca()">📍 Dibujar Geocerca</button>
                 <button id="btnGuardarGeo" class="btn-guardar-geo" onclick="guardarGeocerca()">Guardar Polígono</button>
+            </div>
+            <div class="ajustes-seccion">
+                <h3>Geocercas Guardadas</h3>
+                <div id="listaGeocercasGuardadas"></div>
             </div>
         </div>
 
@@ -228,16 +222,16 @@
     <!-- REPRODUCTOR HISTORIAL -->
     <div id="reproductorRutas" class="reproductor-rutas">
         <div class="reproductor-header">
-            <h2 id="repPlaca">Auditoría de Ruta: --</h2>
+            <h2 id="repPlaca">Historial: --</h2>
             <div>
                 <input type="date" id="repFecha" class="input-fecha" onchange="cargarHistorialDia()">
-                <button class="btn-cerrar-rep" style="margin-left: 15px;" onclick="cerrarReproductor()">Cerrar</button>
+                <button class="btn-cerrar-rep" style="margin-left: 10px;" onclick="cerrarReproductor()">Cerrar</button>
             </div>
         </div>
         <div class="reproductor-datos">
-            <div>Timestamp: <span id="repInfoHora">--:--</span></div>
-            <div>Velocidad: <span id="repInfoVel">-- km/h</span></div>
-            <div>Estado de Flujo: <span id="repInfoEst">--</span></div>
+            <div>Hora: <span id="repInfoHora">--:--</span></div>
+            <div>Vel: <span id="repInfoVel">-- km/h</span></div>
+            <div>Edo: <span id="repInfoEst">--</span></div>
         </div>
         <div class="reproductor-controles">
             <button class="btn-play" id="btnPlayRep" onclick="togglePlayRep()">Play</button>
@@ -246,13 +240,8 @@
     </div>
 
     <script>
-        // INICIALIZAR MAPA (Quitamos el filtro oscuro para aprovechar la luz del día)
         const mapa = L.map('mapa', { zoomControl: false }).setView([19.066, -104.295], 16);
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
-            maxZoom: 19 
-        }).addTo(mapa);
-        
-        // Controles a la derecha para que no estorben el panel
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapa);
         L.control.zoom({ position: 'topright' }).addTo(mapa);
 
         const firebaseConfig = { apiKey: "AIzaSyAH7D-sLL4fCJDliP8xzuYUQGt-H5H7nXE", authDomain: "patio-densidad.firebaseapp.com", databaseURL: "https://patio-densidad-default-rtdb.firebaseio.com", projectId: "patio-densidad" };
@@ -264,20 +253,15 @@
         let camionSeleccionado = null;
         let dataGlobal = {};
         let seleccionadosMulti = new Set();
-        let geocercasMapa = [];
+        let geocercasMapa = {}; // Guardaremos referencias para borrarlas
 
-        // --- NAVEGACIÓN DE PESTAÑAS ---
         window.cambiarTab = function(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('activo'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('activo'));
-            
             document.getElementById(`tab-${tabName}`).classList.add('activo');
-            if(tabName === 'monitoreo') document.getElementById('btnTabMonitoreo').classList.add('activo');
-            if(tabName === 'dashboard') document.getElementById('btnTabDashboard').classList.add('activo');
-            if(tabName === 'ajustes') document.getElementById('btnTabAjustes').classList.add('activo');
+            document.getElementById(`btnTab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`).classList.add('activo');
         };
 
-        // --- DASHBOARD ACTUALIZADOR ---
         function actualizarDashboard() {
             let total = 0, ocio = 0, bano = 0;
             for(let key in dataGlobal) {
@@ -298,7 +282,6 @@
             document.getElementById('btnDibujarGeo').style.display = 'none';
             document.getElementById('btnGuardarGeo').style.display = 'block';
             document.getElementById('mapa').style.cursor = 'crosshair'; 
-            alert("Modo de dibujo: Haz clic en los bordes del área a trazar.");
         };
 
         mapa.on('click', function(e) {
@@ -316,9 +299,8 @@
         window.guardarGeocerca = function() {
             if (puntosDibujo.length < 3) return alert("Mínimo 3 puntos.");
             let nombre = prompt("Nombre de la Geocerca (Ej. Zona LCL):");
-            if (nombre) {
-                db.ref('configuracion/geocercas').push({ nombre: nombre, coordenadas: puntosDibujo });
-            }
+            if (nombre) db.ref('configuracion/geocercas').push({ nombre: nombre, coordenadas: puntosDibujo });
+            
             modoDibujo = false;
             document.getElementById('btnDibujarGeo').style.display = 'block';
             document.getElementById('btnGuardarGeo').style.display = 'none';
@@ -329,26 +311,50 @@
             puntosDibujo = []; marcadoresDibujo = []; polylineDibujo = null;
         };
 
+        // GESTIÓN DE GEOCERCAS (Ajustes -> Eliminar)
+        window.eliminarGeocerca = function(key) {
+            if(confirm("¿Seguro que deseas borrar esta geocerca?")) {
+                db.ref('configuracion/geocercas/' + key).remove();
+            }
+        };
+
         db.ref('configuracion/geocercas').on('value', snap => {
-            geocercasMapa.forEach(geo => mapa.removeLayer(geo));
-            geocercasMapa = [];
+            // Limpiar las viejas del mapa
+            for(let k in geocercasMapa) mapa.removeLayer(geocercasMapa[k]);
+            geocercasMapa = {};
+            
+            let htmlListaGeo = "";
             const data = snap.val();
-            if(!data) return;
+            
+            if(!data) {
+                document.getElementById('listaGeocercasGuardadas').innerHTML = "<p class='texto-ayuda'>No hay geocercas guardadas.</p>";
+                return;
+            }
+            
             for(let key in data) {
                 let geo = data[key];
+                // 1. Dibujarla en el mapa
                 let poligono = L.polygon(geo.coordenadas, {color: '#ffffff', weight: 2, fillColor: '#ffffff', fillOpacity: 0.15}).addTo(mapa);
                 poligono.bindTooltip(`${geo.nombre}`, {permanent: true, direction: 'center', className: 'geo-tooltip'}).openTooltip();
-                geocercasMapa.push(poligono);
+                geocercasMapa[key] = poligono;
+                
+                // 2. Agregarla a la lista de Ajustes
+                htmlListaGeo += `
+                    <div class="item-geo">
+                        <span>${geo.nombre}</span>
+                        <button onclick="eliminarGeocerca('${key}')" title="Borrar">❌</button>
+                    </div>`;
             }
+            document.getElementById('listaGeocercasGuardadas').innerHTML = htmlListaGeo;
         });
 
-        // --- REPRODUCTOR DE RUTAS ---
+        // --- REPRODUCTOR ---
         let datosHistorial = [], polylineHistorial = null, marcadorHistorial = null, timerHistorial = null;
 
         window.abrirReproductor = function() {
             if (!camionSeleccionado) return;
             document.getElementById('reproductorRutas').style.display = 'block';
-            document.getElementById('repPlaca').innerText = "Auditoría de Ruta: " + camionSeleccionado;
+            document.getElementById('repPlaca').innerText = "Historial: " + camionSeleccionado;
             const hoy = new Date().toISOString().split('T')[0];
             document.getElementById('repFecha').value = hoy;
             cargarHistorialDia();
@@ -358,7 +364,7 @@
             const fecha = document.getElementById('repFecha').value;
             if(!fecha || !camionSeleccionado) return;
             limpiarRutaMapa();
-            document.getElementById('repInfoHora').innerText = "Cargando...";
+            document.getElementById('repInfoHora').innerText = "...";
 
             db.ref(`historial_rutas/${fecha}/${camionSeleccionado}`).once('value', snap => {
                 const data = snap.val();
@@ -380,7 +386,7 @@
             const ptos = datosHistorial.map(p => [p.lat, p.lng]);
             polylineHistorial = L.polyline(ptos, {color: '#FF5E3A', weight: 4, opacity: 0.8, dashArray: '8, 8'}).addTo(mapa);
             mapa.fitBounds(polylineHistorial.getBounds(), {padding: [50, 50]});
-            const ghostIcon = L.divIcon({ className: '', html: `<div class="icono-base icono-fantasma"></div>`, iconSize: [16, 16], iconAnchor: [8, 8] });
+            const ghostIcon = L.divIcon({ className: '', html: `<div class="icono-base icono-fantasma"></div>`, iconSize: [12, 12], iconAnchor: [6, 6] });
             marcadorHistorial = L.marker(ptos[0], {icon: ghostIcon, zIndexOffset: 1000}).addTo(mapa);
         }
 
@@ -392,11 +398,11 @@
             document.getElementById('repInfoHora').innerText = fechaObj.toLocaleTimeString();
             document.getElementById('repInfoVel').innerText = punto.vel + " km/h";
             
-            let estFormateado = "FLUJO ACTIVO";
-            if(punto.est === 'baño') estFormateado = "PAUSA (BAÑO)";
-            if(punto.est === 'pager') estFormateado = "FALLA PAGER";
+            let estFormateado = "ACTIVO";
+            if(punto.est === 'baño') estFormateado = "BAÑO";
+            if(punto.est === 'pager') estFormateado = "PAGER";
             if(punto.est === 'emergencia') estFormateado = "EMERGENCIA";
-            if(punto.est === 'ocio') estFormateado = "OCIO / DETENIDO";
+            if(punto.est === 'ocio') estFormateado = "OCIO";
             document.getElementById('repInfoEst').innerText = estFormateado;
         };
 
@@ -434,7 +440,7 @@
             mapa.setView([19.066, -104.295], 16);
         };
 
-        // --- SISTEMA DE LOGÍSTICA ---
+        // --- SISTEMA ---
         window.toggleMulti = function(placa, event) {
             event.stopPropagation();
             if (event.target.checked) seleccionadosMulti.add(placa);
@@ -447,17 +453,16 @@
             const panelInd = document.getElementById('panelAcciones');
             if (seleccionadosMulti.size > 0) {
                 panel.style.display = 'flex';
-                document.getElementById('lblMulti').innerText = `Selección: ${seleccionadosMulti.size} Unidades`;
+                document.getElementById('lblMulti').innerText = `Seleccionadas: ${seleccionadosMulti.size}`;
                 panelInd.style.display = 'none'; camionSeleccionado = null; renderLista(); 
             } else { panel.style.display = 'none'; }
         };
 
         window.enviarMensajeMultiple = function() {
-            const msj = prompt("Señal de voz para el GRUPO:");
+            const msj = prompt("Mensaje para el GRUPO:");
             if (msj && msj.trim() !== "") {
                 seleccionadosMulti.forEach(placa => { if(dataGlobal[placa]) db.ref('camiones_en_patio/' + placa).update({ tts_mensaje: msj.trim(), tts_timestamp: Date.now() }); });
-                alert("Señal transmitida.");
-                seleccionadosMulti.clear(); actualizarPanelMulti(); renderLista();
+                alert("Enviado."); seleccionadosMulti.clear(); actualizarPanelMulti(); renderLista();
             }
         };
 
@@ -468,9 +473,8 @@
             document.getElementById('panelAcciones').style.display = 'flex';
             document.getElementById('tituloAccion').innerText = "Unidad: " + placa;
             
-            if (estado !== 'activo') {
-                document.getElementById('btnResolverAlerta').style.display = 'block';
-            } else { document.getElementById('btnResolverAlerta').style.display = 'none'; }
+            if (estado !== 'activo') document.getElementById('btnResolverAlerta').style.display = 'block';
+            else document.getElementById('btnResolverAlerta').style.display = 'none';
             renderLista();
         };
 
@@ -478,14 +482,14 @@
             const input = document.getElementById('inputVoz');
             if (camionSeleccionado && input.value.trim() !== "") {
                 db.ref('camiones_en_patio/' + camionSeleccionado).update({ tts_mensaje: input.value.trim(), tts_timestamp: Date.now() });
-                input.value = ""; alert("Señal transmitida.");
+                input.value = ""; alert("Enviado.");
             }
         };
 
         window.enviarMensajeGlobal = function() {
-            const msj = prompt("Alerta Global:");
+            const msj = prompt("Mensaje a TODA LA FLOTA:");
             if (msj && msj.trim() !== "") {
-                if(confirm("¿Forzar transmisión a todas las unidades?")) {
+                if(confirm("¿Transmitir a todos?")) {
                     for(const placa in dataGlobal) { db.ref('camiones_en_patio/' + placa).update({ tts_mensaje: msj.trim(), tts_timestamp: Date.now() }); }
                 }
             }
@@ -499,7 +503,7 @@
         };
 
         window.forzarSalidaTorre = function() {
-            if (camionSeleccionado && confirm("¿Expulsar unidad de la base de datos?")) {
+            if (camionSeleccionado && confirm("¿Expulsar unidad?")) {
                 db.ref('camiones_en_patio/' + camionSeleccionado).remove();
                 document.getElementById('panelAcciones').style.display = 'none';
                 camionSeleccionado = null;
@@ -512,7 +516,7 @@
             if (estado === 'pager') claseFondo = 'icono-pager';
             if (estado === 'baño') claseFondo = 'icono-bano'; 
             if (estado === 'ocio') claseFondo = 'icono-ocio';
-            return L.divIcon({ className: '', html: `<div class="icono-base ${claseFondo}"></div>`, iconSize: [22, 22], iconAnchor: [11, 11] });
+            return L.divIcon({ className: '', html: `<div class="icono-base ${claseFondo}"></div>`, iconSize: [14, 14], iconAnchor: [7, 7] });
         }
 
         window.renderLista = function() {
@@ -523,37 +527,39 @@
                 const camion = dataGlobal[placa];
                 const tipo = camion.tipo || 'FORANEO';
                 const estado = camion.estado || 'activo';
-                let infoRuta = tipo === 'FORANEO' ? `Des: ${camion.destino || 'S/D'}` : `BQ: ${camion.buque} | ST: ${camion.sts} | EMP: ${camion.empleado || 'S/D'}`;
+                let infoRuta = tipo === 'FORANEO' ? `Des: ${camion.destino || 'S/D'}` : `BQ: ${camion.buque} | ST: ${camion.sts}`;
                 
                 if (filtro !== "" && !placa.includes(filtro) && !infoRuta.includes(filtro)) continue; 
                 totalUnidades++;
                 
                 let claseCSS = tipo === 'INTERNO' ? 'interno' : 'foraneo';
-                let chipHtml = tipo === 'INTERNO' ? `<span class="chip-estado chip-interno">Tracto Interno</span>` : `<span class="chip-estado chip-foraneo">Tracto Foráneo</span>`;
+                let chipHtml = ''; // Eliminado el chip redundante
                 
-                if (estado === 'emergencia') { claseCSS = 'alerta-emergencia'; chipHtml = `<span class="chip-estado chip-emergencia">🚨 Emergencia</span>`;} 
-                else if (estado === 'pager') { claseCSS = 'alerta-pager'; chipHtml = `<span class="chip-estado chip-pager">📟 Falla Pager</span>`;}
-                else if (estado === 'baño') { claseCSS = 'alerta-bano'; chipHtml = `<span class="chip-estado chip-bano">🚾 En Baño</span>`;}
-                else if (estado === 'ocio') { claseCSS = 'alerta-ocio'; chipHtml = `<span class="chip-estado chip-ocio">⏳ Tiempo Muerto</span>`;}
+                if (estado === 'emergencia') { claseCSS = 'alerta-emergencia'; chipHtml = `<span class="chip-estado chip-emergencia">Emergencia</span>`;} 
+                else if (estado === 'pager') { claseCSS = 'alerta-pager'; chipHtml = `<span class="chip-estado chip-pager">Falla Pager</span>`;}
+                else if (estado === 'baño') { claseCSS = 'alerta-bano'; chipHtml = `<span class="chip-estado chip-bano">En Baño</span>`;}
+                else if (estado === 'ocio') { claseCSS = 'alerta-ocio'; chipHtml = `<span class="chip-estado chip-ocio">Tiempo Muerto</span>`;}
 
                 if (placa === camionSeleccionado) claseCSS += ' seleccionada';
                 let isChecked = seleccionadosMulti.has(placa) ? 'checked' : '';
-                
-                let tiempo = `Flujo: ${Math.floor((Date.now() - (camion.hora_ingreso||Date.now())) / 60000)}m`;
+                let tiempo = `${Math.floor((Date.now() - (camion.hora_ingreso||Date.now())) / 60000)}m`;
 
+                // Tarjeta súper reducida
                 let tarjetaHTML = `
                     <div class="tarjeta-unidad ${claseCSS}" onclick="seleccionarCamion('${placa}', '${estado}')">
                         ${chipHtml}
-                        <div class="placa"><input type="checkbox" class="chk-multi" ${isChecked} onclick="toggleMulti('${placa}', event)">
-                        <span>${placa}</span><span style="text-align: right; color:var(--text-secondary); font-weight:600;">${camion.velocidad_actual||0} km/h</span></div>
-                        <div class="datos"><span>${infoRuta}</span><span>${tiempo}</span></div>
+                        <div class="placa">
+                            <input type="checkbox" class="chk-multi" ${isChecked} onclick="toggleMulti('${placa}', event)">
+                            <span>${placa}</span><span style="text-align: right; font-size:12px; color:var(--text-secondary);">${camion.velocidad_actual||0} km/h</span>
+                        </div>
+                        <div class="datos"><span>${infoRuta}</span><span>Flujo: ${tiempo}</span></div>
                     </div>`;
 
                 if (tipo === 'INTERNO') htmlInternos += tarjetaHTML; else htmlForaneos += tarjetaHTML; 
             }
 
             let vistaFinal = "";
-            if (htmlInternos !== "") vistaFinal += `<div class="titulo-seccion">Pipelines Internos</div>` + htmlInternos;
+            if (htmlInternos !== "") vistaFinal += `<div class="titulo-seccion">Unidades Internas</div>` + htmlInternos;
             if (htmlForaneos !== "") vistaFinal += `<div class="titulo-seccion">Flujo Foráneo</div>` + htmlForaneos;
             
             listaUnidades.innerHTML = vistaFinal;
