@@ -3,177 +3,235 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Torre de Control - Patio YMS</title>
+    <title>Command Center - YMS</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+    
+    <!-- Tipografía Inter (Estilo Ejecutivo/Moderno) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
     <style>
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #1a1a1a; overflow: hidden; }
-        #mapa { width: calc(100vw - 340px); height: calc(100vh - 65px); position: absolute; top: 65px; left: 340px; z-index: 1; }
+        /* PALETA DE COLORES "ROMER" (Quietly Futuristic) */
+        :root {
+            --bg-cinematic: #070708;
+            --border-thin: #232426;
+            --accent-lime: #C4FF44;
+            --accent-blue: #D1EBEB;
+            --surface-glass: rgba(255, 255, 255, 0.03);
+            --surface-hover: rgba(255, 255, 255, 0.08);
+            --text-primary: #ffffff;
+            --text-muted: #888888;
+            --danger: #ff4444;
+            --warning: #ff9800;
+            --purple: #b066ff;
+        }
+
+        body { margin: 0; font-family: 'Inter', sans-serif; background-color: var(--bg-cinematic); color: var(--text-primary); overflow: hidden; letter-spacing: -0.01em;}
+        #mapa { width: calc(100vw - 360px); height: calc(100vh - 70px); position: absolute; top: 70px; left: 360px; z-index: 1; }
         
-        .header { background-color: #001a33; color: white; padding: 15px; position: absolute; top: 0; left: 0; width: 100%; height: 65px; z-index: 1000; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #ffcc00; }
-        .contador { font-size: 16px; font-weight: bold; background: #003366; padding: 8px 15px; border-radius: 20px; margin-right: 20px;}
+        /* HEADER COMMAND CENTER */
+        .header { background-color: var(--bg-cinematic); border-bottom: 1px solid var(--border-thin); padding: 0 25px; position: absolute; top: 0; left: 0; width: 100%; height: 70px; z-index: 1000; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 18px; font-weight: 500; margin: 0; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-primary);}
+        .contador { font-size: 13px; font-weight: 600; background: var(--surface-glass); border: 1px solid var(--border-thin); padding: 8px 16px; border-radius: 4px; color: var(--accent-lime); margin-right: 360px;}
         
-        .panel-lateral { width: 340px; height: calc(100vh - 65px); background-color: #222; position: absolute; top: 65px; left: 0; z-index: 100; display: flex; flex-direction: column;}
+        /* PANEL LATERAL */
+        .panel-lateral { width: 360px; height: calc(100vh - 70px); background-color: var(--bg-cinematic); border-right: 1px solid var(--border-thin); position: absolute; top: 70px; left: 0; z-index: 100; display: flex; flex-direction: column;}
         
-        /* PESTAÑAS (TABS) */
-        .tabs-header { display: flex; background: #111; border-bottom: 2px solid #333; }
-        .tab-btn { flex: 1; padding: 15px; background: transparent; color: #888; border: none; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.3s; }
-        .tab-btn.activo { color: #ffcc00; border-bottom: 3px solid #ffcc00; background: #1a1a1a; }
+        /* TABS (PESTAÑAS) */
+        .tabs-header { display: flex; border-bottom: 1px solid var(--border-thin); background: var(--bg-cinematic); }
+        .tab-btn { flex: 1; padding: 15px 0; background: transparent; color: var(--text-muted); border: none; cursor: pointer; font-weight: 500; font-size: 13px; transition: 0.3s; text-transform: uppercase; letter-spacing: 0.05em;}
+        .tab-btn:hover { color: var(--text-primary); }
+        .tab-btn.activo { color: var(--accent-lime); border-bottom: 2px solid var(--accent-lime); }
         
         .tab-content { display: none; flex-direction: column; height: 100%; overflow-y: auto;}
         .tab-content.activo { display: flex; }
 
-        /* CONTENIDO DE MONITOREO (Lo que ya tenías) */
-        .panel-superior { padding: 15px; background: #111; border-bottom: 2px solid #333; }
-        .input-buscador { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #555; background: #333; color: white; margin-bottom: 15px; box-sizing: border-box; }
-        .btn-global { background-color: #d32f2f; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .lista-scroll { flex: 1; overflow-y: auto; padding: 10px; position: relative;}
+        /* MONITOREO Y BUSCADOR */
+        .panel-superior { padding: 20px; border-bottom: 1px solid var(--border-thin); }
+        .input-buscador { width: 100%; padding: 12px 15px; border-radius: 4px; border: 1px solid var(--border-thin); background: var(--surface-glass); color: var(--text-primary); margin-bottom: 15px; box-sizing: border-box; font-family: 'Inter'; font-size: 13px;}
+        .input-buscador:focus { outline: none; border-color: var(--accent-blue); }
+        .btn-global { background-color: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 10px; width: 100%; border-radius: 4px; cursor: pointer; font-weight: 500; transition: 0.3s; font-family: 'Inter'; font-size: 13px;}
+        .btn-global:hover { background-color: rgba(255, 68, 68, 0.1); }
         
-        /* CONTENIDO DE AJUSTES (NUEVO) */
-        .ajustes-seccion { padding: 20px; border-bottom: 1px solid #333; }
-        .ajustes-seccion h3 { color: white; margin-top: 0; font-size: 16px; border-bottom: 1px solid #ffcc00; padding-bottom: 5px;}
-        .btn-ajuste { background-color: #007AFF; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 10px;}
-        .btn-guardar-geo { background-color: #4caf50; display: none; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .texto-ayuda { color: #aaa; font-size: 12px; margin-bottom: 10px; }
-
-        .titulo-seccion { font-size: 14px; text-align: center; font-weight: bold; padding: 5px; margin: 10px 0; border-radius: 4px; color: white;}
-        .seccion-internos { background-color: #1e4d20; border-left: 5px solid #4caf50;}
-        .seccion-foraneos { background-color: #003366; border-left: 5px solid #007AFF;}
+        .lista-scroll { flex: 1; overflow-y: auto; padding: 20px; position: relative;}
         
-        .chk-multi { transform: scale(1.5); cursor: pointer; margin-right: 10px; accent-color: #ffcc00;}
+        /* SEPARADORES DE SECCIÓN */
+        .titulo-seccion { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; padding: 0 0 10px 0; margin: 15px 0 10px 0; color: var(--text-muted); border-bottom: 1px solid var(--border-thin);}
         
-        .panel-acciones { background-color: #111; padding: 15px; border-top: 2px solid #ffcc00; display: none; flex-direction: column; overflow-y: auto;}
-        .panel-acciones h3 { color: white; font-size: 16px; margin: 0 0 10px 0; text-align: center; }
-        .input-tts { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #555; background: #333; color: white; box-sizing: border-box;}
-        .btn-radio { background-color: #ff9800; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 10px;}
-        .btn-historial { background-color: #007AFF; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 10px;}
-        .btn-resolver { background-color: #2e7d32; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 10px;}
-        .btn-eliminar { background-color: #d32f2f; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; }
-
-        .panel-multi { background-color: #003366; padding: 15px; border-top: 2px solid #ffcc00; display: none; flex-direction: column; position: sticky; bottom: 0; z-index: 200; box-shadow: 0 -4px 10px rgba(0,0,0,0.5);}
-
-        .tarjeta-unidad { background: #333; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
-        .tarjeta-unidad.interno { border-left: 5px solid #4caf50; } 
-        .tarjeta-unidad.foraneo { border-left: 5px solid #007AFF; } 
-        .tarjeta-unidad.seleccionada { border: 2px solid white; background: #444;}
+        /* TARJETAS DE UNIDADES (Glassmorphism) */
+        .tarjeta-unidad { background: var(--surface-glass); border: 1px solid var(--border-thin); padding: 15px; border-radius: 6px; margin-bottom: 12px; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden;}
+        .tarjeta-unidad:hover { background: var(--surface-hover); border-color: #444; }
+        .tarjeta-unidad.seleccionada { border-color: var(--accent-blue); background: rgba(209, 235, 235, 0.05);}
         
-        .tarjeta-unidad.alerta-emergencia { border-left: 5px solid #ff0000; background: #551a1a; animation: parpadeo 1s infinite; }
-        .tarjeta-unidad.alerta-pager { border-left: 5px solid #ff5722; background: #4a2311; }
-        .tarjeta-unidad.alerta-bano { border-left: 5px solid #ffcc00; background: #4a4a11; }
-        .tarjeta-unidad.alerta-ocio { border-left: 5px solid #9c27b0; background: #3b0d42; animation: parpadeo 1s infinite; }
+        /* BORDES DE COLOR SUTILES PARA ESTADOS */
+        .tarjeta-unidad.interno { border-left: 3px solid var(--accent-lime); } 
+        .tarjeta-unidad.foraneo { border-left: 3px solid var(--accent-blue); } 
+        .tarjeta-unidad.alerta-emergencia { border-left: 3px solid var(--danger); background: rgba(255,0,0,0.05); }
+        .tarjeta-unidad.alerta-pager { border-left: 3px solid var(--warning); }
+        .tarjeta-unidad.alerta-bano { border-left: 3px solid #ffee58; }
+        .tarjeta-unidad.alerta-ocio { border-left: 3px solid var(--purple); background: rgba(176, 102, 255, 0.05); }
         
-        @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
-        .placa { font-size: 16px; font-weight: bold; margin-bottom: 5px; display:flex; align-items: center;}
+        .chk-multi { accent-color: var(--accent-lime); cursor: pointer; margin-right: 10px; }
+        .placa { font-size: 14px; font-weight: 600; margin-bottom: 8px; display:flex; align-items: center; color: var(--text-primary);}
         .placa span { flex: 1; }
-        .datos { font-size: 12px; color: #ccc; display: flex; justify-content: space-between; margin-top: 5px; padding-left: 28px;}
+        .datos { font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between; padding-left: 24px;}
+        
+        /* PANELES DE ACCIÓN (Glassmorphism) */
+        .panel-acciones, .panel-multi { background: rgba(7, 7, 8, 0.95); backdrop-filter: blur(10px); padding: 20px; border-top: 1px solid var(--border-thin); display: none; flex-direction: column; position: sticky; bottom: 0; z-index: 200; }
+        .panel-acciones h3, .panel-multi h3 { color: var(--text-primary); font-size: 14px; margin: 0 0 15px 0; font-weight: 500; letter-spacing: 0.02em;}
+        .input-tts { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 4px; border: 1px solid var(--border-thin); background: var(--bg-cinematic); color: white; box-sizing: border-box; font-family: 'Inter'; font-size: 13px;}
+        
+        /* BOTONES PREMIUM */
+        .btn-radio { background-color: var(--accent-lime); color: var(--bg-cinematic); border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: 600; margin-bottom: 10px; font-size: 13px; font-family: 'Inter';}
+        .btn-historial { background-color: var(--accent-blue); color: var(--bg-cinematic); border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: 600; margin-bottom: 10px; font-size: 13px; font-family: 'Inter';}
+        .btn-resolver { background-color: transparent; color: var(--accent-lime); border: 1px solid var(--accent-lime); padding: 12px; border-radius: 4px; cursor: pointer; font-weight: 500; margin-bottom: 10px; font-size: 13px;}
+        .btn-eliminar { background-color: transparent; color: var(--danger); border: 1px solid var(--border-thin); padding: 12px; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 13px;}
+        .btn-eliminar:hover { border-color: var(--danger); }
 
-        .icono-base { display: block; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.5); width: 16px; height: 16px; }
-        .icono-interno { background-color: #4caf50; } 
-        .icono-foraneo { background-color: #007AFF; } 
-        .icono-bano { background-color: #ffcc00; }
-        .icono-emergencia { background-color: #ff0000; animation: parpadeo 1s infinite;}
-        .icono-pager { background-color: #ff5722; }
-        .icono-ocio { background-color: #9c27b0; animation: parpadeo 1s infinite; }
-        .icono-fantasma { display: flex; justify-content: center; align-items: center; background-color: white; border-color: #333; font-size: 14px; width: 22px; height: 22px;}
+        /* NUEVA TABLA DASHBOARD */
+        .dash-container { padding: 30px; display: flex; flex-direction: column; gap: 20px;}
+        .dash-card { background: var(--surface-glass); border: 1px solid var(--border-thin); padding: 25px; border-radius: 6px; display: flex; flex-direction: column; gap: 10px;}
+        .dash-title { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600;}
+        .dash-value { font-size: 36px; font-weight: 500; color: var(--text-primary); }
+        .val-lime { color: var(--accent-lime); }
+        .val-purple { color: var(--purple); }
 
-        .reproductor-rutas { position: absolute; bottom: 25px; left: 365px; width: calc(100vw - 410px); background: rgba(0, 26, 51, 0.95); padding: 15px 25px; border-radius: 12px; z-index: 1000; display: none; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.7); border: 2px solid #ffcc00; box-sizing: border-box;}
-        .reproductor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 10px;}
-        .reproductor-datos { display: flex; justify-content: space-around; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; font-size: 15px; font-weight: bold; margin-bottom: 15px;}
-        .reproductor-datos span { color: #ffcc00; margin-left: 5px;}
-        .reproductor-controles { display: flex; align-items: center; gap: 15px; }
-        .slider-tiempo { flex: 1; accent-color: #ffcc00; cursor: pointer; }
-        .btn-play { background-color: #ffcc00; color: #000; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; min-width: 100px;}
-        .btn-cerrar-rep { background-color: #d32f2f; color: white; padding: 8px 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .input-fecha { padding: 5px 10px; border-radius: 5px; border: none; font-weight: bold; background: #333; color: white;}
+        /* TABLA DE AJUSTES */
+        .ajustes-seccion { padding: 30px; border-bottom: 1px solid var(--border-thin); }
+        .ajustes-seccion h3 { color: var(--text-primary); margin-top: 0; font-size: 14px; font-weight: 500;}
+        .texto-ayuda { color: var(--text-muted); font-size: 13px; margin-bottom: 20px; line-height: 1.5; }
+        .btn-ajuste { background-color: var(--surface-glass); color: var(--text-primary); border: 1px solid var(--border-thin); padding: 12px; width: 100%; border-radius: 4px; cursor: pointer; font-weight: 500; margin-bottom: 10px; font-size: 13px;}
+        .btn-guardar-geo { background-color: var(--accent-lime); color: var(--bg-cinematic); border: none; padding: 12px; width: 100%; border-radius: 4px; cursor: pointer; font-weight: 600; display: none; font-size: 13px;}
+
+        /* ICONOS DEL MAPA (Puntos limpios) */
+        .icono-base { display: block; border-radius: 50%; border: 2px solid var(--bg-cinematic); box-shadow: 0 0 10px rgba(0,0,0,0.8); width: 14px; height: 14px; }
+        .icono-interno { background-color: var(--accent-lime); } 
+        .icono-foraneo { background-color: var(--accent-blue); } 
+        .icono-bano { background-color: #ffee58; }
+        .icono-emergencia { background-color: var(--danger); }
+        .icono-pager { background-color: var(--warning); }
+        .icono-ocio { background-color: var(--purple); }
+        .icono-fantasma { display: flex; justify-content: center; align-items: center; background-color: var(--bg-cinematic); border-color: var(--accent-blue); font-size: 12px; width: 20px; height: 20px; color: white;}
+
+        /* REPRODUCTOR DE RUTAS (Cinematic) */
+        .reproductor-rutas { position: absolute; bottom: 25px; left: 385px; width: calc(100vw - 410px); background: rgba(7, 7, 8, 0.90); backdrop-filter: blur(10px); padding: 20px; border-radius: 8px; z-index: 1000; display: none; border: 1px solid var(--border-thin); box-sizing: border-box;}
+        .reproductor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-thin); padding-bottom: 15px;}
+        .reproductor-header h2 { margin:0; font-size: 16px; font-weight: 500;}
+        .reproductor-datos { display: flex; justify-content: space-around; background: var(--surface-glass); padding: 15px; border-radius: 4px; font-size: 13px; color: var(--text-muted); margin-bottom: 20px; border: 1px solid var(--border-thin);}
+        .reproductor-datos span { color: var(--text-primary); margin-left: 5px; font-weight: 600;}
+        .reproductor-controles { display: flex; align-items: center; gap: 20px; }
+        .slider-tiempo { flex: 1; accent-color: var(--accent-lime); cursor: pointer; }
+        .btn-play { background-color: var(--accent-lime); color: #000; padding: 10px 20px; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 13px; min-width: 100px; font-family: 'Inter';}
+        .btn-cerrar-rep { background-color: transparent; color: var(--text-muted); border: 1px solid var(--border-thin); padding: 8px 15px; border-radius: 4px; font-weight: 500; cursor: pointer; font-size: 12px;}
+        .input-fecha { padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border-thin); font-weight: 500; background: var(--bg-cinematic); color: var(--text-primary); font-family: 'Inter';}
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>📡 TORRE YMS</h1>
-        <div class="contador">Unidades: <span id="contadorCamiones">0</span></div>
+        <h1>Signal Intelligence Flow (YMS)</h1>
+        <div class="contador">Unidades en Flujo: <span id="contadorCamiones">0</span></div>
     </div>
     
     <div class="panel-lateral">
         
-        <!-- PESTAÑAS -->
+        <!-- PESTAÑAS (Romer Style) -->
         <div class="tabs-header">
-            <button class="tab-btn activo" id="btnTabMonitoreo" onclick="cambiarTab('monitoreo')">📡 Monitoreo</button>
-            <button class="tab-btn" id="btnTabAjustes" onclick="cambiarTab('ajustes')">⚙️ Ajustes</button>
+            <button class="tab-btn activo" id="btnTabMonitoreo" onclick="cambiarTab('monitoreo')">Señales</button>
+            <button class="tab-btn" id="btnTabDashboard" onclick="cambiarTab('dashboard')">Dashboard</button>
+            <button class="tab-btn" id="btnTabAjustes" onclick="cambiarTab('ajustes')">Ajustes</button>
         </div>
 
-        <!-- TAB 1: MONITOREO -->
+        <!-- TAB 1: MONITOREO (Señales) -->
         <div id="tab-monitoreo" class="tab-content activo">
             <div class="panel-superior">
-                <input type="text" id="inputBuscador" class="input-buscador" placeholder="🔍 Buscar Unidad o Destino..." onkeyup="renderLista()">
-                <button class="btn-global" onclick="enviarMensajeGlobal()">📢 Transmitir Mensaje a TODOS</button>
+                <input type="text" id="inputBuscador" class="input-buscador" placeholder="Buscar unidad, buque o STS..." onkeyup="renderLista()">
+                <button class="btn-global" onclick="enviarMensajeGlobal()">Detener / Transmitir Alerta Global</button>
             </div>
 
             <div class="lista-scroll" id="listaUnidades"></div>
 
             <div id="panelMulti" class="panel-multi">
-                <h3 id="lblMulti" style="color: white; font-size: 16px; margin: 0 0 10px 0; text-align: center;">Unidades Seleccionadas: 0</h3>
-                <button class="btn-radio" onclick="enviarMensajeMultiple()">✉️ Enviar Mensaje al Grupo</button>
+                <h3 id="lblMulti">Unidades Seleccionadas: 0</h3>
+                <button class="btn-radio" onclick="enviarMensajeMultiple()">Enviar Instrucción al Grupo</button>
             </div>
             
             <div id="panelAcciones" class="panel-acciones">
-                <h3 id="tituloAccion">Selecciona Unidad</h3>
-                <input type="text" id="inputVoz" class="input-tts" placeholder="Escribe mensaje a enviar...">
-                <button class="btn-radio" onclick="enviarMensajeTorre()">🗣️ Enviar Audio al Operador</button>
-                <button class="btn-historial" onclick="abrirReproductor()">🕒 Ver Historial (Línea de Tiempo)</button>
-                <button id="btnResolverAlerta" class="btn-resolver" style="display:none;" onclick="resolverAlertaTorre()">✅ Resolver Alerta</button>
-                <button class="btn-eliminar" onclick="forzarSalidaTorre()">🛑 Finalizar Viaje Forzado</button>
+                <h3 id="tituloAccion">Unidad: Seleccionada</h3>
+                <input type="text" id="inputVoz" class="input-tts" placeholder="Dictar instrucción (TTS)...">
+                <button class="btn-radio" onclick="enviarMensajeTorre()">Transmitir Señal</button>
+                <button class="btn-historial" onclick="abrirReproductor()">Ver Auditoría de Ruta</button>
+                <button id="btnResolverAlerta" class="btn-resolver" style="display:none;" onclick="resolverAlertaTorre()">Resolver Alerta</button>
+                <button class="btn-eliminar" onclick="forzarSalidaTorre()">Forzar Expulsión del Sistema</button>
             </div>
         </div>
 
-        <!-- TAB 2: AJUSTES -->
+        <!-- TAB 2: DASHBOARD (Métricas en vivo) -->
+        <div id="tab-dashboard" class="tab-content">
+            <div class="dash-container">
+                <div class="dash-card">
+                    <div class="dash-title">Total Operando</div>
+                    <div class="dash-value val-lime" id="dashTotal">0</div>
+                </div>
+                <div class="dash-card">
+                    <div class="dash-title">Unidades en Ocio (>3 Min)</div>
+                    <div class="dash-value val-purple" id="dashOcio">0</div>
+                </div>
+                <div class="dash-card">
+                    <div class="dash-title">Operadores en Pausa (Baño)</div>
+                    <div class="dash-value" id="dashBano" style="color: #ffee58;">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: AJUSTES -->
         <div id="tab-ajustes" class="tab-content">
             <div class="ajustes-seccion">
-                <h3>🗺️ Editor de Geocercas</h3>
-                <p class="texto-ayuda">Dibuja áreas de interés en el patio (Ej. Zona LCL, Bloque A). Da clic en el mapa para trazar y guarda cuando termines.</p>
-                <button id="btnDibujarGeo" class="btn-ajuste" onclick="iniciarDibujoGeocerca()">📍 Dibujar Geocerca Nueva</button>
-                <button id="btnGuardarGeo" class="btn-guardar-geo" onclick="guardarGeocerca()">✅ Guardar Geocerca</button>
-            </div>
-            
-            <div class="ajustes-seccion">
-                <h3>🎨 Colores de Tipos de Carga (Futuro)</h3>
-                <p class="texto-ayuda">Aquí podremos asignar colores personalizados. Ej: Housekeeping (Amarillo), Tren (Naranja), Externos (Blanco).</p>
-                <button class="btn-ajuste" style="background:#444; opacity: 0.5;">Próximamente</button>
+                <h3>Control de Geocercas</h3>
+                <p class="texto-ayuda">Dibuja áreas de interés directamente en el mapa (Ej. Bloque A, Zona LCL) para control visual.</p>
+                <button id="btnDibujarGeo" class="btn-ajuste" onclick="iniciarDibujoGeocerca()">Definir Nueva Geocerca</button>
+                <button id="btnGuardarGeo" class="btn-guardar-geo" onclick="guardarGeocerca()">Guardar Polígono</button>
             </div>
         </div>
 
     </div>
 
+    <!-- MAPA -->
     <div id="mapa"></div>
 
-    <!-- REPRODUCTOR -->
+    <!-- REPRODUCTOR HISTORIAL (Cinematic) -->
     <div id="reproductorRutas" class="reproductor-rutas">
         <div class="reproductor-header">
-            <h2 style="margin:0; font-size: 18px;" id="repPlaca">Historial: --</h2>
+            <h2 id="repPlaca">Auditoría de Ruta: --</h2>
             <div>
-                Fecha: <input type="date" id="repFecha" class="input-fecha" onchange="cargarHistorialDia()">
-                <button class="btn-cerrar-rep" style="margin-left: 15px;" onclick="cerrarReproductor()">✖ Cerrar</button>
+                <input type="date" id="repFecha" class="input-fecha" onchange="cargarHistorialDia()">
+                <button class="btn-cerrar-rep" style="margin-left: 15px;" onclick="cerrarReproductor()">Cerrar</button>
             </div>
         </div>
         <div class="reproductor-datos">
-            <div>Hora del registro: <span id="repInfoHora">--:--</span></div>
+            <div>Timestamp: <span id="repInfoHora">--:--</span></div>
             <div>Velocidad: <span id="repInfoVel">-- km/h</span></div>
-            <div>Estado: <span id="repInfoEst">--</span></div>
+            <div>Estado de Flujo: <span id="repInfoEst">--</span></div>
         </div>
         <div class="reproductor-controles">
-            <button class="btn-play" id="btnPlayRep" onclick="togglePlayRep()">▶️ Play</button>
+            <button class="btn-play" id="btnPlayRep" onclick="togglePlayRep()">Play</button>
             <input type="range" id="sliderRep" class="slider-tiempo" min="0" value="0" step="1" oninput="moverSliderRep()">
         </div>
     </div>
 
     <script>
+        // INICIALIZAR MAPA (Filtro sutil para oscurecer el satélite y que resalten los neones)
         const mapa = L.map('mapa').setView([19.066, -104.295], 16);
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapa);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
+            maxZoom: 19, 
+            className: 'map-tiles' 
+        }).addTo(mapa);
+
+        // Agregamos un filtro CSS al mapa para que parezca de noche/cinemático
+        document.querySelector('.leaflet-layer').style.filter = "brightness(0.6) contrast(1.2) saturate(0.8)";
 
         const firebaseConfig = { apiKey: "AIzaSyAH7D-sLL4fCJDliP8xzuYUQGt-H5H7nXE", authDomain: "patio-densidad.firebaseapp.com", databaseURL: "https://patio-densidad-default-rtdb.firebaseio.com", projectId: "patio-densidad" };
         firebase.initializeApp(firebaseConfig);
@@ -188,71 +246,57 @@
 
         // --- NAVEGACIÓN DE PESTAÑAS ---
         window.cambiarTab = function(tabName) {
-            document.getElementById('tab-monitoreo').classList.remove('activo');
-            document.getElementById('tab-ajustes').classList.remove('activo');
-            document.getElementById('btnTabMonitoreo').classList.remove('activo');
-            document.getElementById('btnTabAjustes').classList.remove('activo');
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('activo'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('activo'));
             
-            if(tabName === 'monitoreo') {
-                document.getElementById('tab-monitoreo').classList.add('activo');
-                document.getElementById('btnTabMonitoreo').classList.add('activo');
-            } else {
-                document.getElementById('tab-ajustes').classList.add('activo');
-                document.getElementById('btnTabAjustes').classList.add('activo');
-            }
+            document.getElementById(`tab-${tabName}`).classList.add('activo');
+            if(tabName === 'monitoreo') document.getElementById('btnTabMonitoreo').classList.add('activo');
+            if(tabName === 'dashboard') document.getElementById('btnTabDashboard').classList.add('activo');
+            if(tabName === 'ajustes') document.getElementById('btnTabAjustes').classList.add('activo');
         };
 
-        // --- SISTEMA DE GEOCERCAS INTERACTIVO ---
-        let modoDibujo = false;
-        let puntosDibujo = [];
-        let polylineDibujo = null;
-        let marcadoresDibujo = [];
+        // --- DASHBOARD ACTUALIZADOR ---
+        function actualizarDashboard() {
+            let total = 0, ocio = 0, bano = 0;
+            for(let key in dataGlobal) {
+                total++;
+                if(dataGlobal[key].estado === 'ocio') ocio++;
+                if(dataGlobal[key].estado === 'baño') bano++;
+            }
+            document.getElementById('dashTotal').innerText = total;
+            document.getElementById('dashOcio').innerText = ocio;
+            document.getElementById('dashBano').innerText = bano;
+        }
+
+        // --- SISTEMA DE GEOCERCAS ---
+        let modoDibujo = false, puntosDibujo = [], polylineDibujo = null, marcadoresDibujo = [];
 
         window.iniciarDibujoGeocerca = function() {
-            modoDibujo = true;
-            puntosDibujo = [];
+            modoDibujo = true; puntosDibujo = [];
             document.getElementById('btnDibujarGeo').style.display = 'none';
             document.getElementById('btnGuardarGeo').style.display = 'block';
-            document.getElementById('mapa').style.cursor = 'crosshair'; // Cambia el cursor para indicar dibujo
-            alert("Modo de dibujo activado. Haz clic en los bordes del mapa para trazar el polígono de tu zona.");
+            document.getElementById('mapa').style.cursor = 'crosshair'; 
+            alert("Modo de dibujo: Haz clic en los bordes del área a trazar.");
         };
 
         mapa.on('click', function(e) {
             if (!modoDibujo) return;
-            
-            // Agregar punto
             puntosDibujo.push([e.latlng.lat, e.latlng.lng]);
-            
-            // Dibujar marcador temporal
-            let marcador = L.circleMarker([e.latlng.lat, e.latlng.lng], {radius: 5, color: '#ff0000', fillColor: '#ff0000', fillOpacity: 1}).addTo(mapa);
+            let marcador = L.circleMarker([e.latlng.lat, e.latlng.lng], {radius: 4, color: '#C4FF44', fillColor: '#C4FF44', fillOpacity: 1}).addTo(mapa);
             marcadoresDibujo.push(marcador);
             
-            // Dibujar la línea uniendo los puntos
             if (polylineDibujo) mapa.removeLayer(polylineDibujo);
-            
             let puntosPoligono = [...puntosDibujo];
-            if(puntosPoligono.length > 2) puntosPoligono.push(puntosPoligono[0]); // Cerrar visualmente el polígono
-            
-            polylineDibujo = L.polygon(puntosPoligono, {color: '#ff0000', weight: 3, fillColor: '#ff0000', fillOpacity: 0.2}).addTo(mapa);
+            if(puntosPoligono.length > 2) puntosPoligono.push(puntosPoligono[0]);
+            polylineDibujo = L.polygon(puntosPoligono, {color: '#C4FF44', weight: 2, fillColor: '#C4FF44', fillOpacity: 0.1}).addTo(mapa);
         });
 
         window.guardarGeocerca = function() {
-            if (puntosDibujo.length < 3) {
-                alert("Necesitas al menos 3 puntos para crear una zona.");
-                return;
-            }
-            
-            let nombre = prompt("¿Qué nombre tiene esta zona/geocerca? (Ej. Bloque A)");
+            if (puntosDibujo.length < 3) return alert("Mínimo 3 puntos.");
+            let nombre = prompt("Nombre de la Geocerca (Ej. Zona LCL):");
             if (nombre) {
-                // Guardar en la base de datos
-                db.ref('configuracion/geocercas').push({
-                    nombre: nombre,
-                    coordenadas: puntosDibujo
-                });
-                alert("¡Geocerca guardada con éxito!");
+                db.ref('configuracion/geocercas').push({ nombre: nombre, coordenadas: puntosDibujo });
             }
-            
-            // Limpiar modo dibujo
             modoDibujo = false;
             document.getElementById('btnDibujarGeo').style.display = 'block';
             document.getElementById('btnGuardarGeo').style.display = 'none';
@@ -260,41 +304,29 @@
             
             if(polylineDibujo) mapa.removeLayer(polylineDibujo);
             marcadoresDibujo.forEach(m => mapa.removeLayer(m));
-            puntosDibujo = [];
-            marcadoresDibujo = [];
-            polylineDibujo = null;
+            puntosDibujo = []; marcadoresDibujo = []; polylineDibujo = null;
         };
 
-        // ESCUCHAR Y DIBUJAR GEOCERCAS GUARDADAS
         db.ref('configuracion/geocercas').on('value', snap => {
-            // Limpiar las anteriores
             geocercasMapa.forEach(geo => mapa.removeLayer(geo));
             geocercasMapa = [];
-            
             const data = snap.val();
             if(!data) return;
-            
             for(let key in data) {
                 let geo = data[key];
-                // Dibujar polígono en el mapa
-                let poligono = L.polygon(geo.coordenadas, {color: '#007AFF', weight: 2, fillColor: '#007AFF', fillOpacity: 0.1}).addTo(mapa);
-                poligono.bindTooltip(`<b>${geo.nombre}</b>`, {permanent: true, direction: 'center', className: 'geo-tooltip'}).openTooltip();
+                let poligono = L.polygon(geo.coordenadas, {color: '#232426', weight: 2, fillColor: '#C4FF44', fillOpacity: 0.05}).addTo(mapa);
+                poligono.bindTooltip(`<div style="background:transparent; border:none; color:#C4FF44; text-shadow: 1px 1px 3px black; font-weight:bold;">${geo.nombre}</div>`, {permanent: true, direction: 'center', className: 'geo-tooltip'}).openTooltip();
                 geocercasMapa.push(poligono);
             }
         });
 
-
-        // ---------------- TODO LO DEMÁS (Monitoreo, Reproductor) SIGUE EXACTAMENTE IGUAL ----------------
-
-        let datosHistorial = [];
-        let polylineHistorial = null;
-        let marcadorHistorial = null;
-        let timerHistorial = null;
+        // --- REPRODUCTOR DE RUTAS ---
+        let datosHistorial = [], polylineHistorial = null, marcadorHistorial = null, timerHistorial = null;
 
         window.abrirReproductor = function() {
             if (!camionSeleccionado) return;
             document.getElementById('reproductorRutas').style.display = 'block';
-            document.getElementById('repPlaca').innerText = "Historial de Ruta: " + camionSeleccionado;
+            document.getElementById('repPlaca').innerText = "Auditoría de Ruta: " + camionSeleccionado;
             const hoy = new Date().toISOString().split('T')[0];
             document.getElementById('repFecha').value = hoy;
             cargarHistorialDia();
@@ -309,7 +341,7 @@
             db.ref(`historial_rutas/${fecha}/${camionSeleccionado}`).once('value', snap => {
                 const data = snap.val();
                 if(!data) {
-                    alert("No hay registros de rutas guardados para " + camionSeleccionado + " en la fecha " + fecha);
+                    alert("Sin registros en: " + fecha);
                     document.getElementById('repInfoHora').innerText = "--:--";
                     return;
                 }
@@ -323,11 +355,11 @@
         };
 
         function dibujarLineaHistorial() {
-            const puntosLatLng = datosHistorial.map(p => [p.lat, p.lng]);
-            polylineHistorial = L.polyline(puntosLatLng, {color: '#ffcc00', weight: 4, opacity: 0.8, dashArray: '10, 10'}).addTo(mapa);
+            const ptos = datosHistorial.map(p => [p.lat, p.lng]);
+            polylineHistorial = L.polyline(ptos, {color: '#D1EBEB', weight: 3, opacity: 0.8, dashArray: '5, 5'}).addTo(mapa);
             mapa.fitBounds(polylineHistorial.getBounds(), {padding: [50, 50]});
-            const ghostIcon = L.divIcon({ className: '', html: `<div class="icono-base icono-fantasma">🕒</div>`, iconSize: [26, 26], iconAnchor: [13, 13] });
-            marcadorHistorial = L.marker(puntosLatLng[0], {icon: ghostIcon, zIndexOffset: 1000}).addTo(mapa);
+            const ghostIcon = L.divIcon({ className: '', html: `<div class="icono-base icono-fantasma">●</div>`, iconSize: [20, 20], iconAnchor: [10, 10] });
+            marcadorHistorial = L.marker(ptos[0], {icon: ghostIcon, zIndexOffset: 1000}).addTo(mapa);
         }
 
         window.actualizarDatosSlider = function(index) {
@@ -338,36 +370,28 @@
             document.getElementById('repInfoHora').innerText = fechaObj.toLocaleTimeString();
             document.getElementById('repInfoVel').innerText = punto.vel + " km/h";
             
-            let estFormateado = "✅ ACTIVO";
-            if(punto.est === 'baño') estFormateado = "🚾 BAÑO";
-            if(punto.est === 'pager') estFormateado = "📟 PAGER";
-            if(punto.est === 'emergencia') estFormateado = "🚨 AUXILIO";
-            if(punto.est === 'ocio') estFormateado = "⏳ OCIO";
+            let estFormateado = "FLUJO ACTIVO";
+            if(punto.est === 'baño') estFormateado = "PAUSA (BAÑO)";
+            if(punto.est === 'pager') estFormateado = "FALLA PAGER";
+            if(punto.est === 'emergencia') estFormateado = "EMERGENCIA";
+            if(punto.est === 'ocio') estFormateado = "OCIO / DETENIDO";
             document.getElementById('repInfoEst').innerText = estFormateado;
         };
 
-        window.moverSliderRep = function() {
-            actualizarDatosSlider(parseInt(document.getElementById('sliderRep').value));
-        };
+        window.moverSliderRep = function() { actualizarDatosSlider(parseInt(document.getElementById('sliderRep').value)); };
 
         window.togglePlayRep = function() {
             const btn = document.getElementById('btnPlayRep');
             if(timerHistorial) {
-                clearInterval(timerHistorial);
-                timerHistorial = null;
-                btn.innerText = "▶️ Play";
+                clearInterval(timerHistorial); timerHistorial = null; btn.innerText = "Play";
             } else {
-                btn.innerText = "⏸️ Pausa";
+                btn.innerText = "Pausa";
                 timerHistorial = setInterval(() => {
                     let val = parseInt(document.getElementById('sliderRep').value);
                     if(val < datosHistorial.length - 1) {
-                        val++;
-                        document.getElementById('sliderRep').value = val;
-                        actualizarDatosSlider(val);
+                        val++; document.getElementById('sliderRep').value = val; actualizarDatosSlider(val);
                     } else {
-                        clearInterval(timerHistorial);
-                        timerHistorial = null;
-                        btn.innerText = "▶️ Play";
+                        clearInterval(timerHistorial); timerHistorial = null; btn.innerText = "Play";
                     }
                 }, 800);
             }
@@ -377,9 +401,8 @@
             if(polylineHistorial) mapa.removeLayer(polylineHistorial);
             if(marcadorHistorial) mapa.removeLayer(marcadorHistorial);
             polylineHistorial = null; marcadorHistorial = null;
-            if(timerHistorial) clearInterval(timerHistorial);
-            timerHistorial = null;
-            document.getElementById('btnPlayRep').innerText = "▶️ Play";
+            if(timerHistorial) clearInterval(timerHistorial); timerHistorial = null;
+            document.getElementById('btnPlayRep').innerText = "Play";
         }
 
         window.cerrarReproductor = function() {
@@ -389,6 +412,7 @@
             mapa.setView([19.066, -104.295], 16);
         };
 
+        // --- SISTEMA DE LOGÍSTICA ---
         window.toggleMulti = function(placa, event) {
             event.stopPropagation();
             if (event.target.checked) seleccionadosMulti.add(placa);
@@ -401,25 +425,17 @@
             const panelInd = document.getElementById('panelAcciones');
             if (seleccionadosMulti.size > 0) {
                 panel.style.display = 'flex';
-                document.getElementById('lblMulti').innerText = `Unidades Seleccionadas: ${seleccionadosMulti.size}`;
-                panelInd.style.display = 'none'; 
-                camionSeleccionado = null;
-                renderLista(); 
-            } else {
-                panel.style.display = 'none';
-            }
+                document.getElementById('lblMulti').innerText = `Selección: ${seleccionadosMulti.size} Unidades`;
+                panelInd.style.display = 'none'; camionSeleccionado = null; renderLista(); 
+            } else { panel.style.display = 'none'; }
         };
 
         window.enviarMensajeMultiple = function() {
-            const msj = prompt("Escribe el mensaje para el GRUPO seleccionado:");
+            const msj = prompt("Señal de voz para el GRUPO:");
             if (msj && msj.trim() !== "") {
-                seleccionadosMulti.forEach(placa => {
-                    if(dataGlobal[placa]) db.ref('camiones_en_patio/' + placa).update({ tts_mensaje: msj.trim(), tts_timestamp: Date.now() });
-                });
-                alert("Mensaje enviado a las " + seleccionadosMulti.size + " unidades.");
-                seleccionadosMulti.clear();
-                actualizarPanelMulti();
-                renderLista();
+                seleccionadosMulti.forEach(placa => { if(dataGlobal[placa]) db.ref('camiones_en_patio/' + placa).update({ tts_mensaje: msj.trim(), tts_timestamp: Date.now() }); });
+                alert("Señal transmitida.");
+                seleccionadosMulti.clear(); actualizarPanelMulti(); renderLista();
             }
         };
 
@@ -427,15 +443,12 @@
             if (seleccionadosMulti.size > 0) return;
             camionSeleccionado = placa;
             if (marcadoresCamiones[placa]) mapa.setView(marcadoresCamiones[placa].getLatLng(), 18);
-            const panel = document.getElementById('panelAcciones');
-            panel.style.display = 'flex';
-            document.getElementById('tituloAccion').innerText = "Acciones: " + placa;
+            document.getElementById('panelAcciones').style.display = 'flex';
+            document.getElementById('tituloAccion').innerText = "Unidad: " + placa;
+            
             if (estado !== 'activo') {
                 document.getElementById('btnResolverAlerta').style.display = 'block';
-                document.getElementById('btnResolverAlerta').innerText = `✅ Resolver (${estado.toUpperCase()})`;
-            } else {
-                document.getElementById('btnResolverAlerta').style.display = 'none';
-            }
+            } else { document.getElementById('btnResolverAlerta').style.display = 'none'; }
             renderLista();
         };
 
@@ -443,19 +456,15 @@
             const input = document.getElementById('inputVoz');
             if (camionSeleccionado && input.value.trim() !== "") {
                 db.ref('camiones_en_patio/' + camionSeleccionado).update({ tts_mensaje: input.value.trim(), tts_timestamp: Date.now() });
-                input.value = ""; 
-                alert("Mensaje enviado a " + camionSeleccionado);
+                input.value = ""; alert("Señal transmitida.");
             }
         };
 
         window.enviarMensajeGlobal = function() {
-            const msj = prompt("Escribe el mensaje de voz para TODAS las unidades en el patio:");
+            const msj = prompt("Alerta Global:");
             if (msj && msj.trim() !== "") {
-                if(confirm("¿Seguro que deseas interrumpir a toda la operación con este mensaje?")) {
-                    for(const placa in dataGlobal) {
-                        db.ref('camiones_en_patio/' + placa).update({ tts_mensaje: msj.trim(), tts_timestamp: Date.now() });
-                    }
-                    alert("Mensaje transmitido a toda la flota.");
+                if(confirm("¿Forzar transmisión a todas las unidades?")) {
+                    for(const placa in dataGlobal) { db.ref('camiones_en_patio/' + placa).update({ tts_mensaje: msj.trim(), tts_timestamp: Date.now() }); }
                 }
             }
         };
@@ -468,12 +477,10 @@
         };
 
         window.forzarSalidaTorre = function() {
-            if (camionSeleccionado) {
-                if(confirm("¿Seguro que deseas FINALIZAR el viaje de " + camionSeleccionado + "? Se borrará del patio.")) {
-                    db.ref('camiones_en_patio/' + camionSeleccionado).remove();
-                    document.getElementById('panelAcciones').style.display = 'none';
-                    camionSeleccionado = null;
-                }
+            if (camionSeleccionado && confirm("¿Expulsar unidad de la base de datos?")) {
+                db.ref('camiones_en_patio/' + camionSeleccionado).remove();
+                document.getElementById('panelAcciones').style.display = 'none';
+                camionSeleccionado = null;
             }
         };
 
@@ -483,41 +490,39 @@
             if (estado === 'pager') claseFondo = 'icono-pager';
             if (estado === 'baño') claseFondo = 'icono-bano'; 
             if (estado === 'ocio') claseFondo = 'icono-ocio';
-            return L.divIcon({ className: '', html: `<div class="icono-base ${claseFondo}"></div>`, iconSize: [20, 20], iconAnchor: [10, 10] });
+            return L.divIcon({ className: '', html: `<div class="icono-base ${claseFondo}"></div>`, iconSize: [14, 14], iconAnchor: [7, 7] });
         }
 
         window.renderLista = function() {
             const filtro = document.getElementById('inputBuscador').value.trim().toUpperCase();
-            let htmlInternos = ""; let htmlForaneos = ""; let totalUnidades = 0;
+            let htmlInternos = "", htmlForaneos = "", totalUnidades = 0;
 
             for (const placa in dataGlobal) {
                 const camion = dataGlobal[placa];
                 const tipo = camion.tipo || 'FORANEO';
                 const estado = camion.estado || 'activo';
+                let infoRuta = tipo === 'FORANEO' ? `Des: ${camion.destino || 'S/D'}` : `BQ: ${camion.buque} | ST: ${camion.sts} | EMP: ${camion.empleado || 'S/D'}`;
                 
-                let infoRuta = tipo === 'FORANEO' ? `📍 ${camion.destino || 'S/D'}` : `🚢 ${camion.buque} | 🏗️ ${camion.sts} | 👤 ${camion.empleado || 'S/D'}`;
                 if (filtro !== "" && !placa.includes(filtro) && !infoRuta.includes(filtro)) continue; 
-
                 totalUnidades++;
+                
                 let claseCSS = tipo === 'INTERNO' ? 'interno' : 'foraneo';
-                let iconoLateral = tipo === 'INTERNO' ? '🚜' : '🚚';
-
-                if (estado === 'emergencia') { claseCSS = 'alerta-emergencia'; iconoLateral = '🚨';}
-                else if (estado === 'pager') { claseCSS = 'alerta-pager'; iconoLateral = '📟';}
-                else if (estado === 'baño') { claseCSS = 'alerta-bano'; iconoLateral = '🚾';}
-                else if (estado === 'ocio') { claseCSS = 'alerta-ocio'; iconoLateral = '⏳';}
+                if (estado === 'emergencia') claseCSS = 'alerta-emergencia'; 
+                else if (estado === 'pager') claseCSS = 'alerta-pager';
+                else if (estado === 'baño') claseCSS = 'alerta-bano';
+                else if (estado === 'ocio') claseCSS = 'alerta-ocio';
 
                 if (placa === camionSeleccionado) claseCSS += ' seleccionada';
                 let isChecked = seleccionadosMulti.has(placa) ? 'checked' : '';
                 
-                let tiempo = `⏱️ ${Math.floor((Date.now() - (camion.hora_ingreso||Date.now())) / 60000)} min`;
-                if(estado === 'baño') tiempo = "🚾 BAÑO";
-                if(estado === 'ocio') tiempo = "⏳ DETENIDO";
+                let tiempo = `Flujo: ${Math.floor((Date.now() - (camion.hora_ingreso||Date.now())) / 60000)}m`;
+                if(estado === 'baño') tiempo = "Pausa: Baño";
+                if(estado === 'ocio') tiempo = "Riesgo: Ocio";
 
                 let tarjetaHTML = `
                     <div class="tarjeta-unidad ${claseCSS}" onclick="seleccionarCamion('${placa}', '${estado}')">
                         <div class="placa"><input type="checkbox" class="chk-multi" ${isChecked} onclick="toggleMulti('${placa}', event)">
-                        <span>${iconoLateral} ${placa}</span><span style="text-align: right;">🏎️ ${camion.velocidad_actual||0} km/h</span></div>
+                        <span>${placa}</span><span style="text-align: right; color:#888;">${camion.velocidad_actual||0} km/h</span></div>
                         <div class="datos"><span>${infoRuta}</span><span>${tiempo}</span></div>
                     </div>`;
 
@@ -525,17 +530,16 @@
             }
 
             let vistaFinal = "";
-            if (htmlInternos !== "") vistaFinal += `<div class="titulo-seccion seccion-internos">🚜 UNIDADES INTERNAS</div>` + htmlInternos;
-            if (htmlForaneos !== "") vistaFinal += `<div class="titulo-seccion seccion-foraneos">🚚 UNIDADES FORÁNEAS</div>` + htmlForaneos;
-            if (vistaFinal === "") vistaFinal = `<div style="text-align:center; color:#888; padding:20px;">No hay unidades coincidentes.</div>`;
-
+            if (htmlInternos !== "") vistaFinal += `<div class="titulo-seccion">Pipelines Internos</div>` + htmlInternos;
+            if (htmlForaneos !== "") vistaFinal += `<div class="titulo-seccion">Flujo Foráneo</div>` + htmlForaneos;
+            
             listaUnidades.innerHTML = vistaFinal;
             document.getElementById('contadorCamiones').innerText = totalUnidades;
+            actualizarDashboard();
         }
 
         db.ref('camiones_en_patio').on('value', (snapshot) => {
             dataGlobal = snapshot.val() || {};
-            
             for (const placa in dataGlobal) {
                 const camion = dataGlobal[placa];
                 const latlng = [camion.lat, camion.lng];
@@ -558,16 +562,9 @@
 
             for (const placa in marcadoresCamiones) {
                 if (!dataGlobal[placa]) { 
-                    mapa.removeLayer(marcadoresCamiones[placa]); 
-                    delete marcadoresCamiones[placa]; 
-                    if(camionSeleccionado === placa) {
-                        camionSeleccionado = null;
-                        document.getElementById('panelAcciones').style.display = 'none';
-                    }
-                    if(seleccionadosMulti.has(placa)) {
-                        seleccionadosMulti.delete(placa);
-                        actualizarPanelMulti();
-                    }
+                    mapa.removeLayer(marcadoresCamiones[placa]); delete marcadoresCamiones[placa]; 
+                    if(camionSeleccionado === placa) { camionSeleccionado = null; document.getElementById('panelAcciones').style.display = 'none'; }
+                    if(seleccionadosMulti.has(placa)) { seleccionadosMulti.delete(placa); actualizarPanelMulti(); }
                 }
             }
             renderLista();
