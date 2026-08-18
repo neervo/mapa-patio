@@ -9,45 +9,27 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
-    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --bg-base: #fff9ee;
-            --surface-glass: rgba(255, 249, 238, 0.95);
-            --card-glass: rgba(255, 255, 255, 0.9);
-            --border-thin: rgba(137, 114, 107, 0.3);
-            
-            --primary: #FF5E3A; 
-            --primary-container: #ffdbd0;
-            
-            --secondary: #5a6c00; 
-            --secondary-container: #d6ed7a; 
-            
-            --tertiary: #326578;
-            --tertiary-container: #bbe9ff; 
-            
-            --danger: #ba1a1a;
-            --danger-container: #ffdad6;
-            
-            --text-primary: #1d1c15;
-            --text-secondary: #56423c;
+            --bg-base: #fff9ee; --surface-glass: rgba(255, 249, 238, 0.95); --card-glass: rgba(255, 255, 255, 0.9); --border-thin: rgba(137, 114, 107, 0.3);
+            --primary: #FF5E3A; --primary-container: #ffdbd0;
+            --secondary: #5a6c00; --secondary-container: #d6ed7a; 
+            --tertiary: #326578; --tertiary-container: #bbe9ff; 
+            --danger: #ba1a1a; --danger-container: #ffdad6;
+            --text-primary: #1d1c15; --text-secondary: #56423c;
         }
 
         body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-base); color: var(--text-primary); overflow: hidden; }
-        
         #mapa { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
         
-        /* HEADER COMPACTO */
         .header { background: var(--surface-glass); border-bottom: 1px solid var(--border-thin); padding: 0 20px; position: absolute; top: 0; left: 0; width: 100%; height: 60px; z-index: 1000; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; }
         .header h1 { font-size: 20px; font-weight: 800; margin: 0; letter-spacing: -0.02em; color: var(--text-primary);}
-        .contador { font-size: 12px; font-weight: 700; background: var(--secondary-container); border: 1px solid rgba(255,255,255,0.5); padding: 6px 16px; border-radius: 9999px; color: var(--secondary); margin-right: 20px;}
+        .contador { font-size: 12px; font-weight: 700; background: var(--secondary-container); padding: 6px 16px; border-radius: 9999px; color: var(--secondary); margin-right: 20px;}
         
-        /* PANEL LATERAL FLOTANTE (Menos blur para mayor velocidad) */
-        .panel-lateral { width: 340px; height: calc(100vh - 80px); background: var(--surface-glass); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid var(--border-thin); border-radius: 20px; position: absolute; top: 70px; left: 15px; z-index: 100; display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden;}
+        .panel-lateral { width: 340px; height: calc(100vh - 80px); background: var(--surface-glass); backdrop-filter: blur(8px); border: 1px solid var(--border-thin); border-radius: 20px; position: absolute; top: 70px; left: 15px; z-index: 100; display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden;}
         
-        /* PESTAÑAS */
         .tabs-header { display: flex; border-bottom: 1px solid var(--border-thin); background: rgba(255,255,255,0.5); }
         .tab-btn { flex: 1; padding: 12px 0; background: transparent; color: var(--text-secondary); border: none; cursor: pointer; font-weight: 700; font-size: 13px; margin: 0;}
         .tab-btn.activo { color: var(--primary); background: var(--card-glass); border-bottom: 3px solid var(--primary); }
@@ -55,29 +37,32 @@
         .tab-content { display: none; flex-direction: column; height: 100%; overflow-y: auto; padding-bottom: 10px;}
         .tab-content.activo { display: flex; }
 
-        /* MONITOREO Y BUSCADOR COMPACTO */
         .panel-superior { padding: 15px; border-bottom: 1px solid var(--border-thin); }
         .input-buscador { width: 100%; padding: 10px 15px; border-radius: 9999px; border: 1px solid var(--border-thin); background: var(--card-glass); color: var(--text-primary); margin-bottom: 10px; box-sizing: border-box; font-family: 'Plus Jakarta Sans'; font-size: 13px; font-weight: 500;}
         .input-buscador:focus { outline: none; border-color: var(--primary); background: #ffffff;}
-        
         .btn-global { background: var(--danger-container); color: var(--danger); border: none; padding: 10px; width: 100%; border-radius: 9999px; cursor: pointer; font-weight: 700; font-family: 'Plus Jakarta Sans'; font-size: 12px;}
         
         .lista-scroll { flex: 1; overflow-y: auto; padding: 5px 15px; position: relative;}
         
-        .titulo-seccion { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 800; padding: 0; margin: 15px 0 8px 0; color: var(--text-secondary); text-align: left;}
-        
-        /* TARJETAS DE UNIDADES SÚPER COMPACTAS (Sin animaciones para evitar Lag) */
+        details > summary { list-style: none; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 800; padding: 10px 0; margin: 10px 0 5px 0; color: var(--text-secondary); border-bottom: 1px solid var(--border-thin); cursor: pointer; display: flex; justify-content: space-between; align-items: center;}
+        details > summary::-webkit-details-marker { display: none; }
+        .btn-ojo { background: transparent; border: none; font-size: 14px; cursor: pointer; opacity: 0.6; transition: 0.2s; padding: 0 5px;}
+        .btn-ojo:hover { opacity: 1; transform: scale(1.1);}
+        .btn-ojo.oculto { filter: grayscale(100%) opacity(0.3); }
+
         .tarjeta-unidad { background: var(--card-glass); border: 1px solid var(--border-thin); padding: 10px 12px; border-radius: 12px; margin-bottom: 8px; cursor: pointer; position: relative; overflow: hidden;}
         .tarjeta-unidad.seleccionada { border-color: var(--primary); background: var(--primary-container);}
         
-        .tarjeta-unidad.interno { border-left: 4px solid var(--secondary); } 
+        .tarjeta-unidad.interno { border-left: 4px solid #a4c900; } 
+        .tarjeta-unidad.housekeeping { border-left: 4px solid #fbc02d; } 
+        .tarjeta-unidad.traslado { border-left: 4px solid #ff9800; } 
+        
         .tarjeta-unidad.foraneo { border-left: 4px solid var(--tertiary); } 
         .tarjeta-unidad.alerta-emergencia { border-left: 4px solid var(--danger); background: rgba(255,0,0,0.05); }
         .tarjeta-unidad.alerta-pager { border-left: 4px solid #f57f17; }
         .tarjeta-unidad.alerta-bano { border-left: 4px solid #fbc02d; }
         .tarjeta-unidad.alerta-ocio { border-left: 4px solid #8e24aa; background: rgba(176, 102, 255, 0.05); }
         
-        /* CHIPS SOLO PARA ALERTAS (Pequeños) */
         .chip-estado { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 9px; font-weight: 800; text-transform: uppercase; margin-bottom: 4px;}
         .chip-emergencia { background: var(--danger); color: white; animation: pulse 1s infinite;}
         .chip-pager { background: #f57f17; color: white; }
@@ -90,26 +75,26 @@
         .placa span { flex: 1; }
         .datos { font-size: 11px; color: var(--text-secondary); display: flex; justify-content: space-between; font-weight: 600; padding-left: 22px;}
         
-        /* PANELES DE ACCIÓN COMPACTOS */
         .panel-acciones, .panel-multi { background: var(--surface-glass); padding: 15px; border-top: 1px solid var(--border-thin); display: none; flex-direction: column; position: sticky; bottom: 0; z-index: 200; border-radius: 0 0 20px 20px;}
         .panel-acciones h3, .panel-multi h3 { color: var(--text-primary); font-size: 13px; margin: 0 0 10px 0; font-weight: 800;}
         .input-tts { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 9999px; border: 1px solid var(--border-thin); background: #ffffff; color: var(--text-primary); box-sizing: border-box; font-family: 'Plus Jakarta Sans'; font-size: 12px;}
         
-        /* BOTONES COMPACTOS */
         .btn-radio { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 9999px; cursor: pointer; font-weight: 700; margin-bottom: 8px; font-size: 12px; font-family: 'Plus Jakarta Sans';}
         .btn-historial { background-color: var(--tertiary-container); color: var(--tertiary); border: none; padding: 10px; border-radius: 9999px; cursor: pointer; font-weight: 700; margin-bottom: 8px; font-size: 12px;}
+        
+        /* NUEVOS BOTONES PIVOTE */
+        .btn-pivote { background-color: #e1bee7; color: #6a1b9a; border: none; padding: 10px; border-radius: 9999px; cursor: pointer; font-weight: 700; margin-bottom: 8px; font-size: 12px;}
+        
         .btn-resolver { background-color: transparent; color: var(--primary); border: 2px solid var(--primary); padding: 10px; border-radius: 9999px; cursor: pointer; font-weight: 700; margin-bottom: 8px; font-size: 12px;}
         .btn-eliminar { background-color: transparent; color: var(--danger); padding: 8px; border-radius: 9999px; cursor: pointer; font-weight: 600; font-size: 11px; border: none; text-decoration: underline;}
 
-        /* DASHBOARD */
         .dash-container { padding: 20px; display: flex; flex-direction: column; gap: 15px;}
         .dash-card { background: var(--card-glass); border: 1px solid var(--border-thin); padding: 20px; border-radius: 16px; display: flex; flex-direction: column; gap: 5px;}
         .dash-title { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; font-weight: 800;}
         .dash-value { font-size: 40px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.04em;}
-        .val-orange { color: var(--primary); }
-        .val-cyan { color: var(--tertiary); }
+        
+        .btn-excel { background-color: #4caf50; color: white; border: none; padding: 12px; border-radius: 9999px; font-weight: 800; cursor: pointer; font-family: 'Plus Jakarta Sans'; font-size: 13px; text-transform: uppercase; margin-top: 10px; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);}
 
-        /* AJUSTES Y LISTA DE GEOCERCAS */
         .ajustes-seccion { padding: 20px; border-bottom: 1px solid var(--border-thin); }
         .ajustes-seccion h3 { color: var(--text-primary); margin-top: 0; font-size: 14px; font-weight: 800;}
         .texto-ayuda { color: var(--text-secondary); font-size: 12px; margin-bottom: 15px; line-height: 1.4; }
@@ -119,9 +104,10 @@
         .item-geo { display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; border: 1px solid var(--border-thin); font-size: 12px; font-weight: 700;}
         .item-geo button { background: transparent; border: none; cursor: pointer; font-size: 14px;}
 
-        /* ICONOS DEL MAPA */
         .icono-base { display: block; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.5); width: 14px; height: 14px; }
         .icono-interno { background-color: #a4c900; } 
+        .icono-housekeeping { background-color: #fbc02d; } 
+        .icono-traslado { background-color: #ff9800; } 
         .icono-foraneo { background-color: #38BDF8; } 
         .icono-emergencia { background-color: var(--danger); animation: pulse 1s infinite;}
         .icono-pager { background-color: #f57f17; }
@@ -129,7 +115,6 @@
         .icono-ocio { background-color: #ba68c8; }
         .icono-fantasma { display: flex; justify-content: center; align-items: center; background-color: white; border: 2px solid var(--primary); width: 12px; height: 12px;}
 
-        /* REPRODUCTOR DE RUTAS */
         .reproductor-rutas { position: absolute; bottom: 20px; left: 380px; width: calc(100vw - 420px); max-width: 800px; background: rgba(255, 249, 238, 0.95); backdrop-filter: blur(10px); padding: 20px; border-radius: 20px; z-index: 1000; display: none; color: var(--text-primary); border: 1px solid var(--border-thin); box-sizing: border-box;}
         .reproductor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;}
         .reproductor-header h2 { margin:0; font-size: 16px; font-weight: 800;}
@@ -142,6 +127,7 @@
         .input-fecha { padding: 8px 12px; border-radius: 9999px; border: 1px solid var(--border-thin); font-weight: 600; background: #ffffff; color: var(--text-primary); font-family: 'Plus Jakarta Sans'; font-size: 11px;}
         
         .geo-tooltip { background: rgba(255,255,255,0.9); border: none; border-radius: 9999px; padding: 4px 10px; color: var(--primary); font-family: 'Plus Jakarta Sans'; font-weight: 800; font-size: 11px;}
+        .geo-tooltip.oculto { display: none !important; }
     </style>
 </head>
 <body>
@@ -161,7 +147,6 @@
             <button class="tab-btn" id="btnTabAjustes" onclick="cambiarTab('ajustes')">Ajustes</button>
         </div>
 
-        <!-- TAB 1: MONITOREO -->
         <div id="tab-monitoreo" class="tab-content activo">
             <div class="panel-superior">
                 <input type="text" id="inputBuscador" class="input-buscador" placeholder="Buscar unidad o buque..." onkeyup="renderLista()">
@@ -172,12 +157,14 @@
 
             <div id="panelMulti" class="panel-multi">
                 <h3 id="lblMulti">Unidades: 0</h3>
+                <button class="btn-pivote" onclick="reasignarDestinoMultiple()">📍 Desviar Grupo a Posición Pivote</button>
                 <button class="btn-radio" onclick="enviarMensajeMultiple()">Enviar Mensaje al Grupo</button>
             </div>
             
             <div id="panelAcciones" class="panel-acciones">
                 <h3 id="tituloAccion">Unidad: Seleccionada</h3>
                 <input type="text" id="inputVoz" class="input-tts" placeholder="Dictar instrucción...">
+                <button class="btn-pivote" onclick="reasignarDestinoIndividual()">📍 Asignar Posición Pivote</button>
                 <button class="btn-radio" onclick="enviarMensajeTorre()">Enviar Mensaje</button>
                 <button class="btn-historial" onclick="abrirReproductor()">Historial Ruta</button>
                 <button id="btnResolverAlerta" class="btn-resolver" style="display:none;" onclick="resolverAlertaTorre()">Resolver Alerta</button>
@@ -185,7 +172,6 @@
             </div>
         </div>
 
-        <!-- TAB 2: DASHBOARD -->
         <div id="tab-dashboard" class="tab-content">
             <div class="dash-container">
                 <div class="dash-card">
@@ -196,30 +182,32 @@
                     <div class="dash-title">Tiempos Muertos (>3 Min)</div>
                     <div class="dash-value" id="dashOcio" style="color: #9c27b0;">0</div>
                 </div>
-                <div class="dash-card">
-                    <div class="dash-title">Operadores en Baño</div>
-                    <div class="dash-value val-cyan" id="dashBano">0</div>
-                </div>
+                <button class="btn-excel" onclick="exportarExcel()">📥 Exportar Reporte (Excel)</button>
             </div>
         </div>
 
-        <!-- TAB 3: AJUSTES -->
         <div id="tab-ajustes" class="tab-content">
             <div class="ajustes-seccion">
+                <h3>Visualización del Mapa</h3>
+                <label style="font-size: 13px; font-weight: 600; display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" id="chkNombresGeo" class="chk-multi" checked onchange="toggleNombresGeo()"> 
+                    Mostrar Nombres de Geocercas
+                </label>
+            </div>
+
+            <div class="ajustes-seccion">
                 <h3>Geocercas</h3>
-                <p class="texto-ayuda">Dibuja áreas en el mapa para control visual.</p>
                 <button id="btnDibujarGeo" class="btn-ajuste" onclick="iniciarDibujoGeocerca()">📍 Dibujar Geocerca</button>
                 <button id="btnGuardarGeo" class="btn-guardar-geo" onclick="guardarGeocerca()">Guardar Polígono</button>
             </div>
             <div class="ajustes-seccion">
-                <h3>Geocercas Guardadas</h3>
+                <h3>Zonas Creadas</h3>
                 <div id="listaGeocercasGuardadas"></div>
             </div>
         </div>
 
     </div>
 
-    <!-- REPRODUCTOR HISTORIAL -->
     <div id="reproductorRutas" class="reproductor-rutas">
         <div class="reproductor-header">
             <h2 id="repPlaca">Historial: --</h2>
@@ -253,13 +241,30 @@
         let camionSeleccionado = null;
         let dataGlobal = {};
         let seleccionadosMulti = new Set();
-        let geocercasMapa = {}; // Guardaremos referencias para borrarlas
+        let geocercasMapa = {}; 
+        
+        let verInternos = true;
+        let verForaneos = true;
 
         window.cambiarTab = function(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('activo'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('activo'));
             document.getElementById(`tab-${tabName}`).classList.add('activo');
             document.getElementById(`btnTab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`).classList.add('activo');
+        };
+
+        window.exportarExcel = function() {
+            let csv = "Placa,Tipo,Subtipo,Estado,Destino/Buque,STS,Velocidad (km/h),Tiempo Min\n";
+            for(let key in dataGlobal) {
+                let u = dataGlobal[key];
+                let min = Math.floor((Date.now() - (u.hora_ingreso||Date.now())) / 60000);
+                csv += `${u.placa},${u.tipo},${u.subtipo || 'N/A'},${u.estado},${u.destino || u.buque || 'S/D'},${u.sts || 'N/A'},${u.velocidad_actual || 0},${min}\n`;
+            }
+            const blob = new Blob(["\uFEFF"+csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url; a.download = `Reporte_YMS_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
         };
 
         function actualizarDashboard() {
@@ -271,11 +276,17 @@
             }
             document.getElementById('dashTotal').innerText = total;
             document.getElementById('dashOcio').innerText = ocio;
-            document.getElementById('dashBano').innerText = bano;
         }
 
         // --- SISTEMA DE GEOCERCAS ---
         let modoDibujo = false, puntosDibujo = [], polylineDibujo = null, marcadoresDibujo = [];
+
+        window.toggleNombresGeo = function() {
+            let activo = document.getElementById('chkNombresGeo').checked;
+            document.querySelectorAll('.geo-tooltip').forEach(el => {
+                if(activo) el.classList.remove('oculto'); else el.classList.add('oculto');
+            });
+        };
 
         window.iniciarDibujoGeocerca = function() {
             modoDibujo = true; puntosDibujo = [];
@@ -298,54 +309,39 @@
 
         window.guardarGeocerca = function() {
             if (puntosDibujo.length < 3) return alert("Mínimo 3 puntos.");
-            let nombre = prompt("Nombre de la Geocerca (Ej. Zona LCL):");
+            let nombre = prompt("Nombre de la Geocerca:");
             if (nombre) db.ref('configuracion/geocercas').push({ nombre: nombre, coordenadas: puntosDibujo });
             
             modoDibujo = false;
             document.getElementById('btnDibujarGeo').style.display = 'block';
             document.getElementById('btnGuardarGeo').style.display = 'none';
             document.getElementById('mapa').style.cursor = 'grab';
-            
             if(polylineDibujo) mapa.removeLayer(polylineDibujo);
             marcadoresDibujo.forEach(m => mapa.removeLayer(m));
             puntosDibujo = []; marcadoresDibujo = []; polylineDibujo = null;
         };
 
-        // GESTIÓN DE GEOCERCAS (Ajustes -> Eliminar)
         window.eliminarGeocerca = function(key) {
-            if(confirm("¿Seguro que deseas borrar esta geocerca?")) {
-                db.ref('configuracion/geocercas/' + key).remove();
-            }
+            if(confirm("¿Borrar esta geocerca?")) db.ref('configuracion/geocercas/' + key).remove();
         };
 
         db.ref('configuracion/geocercas').on('value', snap => {
-            // Limpiar las viejas del mapa
             for(let k in geocercasMapa) mapa.removeLayer(geocercasMapa[k]);
             geocercasMapa = {};
-            
             let htmlListaGeo = "";
             const data = snap.val();
             
-            if(!data) {
-                document.getElementById('listaGeocercasGuardadas').innerHTML = "<p class='texto-ayuda'>No hay geocercas guardadas.</p>";
-                return;
+            if(data) {
+                let mostrarNombres = document.getElementById('chkNombresGeo').checked ? '' : 'oculto';
+                for(let key in data) {
+                    let geo = data[key];
+                    let poligono = L.polygon(geo.coordenadas, {color: '#ffffff', weight: 2, fillColor: '#ffffff', fillOpacity: 0.15}).addTo(mapa);
+                    poligono.bindTooltip(`${geo.nombre}`, {permanent: true, direction: 'center', className: `geo-tooltip ${mostrarNombres}`}).openTooltip();
+                    geocercasMapa[key] = poligono;
+                    htmlListaGeo += `<div class="item-geo"><span>${geo.nombre}</span><button onclick="eliminarGeocerca('${key}')">❌</button></div>`;
+                }
             }
-            
-            for(let key in data) {
-                let geo = data[key];
-                // 1. Dibujarla en el mapa
-                let poligono = L.polygon(geo.coordenadas, {color: '#ffffff', weight: 2, fillColor: '#ffffff', fillOpacity: 0.15}).addTo(mapa);
-                poligono.bindTooltip(`${geo.nombre}`, {permanent: true, direction: 'center', className: 'geo-tooltip'}).openTooltip();
-                geocercasMapa[key] = poligono;
-                
-                // 2. Agregarla a la lista de Ajustes
-                htmlListaGeo += `
-                    <div class="item-geo">
-                        <span>${geo.nombre}</span>
-                        <button onclick="eliminarGeocerca('${key}')" title="Borrar">❌</button>
-                    </div>`;
-            }
-            document.getElementById('listaGeocercasGuardadas').innerHTML = htmlListaGeo;
+            document.getElementById('listaGeocercasGuardadas').innerHTML = htmlListaGeo || "<p class='texto-ayuda'>No hay geocercas.</p>";
         });
 
         // --- REPRODUCTOR ---
@@ -355,8 +351,7 @@
             if (!camionSeleccionado) return;
             document.getElementById('reproductorRutas').style.display = 'block';
             document.getElementById('repPlaca').innerText = "Historial: " + camionSeleccionado;
-            const hoy = new Date().toISOString().split('T')[0];
-            document.getElementById('repFecha').value = hoy;
+            document.getElementById('repFecha').value = new Date().toISOString().split('T')[0];
             cargarHistorialDia();
         };
 
@@ -368,17 +363,12 @@
 
             db.ref(`historial_rutas/${fecha}/${camionSeleccionado}`).once('value', snap => {
                 const data = snap.val();
-                if(!data) {
-                    alert("Sin registros en: " + fecha);
-                    document.getElementById('repInfoHora').innerText = "--:--";
-                    return;
-                }
+                if(!data) { document.getElementById('repInfoHora').innerText = "--:--"; return alert("Sin registros."); }
                 datosHistorial = Object.values(data).sort((a,b) => a.time - b.time);
                 if(datosHistorial.length === 0) return;
                 document.getElementById('sliderRep').max = datosHistorial.length - 1;
                 document.getElementById('sliderRep').value = 0;
-                dibujarLineaHistorial();
-                actualizarDatosSlider(0);
+                dibujarLineaHistorial(); actualizarDatosSlider(0);
             });
         };
 
@@ -394,33 +384,22 @@
             if(datosHistorial.length === 0) return;
             const punto = datosHistorial[index];
             marcadorHistorial.setLatLng([punto.lat, punto.lng]);
-            const fechaObj = new Date(punto.time);
-            document.getElementById('repInfoHora').innerText = fechaObj.toLocaleTimeString();
+            document.getElementById('repInfoHora').innerText = new Date(punto.time).toLocaleTimeString();
             document.getElementById('repInfoVel').innerText = punto.vel + " km/h";
-            
-            let estFormateado = "ACTIVO";
-            if(punto.est === 'baño') estFormateado = "BAÑO";
-            if(punto.est === 'pager') estFormateado = "PAGER";
-            if(punto.est === 'emergencia') estFormateado = "EMERGENCIA";
-            if(punto.est === 'ocio') estFormateado = "OCIO";
-            document.getElementById('repInfoEst').innerText = estFormateado;
+            document.getElementById('repInfoEst').innerText = punto.est === 'baño' ? 'BAÑO' : punto.est === 'ocio' ? 'OCIO' : 'ACTIVO';
         };
 
         window.moverSliderRep = function() { actualizarDatosSlider(parseInt(document.getElementById('sliderRep').value)); };
 
         window.togglePlayRep = function() {
             const btn = document.getElementById('btnPlayRep');
-            if(timerHistorial) {
-                clearInterval(timerHistorial); timerHistorial = null; btn.innerText = "Play";
-            } else {
+            if(timerHistorial) { clearInterval(timerHistorial); timerHistorial = null; btn.innerText = "Play"; } 
+            else {
                 btn.innerText = "Pausa";
                 timerHistorial = setInterval(() => {
                     let val = parseInt(document.getElementById('sliderRep').value);
-                    if(val < datosHistorial.length - 1) {
-                        val++; document.getElementById('sliderRep').value = val; actualizarDatosSlider(val);
-                    } else {
-                        clearInterval(timerHistorial); timerHistorial = null; btn.innerText = "Play";
-                    }
+                    if(val < datosHistorial.length - 1) { document.getElementById('sliderRep').value = ++val; actualizarDatosSlider(val); } 
+                    else { clearInterval(timerHistorial); timerHistorial = null; btn.innerText = "Play"; }
                 }, 800);
             }
         };
@@ -433,27 +412,19 @@
             document.getElementById('btnPlayRep').innerText = "Play";
         }
 
-        window.cerrarReproductor = function() {
-            limpiarRutaMapa();
-            document.getElementById('reproductorRutas').style.display = 'none';
-            datosHistorial = [];
-            mapa.setView([19.066, -104.295], 16);
-        };
+        window.cerrarReproductor = function() { limpiarRutaMapa(); document.getElementById('reproductorRutas').style.display = 'none'; datosHistorial = []; mapa.setView([19.066, -104.295], 16); };
 
         // --- SISTEMA ---
         window.toggleMulti = function(placa, event) {
             event.stopPropagation();
-            if (event.target.checked) seleccionadosMulti.add(placa);
-            else seleccionadosMulti.delete(placa);
+            if (event.target.checked) seleccionadosMulti.add(placa); else seleccionadosMulti.delete(placa);
             actualizarPanelMulti();
         };
 
         window.actualizarPanelMulti = function() {
-            const panel = document.getElementById('panelMulti');
-            const panelInd = document.getElementById('panelAcciones');
+            const panel = document.getElementById('panelMulti'), panelInd = document.getElementById('panelAcciones');
             if (seleccionadosMulti.size > 0) {
-                panel.style.display = 'flex';
-                document.getElementById('lblMulti').innerText = `Seleccionadas: ${seleccionadosMulti.size}`;
+                panel.style.display = 'flex'; document.getElementById('lblMulti').innerText = `Seleccionadas: ${seleccionadosMulti.size}`;
                 panelInd.style.display = 'none'; camionSeleccionado = null; renderLista(); 
             } else { panel.style.display = 'none'; }
         };
@@ -466,16 +437,50 @@
             }
         };
 
+        // NUEVO REQ: SISTEMA DE PIVOTE MULTIPLE
+        window.reasignarDestinoMultiple = function() {
+            let nuevoDestino = prompt("Ingresa la Bahía temporal (Pivote) para el GRUPO.\n\n(O deja en blanco para regresarlos a su destino original):");
+            if (nuevoDestino !== null) {
+                let msj = nuevoDestino.trim() !== "" ? "Atención grupo. Procedan a la nueva posición temporal: " + nuevoDestino : "Atención grupo. Regresen a su destino original.";
+                seleccionadosMulti.forEach(placa => { 
+                    if(dataGlobal[placa]) {
+                        db.ref('camiones_en_patio/' + placa).update({ 
+                            destino_temporal: nuevoDestino.trim().toUpperCase(),
+                            tts_mensaje: msj,
+                            tts_timestamp: Date.now()
+                        }); 
+                    }
+                });
+                alert("Comando de desvío enviado al grupo.");
+                seleccionadosMulti.clear(); actualizarPanelMulti(); renderLista();
+            }
+        };
+
         window.seleccionarCamion = function(placa, estado) {
             if (seleccionadosMulti.size > 0) return;
             camionSeleccionado = placa;
             if (marcadoresCamiones[placa]) mapa.setView(marcadoresCamiones[placa].getLatLng(), 18);
             document.getElementById('panelAcciones').style.display = 'flex';
             document.getElementById('tituloAccion').innerText = "Unidad: " + placa;
-            
-            if (estado !== 'activo') document.getElementById('btnResolverAlerta').style.display = 'block';
-            else document.getElementById('btnResolverAlerta').style.display = 'none';
+            document.getElementById('btnResolverAlerta').style.display = (estado !== 'activo') ? 'block' : 'none';
             renderLista();
+        };
+
+        // NUEVO REQ: SISTEMA DE PIVOTE INDIVIDUAL
+        window.reasignarDestinoIndividual = function() {
+            if(camionSeleccionado) {
+                let nuevoDestino = prompt("Ingresa la Bahía temporal (Pivote) para esta unidad.\n\n(O deja en blanco para regresarlo a su destino original):");
+                if (nuevoDestino !== null) {
+                    let msj = nuevoDestino.trim() !== "" ? "Atención. Proceda a la nueva posición temporal: " + nuevoDestino : "Atención. Regrese a su destino original.";
+                    db.ref('camiones_en_patio/' + camionSeleccionado).update({ 
+                        destino_temporal: nuevoDestino.trim().toUpperCase(),
+                        tts_mensaje: msj,
+                        tts_timestamp: Date.now()
+                    });
+                    alert("Comando de desvío enviado a " + camionSeleccionado);
+                    renderLista();
+                }
+            }
         };
 
         window.enviarMensajeTorre = function() {
@@ -495,23 +500,21 @@
             }
         };
 
-        window.resolverAlertaTorre = function() {
-            if (camionSeleccionado) {
-                db.ref('camiones_en_patio/' + camionSeleccionado).update({ estado: 'activo' });
-                document.getElementById('btnResolverAlerta').style.display = 'none';
-            }
+        window.resolverAlertaTorre = function() { if (camionSeleccionado) { db.ref('camiones_en_patio/' + camionSeleccionado).update({ estado: 'activo' }); document.getElementById('btnResolverAlerta').style.display = 'none'; } };
+        window.forzarSalidaTorre = function() { if (camionSeleccionado && confirm("¿Expulsar unidad?")) { db.ref('camiones_en_patio/' + camionSeleccionado).remove(); document.getElementById('panelAcciones').style.display = 'none'; camionSeleccionado = null; } };
+
+        window.toggleOjito = function(tipo, event) {
+            event.stopPropagation(); 
+            if(tipo === 'internos') verInternos = !verInternos;
+            if(tipo === 'foraneos') verForaneos = !verForaneos;
+            renderLista();
         };
 
-        window.forzarSalidaTorre = function() {
-            if (camionSeleccionado && confirm("¿Expulsar unidad?")) {
-                db.ref('camiones_en_patio/' + camionSeleccionado).remove();
-                document.getElementById('panelAcciones').style.display = 'none';
-                camionSeleccionado = null;
-            }
-        };
-
-        function getIcono(tipo, estado) {
+        function getIcono(tipo, subtipo, estado) {
             let claseFondo = tipo === 'INTERNO' ? 'icono-interno' : 'icono-foraneo';
+            if(tipo === 'INTERNO' && subtipo === 'Housekeeping') claseFondo = 'icono-housekeeping';
+            if(tipo === 'INTERNO' && subtipo === 'Traslado') claseFondo = 'icono-traslado';
+
             if (estado === 'emergencia') claseFondo = 'icono-emergencia';
             if (estado === 'pager') claseFondo = 'icono-pager';
             if (estado === 'baño') claseFondo = 'icono-bano'; 
@@ -526,15 +529,28 @@
             for (const placa in dataGlobal) {
                 const camion = dataGlobal[placa];
                 const tipo = camion.tipo || 'FORANEO';
+                const subtipo = camion.subtipo || '';
                 const estado = camion.estado || 'activo';
-                let infoRuta = tipo === 'FORANEO' ? `Des: ${camion.destino || 'S/D'}` : `BQ: ${camion.buque} | ST: ${camion.sts}`;
                 
+                if(tipo === 'INTERNO' && !verInternos) { if(marcadoresCamiones[placa]) mapa.removeLayer(marcadoresCamiones[placa]); continue; }
+                if(tipo === 'FORANEO' && !verForaneos) { if(marcadoresCamiones[placa]) mapa.removeLayer(marcadoresCamiones[placa]); continue; }
+                if(marcadoresCamiones[placa] && !mapa.hasLayer(marcadoresCamiones[placa])) marcadoresCamiones[placa].addTo(mapa);
+
+                // TEXTO DE DESTINO (Con Lógica de PIVOTE temporal)
+                let textoDestino = camion.destino || 'S/D';
+                if(tipo === 'FORANEO' && camion.destino_temporal && camion.destino_temporal !== "") {
+                    textoDestino = `🔄 ${camion.destino_temporal} (Orig: ${textoDestino})`;
+                }
+
+                let infoRuta = tipo === 'FORANEO' ? `Des: ${textoDestino}` : (subtipo === 'Operacion Buque' ? `BQ: ${camion.buque} | ST: ${camion.sts}` : `⚙️ ${subtipo}`);
                 if (filtro !== "" && !placa.includes(filtro) && !infoRuta.includes(filtro)) continue; 
                 totalUnidades++;
                 
                 let claseCSS = tipo === 'INTERNO' ? 'interno' : 'foraneo';
-                let chipHtml = ''; // Eliminado el chip redundante
-                
+                if (tipo === 'INTERNO' && subtipo === 'Housekeeping') claseCSS = 'housekeeping';
+                if (tipo === 'INTERNO' && subtipo === 'Traslado') claseCSS = 'traslado';
+
+                let chipHtml = ''; 
                 if (estado === 'emergencia') { claseCSS = 'alerta-emergencia'; chipHtml = `<span class="chip-estado chip-emergencia">Emergencia</span>`;} 
                 else if (estado === 'pager') { claseCSS = 'alerta-pager'; chipHtml = `<span class="chip-estado chip-pager">Falla Pager</span>`;}
                 else if (estado === 'baño') { claseCSS = 'alerta-bano'; chipHtml = `<span class="chip-estado chip-bano">En Baño</span>`;}
@@ -544,7 +560,6 @@
                 let isChecked = seleccionadosMulti.has(placa) ? 'checked' : '';
                 let tiempo = `${Math.floor((Date.now() - (camion.hora_ingreso||Date.now())) / 60000)}m`;
 
-                // Tarjeta súper reducida
                 let tarjetaHTML = `
                     <div class="tarjeta-unidad ${claseCSS}" onclick="seleccionarCamion('${placa}', '${estado}')">
                         ${chipHtml}
@@ -559,8 +574,15 @@
             }
 
             let vistaFinal = "";
-            if (htmlInternos !== "") vistaFinal += `<div class="titulo-seccion">Unidades Internas</div>` + htmlInternos;
-            if (htmlForaneos !== "") vistaFinal += `<div class="titulo-seccion">Flujo Foráneo</div>` + htmlForaneos;
+            let btnOjoInt = verInternos ? "👁️" : "👁️‍🗨️"; let btnOjoFor = verForaneos ? "👁️" : "👁️‍🗨️";
+            let classOjoInt = verInternos ? "" : "oculto"; let classOjoFor = verForaneos ? "" : "oculto";
+
+            if (htmlInternos !== "") {
+                vistaFinal += `<details open><summary>Pipelines Internos <button class="btn-ojo ${classOjoInt}" onclick="toggleOjito('internos', event)" title="Mostrar/Ocultar">${btnOjoInt}</button></summary>${htmlInternos}</details>`;
+            }
+            if (htmlForaneos !== "") {
+                vistaFinal += `<details open><summary>Flujo Foráneo <button class="btn-ojo ${classOjoFor}" onclick="toggleOjito('foraneos', event)" title="Mostrar/Ocultar">${btnOjoFor}</button></summary>${htmlForaneos}</details>`;
+            }
             
             listaUnidades.innerHTML = vistaFinal;
             document.getElementById('contadorCamiones').innerText = totalUnidades;
@@ -573,17 +595,18 @@
                 const camion = dataGlobal[placa];
                 const latlng = [camion.lat, camion.lng];
                 const tipo = camion.tipo || 'FORANEO';
+                const subtipo = camion.subtipo || '';
                 const estado = camion.estado || 'activo';
 
                 if (marcadoresCamiones[placa]) {
                     marcadoresCamiones[placa].setLatLng(latlng);
                     if (marcadoresCamiones[placa].estadoGuardado !== estado) {
-                        marcadoresCamiones[placa].setIcon(getIcono(tipo, estado));
+                        marcadoresCamiones[placa].setIcon(getIcono(tipo, subtipo, estado));
                         marcadoresCamiones[placa].estadoGuardado = estado;
                         if(camionSeleccionado === placa) seleccionarCamion(placa, estado);
                     }
                 } else {
-                    marcadoresCamiones[placa] = L.marker(latlng, { icon: getIcono(tipo, estado) }).addTo(mapa);
+                    marcadoresCamiones[placa] = L.marker(latlng, { icon: getIcono(tipo, subtipo, estado) }).addTo(mapa);
                     marcadoresCamiones[placa].on('click', () => seleccionarCamion(placa, estado));
                     marcadoresCamiones[placa].estadoGuardado = estado;
                 }
