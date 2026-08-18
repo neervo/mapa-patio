@@ -26,81 +26,98 @@
         .panel-flotante { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); background-color: rgba(255, 255, 255, 0.98); padding: 24px; border-radius: 32px; width: 90%; max-width: 380px; box-shadow: 0 12px 40px rgba(0,0,0,0.12); z-index: 10; text-align: center; box-sizing: border-box; border: 1px solid var(--border-thin);}
         .panel-completo { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: var(--bg-base); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px; box-sizing: border-box; z-index: 10; overflow: hidden;}
         
-        h2 { color: var(--text-primary); margin-top: 0; margin-bottom: 24px; font-size: 24px; font-weight: 800; letter-spacing: -0.02em;}
+        h2 { color: var(--text-primary); margin-top: 0; margin-bottom: 24px; font-size: 22px; font-weight: 800; letter-spacing: -0.02em;}
         
-        input, select { width: 100%; font-size: 16px; border: 1px solid var(--border-thin); border-radius: 9999px; margin-bottom: 16px; padding: 16px; text-align: center; font-weight: 600; background: var(--surface); color: var(--text-primary); outline: none; text-transform: uppercase; box-sizing: border-box; font-family: 'Plus Jakarta Sans';}
+        input, select { width: 100%; font-size: 14px; border: 1px solid var(--border-thin); border-radius: 9999px; margin-bottom: 16px; padding: 16px; text-align: center; font-weight: 600; background: var(--surface); color: var(--text-primary); outline: none; text-transform: uppercase; box-sizing: border-box; font-family: 'Plus Jakarta Sans';}
         input:focus, select:focus { border-color: var(--primary); }
         select { appearance: none; cursor: pointer;}
         
-        button { font-size: 16px; font-weight: 700; border: none; border-radius: 9999px; padding: 18px; width: 100%; cursor: pointer; color: white; transition: 0.2s; margin-bottom: 12px; box-sizing: border-box; font-family: 'Plus Jakarta Sans';}
+        button { font-size: 15px; font-weight: 700; border: none; border-radius: 9999px; padding: 18px; width: 100%; cursor: pointer; color: white; transition: 0.2s; margin-bottom: 12px; box-sizing: border-box; font-family: 'Plus Jakarta Sans';}
         button:active { transform: scale(0.98); }
         
-        .btn-gordo { padding: 20px; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 10px;}
-        .btn-foraneo { background-color: var(--tertiary); box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);}
-        .btn-interno { background-color: var(--secondary); box-shadow: 0 4px 15px rgba(164, 201, 0, 0.3);}
+        .btn-gordo { padding: 20px; font-size: 16px; }
+        .btn-foraneo { background-color: var(--tertiary); box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3); color: #001f29;}
+        .btn-interno { background-color: var(--secondary); box-shadow: 0 4px 15px rgba(164, 201, 0, 0.3); color: #181e00;}
         
-        .btn-atras { background-color: transparent; color: var(--text-muted); border: 1px solid var(--border-thin); padding: 12px; width: auto; align-self: flex-start; margin-bottom: 20px; font-size: 14px;}
+        .btn-atras { background-color: transparent; color: var(--text-muted); border: 1px solid var(--border-thin); padding: 12px; width: auto; align-self: flex-start; margin-bottom: 20px; font-size: 13px;}
         .btn-entrar { background: linear-gradient(135deg, #FF5E3A 0%, #ff8a65 100%); box-shadow: 0 6px 20px var(--primary-shadow);}
         
         .btn-auxilio { background-color: var(--danger); box-shadow: 0 4px 15px rgba(186, 26, 26, 0.3); }
         .btn-salir { background-color: transparent; color: var(--danger); border: 1px solid var(--border-thin); margin-bottom: 0; padding: 14px;}
 
         .texto-placa { font-size: 24px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px; letter-spacing: -0.02em;}
-        .texto-destino { font-size: 15px; font-weight: 600; color: var(--text-muted); margin-bottom: 16px; background: rgba(0,0,0,0.03); padding: 8px 16px; border-radius: 9999px; display: inline-block;}
-        .texto-tiempo { font-size: 18px; color: var(--secondary); font-weight: 800; margin-bottom: 24px; }
+        .texto-destino { font-size: 14px; font-weight: 600; color: var(--text-muted); margin-bottom: 16px; background: rgba(0,0,0,0.03); padding: 8px 16px; border-radius: 9999px; display: inline-block;}
+        .texto-tiempo { font-size: 16px; color: var(--secondary); font-weight: 800; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 0.05em;}
 
+        /* MODALES PREMIUM */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(29, 28, 21, 0.8); backdrop-filter: blur(5px); z-index: 9999; display: flex; justify-content: center; align-items: center;}
+        .modal-box { background: white; padding: 32px 24px; border-radius: 24px; width: 85%; max-width: 340px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2);}
+        .modal-box h3 { margin-top: 0; color: var(--text-primary); font-weight: 800; font-size: 18px;}
+        .modal-box p { color: var(--text-muted); font-size: 15px; margin-bottom: 24px; line-height: 1.5; font-weight: 500;}
+        .modal-btn { background: var(--text-primary); padding: 14px; border-radius: 9999px; color: white; width: 100%; font-weight: 700;}
+
+        /* MENSAJE AUDIO TORRE */
         #alertaMensaje { display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background-color: #ffca28; padding: 24px; width: 90%; max-width: 380px; border-radius: 24px; z-index: 100; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.15); box-sizing: border-box; border: 2px solid white;}
-        .btn-centrar-mapa { position: absolute; top: 20px; right: 20px; z-index: 1000; background: white; border: 2px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-size: 20px; display: none; align-items: center; justify-content: center; cursor: pointer; padding: 0;}
+        .btn-centrar-mapa { position: absolute; top: 20px; right: 20px; z-index: 1000; background: white; border: 2px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-size: 12px; font-weight:800; display: none; align-items: center; justify-content: center; cursor: pointer; padding: 0; color: var(--primary);}
     </style>
 </head>
 <body>
 
     <div id="mapaFondo"></div>
-    <button id="btnCentrar" class="btn-centrar-mapa" onclick="centrarMapa()">🎯</button>
+    <button id="btnCentrar" class="btn-centrar-mapa" onclick="centrarMapa()">GPS</button>
+
+    <div id="customAlert" class="modal-overlay" style="display:none;">
+        <div class="modal-box">
+            <h3 id="alertTitle">Aviso</h3>
+            <p id="alertText">Mensaje</p>
+            <button class="modal-btn" onclick="document.getElementById('customAlert').style.display='none'">Entendido</button>
+        </div>
+    </div>
 
     <div id="alertaMensaje">
-        <div style="color: #752305; font-weight: 800; font-size:12px; text-transform: uppercase; letter-spacing: 0.1em;">📩 Torre de Control:</div>
-        <div id="textoMensaje" style="font-size: 20px; font-weight: 800; margin: 16px 0; color: #1d1c15; letter-spacing: -0.02em;"></div>
-        <button style="background-color: var(--text-primary); padding:14px;" onclick="document.getElementById('alertaMensaje').style.display = 'none';">✅ ENTENDIDO</button>
+        <div style="color: #752305; font-weight: 800; font-size:11px; text-transform: uppercase; letter-spacing: 0.1em;">Señal de Control</div>
+        <div id="textoMensaje" style="font-size: 18px; font-weight: 800; margin: 16px 0; color: #1d1c15; letter-spacing: -0.02em;"></div>
+        <button style="background-color: var(--text-primary); padding:14px;" onclick="document.getElementById('alertaMensaje').style.display = 'none';">Confirmar Recepción</button>
     </div>
 
     <div class="card" id="pantallaSeleccion">
-        <h2>Selecciona tu Perfil</h2>
-        <button class="btn-gordo btn-foraneo" onclick="seleccionarPerfil('FORANEO')">🚚 FORÁNEO</button>
-        <button class="btn-gordo btn-interno" onclick="seleccionarPerfil('INTERNO')">🚜 INTERNO</button>
+        <h2>Perfil Operativo</h2>
+        <button class="btn-gordo btn-foraneo" onclick="seleccionarPerfil('FORANEO')">Flujo Foráneo</button>
+        <button class="btn-gordo btn-interno" onclick="seleccionarPerfil('INTERNO')">Operación Interna</button>
     </div>
 
     <div class="card" id="pantallaLogin" style="display: none; overflow-y: auto; max-height: 90vh;">
-        <button class="btn-atras" onclick="volverSeleccion()">⬅ Volver</button>
+        <button class="btn-atras" onclick="volverSeleccion()">Regresar</button>
         <h2 id="tituloLogin">Registro</h2>
-        <input type="text" id="placaInput" placeholder="Placa / Num Eco">
-        <input type="text" id="posicionInput" placeholder="Posición (Ej. A0 03)">
+        
+        <input type="text" id="placaInput" placeholder="Matrícula / Eco">
+        <input type="text" id="posicionInput" placeholder="Destino (Ej. A0 03)">
         
         <select id="subtipoInput" style="display:none;">
-            <option value="Operacion Buque">🚢 Operación Buque</option>
-            <option value="Housekeeping">🧹 Housekeeping</option>
-            <option value="Traslado">🚛 Traslado Interno</option>
+            <option value="Operacion Buque">Operación Buque</option>
+            <option value="Housekeeping">Housekeeping</option>
+            <option value="Traslado">Traslado Interno</option>
         </select>
 
-        <input type="text" id="empleadoInput" placeholder="Num Empleado (Ej. EMP-123)" style="display:none;">
+        <input type="text" id="empleadoInput" placeholder="ID Empleado" style="display:none;">
         <input type="text" id="buqueInput" placeholder="Buque Asignado" style="display:none;">
         <input type="text" id="stsInput" placeholder="Grúa STS" style="display:none;">
         
-        <button class="btn-entrar" id="btnIngresar" onclick="iniciarRastreo()">Ingresar</button>
+        <button class="btn-entrar" id="btnIngresar" onclick="iniciarRastreo()">Validar Ingreso</button>
     </div>
 
     <div id="pantallaActiva" style="display: none;">
         <div style="width: 100%; max-width: 400px; text-align: center;">
-            <div class="texto-placa" id="lblPlaca">UNIDAD: --</div>
-            <div class="texto-destino" id="lblDestino">Destino: --</div>
-            <div class="texto-tiempo" id="lblTiempo">⏱️ 0 min</div>
+            <div class="texto-placa" id="lblPlaca">--</div>
+            <div class="texto-destino" id="lblDestino">--</div>
+            <div class="texto-tiempo" id="lblTiempo">Flujo: 0 min</div>
             
             <div id="botoneraInterna" style="display: none; width: 100%;">
-                <button id="btnBano" style="background-color: #ffca28; color: #752305; box-shadow: 0 4px 15px rgba(255, 202, 40, 0.3);" onclick="toggleBano()">🚾 Pausa (Baño)</button>
-                <button style="background-color: #f57f17; box-shadow: 0 4px 15px rgba(245, 127, 23, 0.3);" onclick="cambiarEstado('pager', 'Falla de Pager')">📟 Falla de Pager</button>
+                <button id="btnBano" style="background-color: #ffca28; color: #752305; box-shadow: 0 4px 15px rgba(255, 202, 40, 0.3);" onclick="toggleBano()">Pausa Operativa</button>
+                <button style="background-color: #f57f17; box-shadow: 0 4px 15px rgba(245, 127, 23, 0.3);" onclick="cambiarEstado('pager', 'Falla de Sistema')">Falla de Sistema</button>
             </div>
 
-            <button class="btn-auxilio" onclick="cambiarEstado('emergencia', 'AUXILIO REQUERIDO')">🚨 Auxilio</button>
+            <button class="btn-auxilio" onclick="cambiarEstado('emergencia', 'AUXILIO REQUERIDO')">Emergencia</button>
             <button class="btn-salir" onclick="salirRastreo()">Finalizar Turno</button>
         </div>
     </div>
@@ -110,13 +127,18 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Puedes agregar aquí más coordenadas de bahías y pivotes cuando lo necesites
-        const coordenadasBahias = { 
-            "A0 02": [19.0671, -104.2955], 
-            "A0 06": [19.0650, -104.2940], 
-            "G3 02": [19.0665, -104.2960],
-            "B2": [19.0668, -104.2950] // Coordenada de ejemplo para tu Pivote B2
-        };
+        let coordenadasBahias = {}; // Se llenará desde Firebase automáticamente
+        
+        // Cargar Bahías dinámicas creadas en la Torre
+        db.ref('configuracion/posiciones').on('value', snap => {
+            coordenadasBahias = {};
+            if(snap.val()) {
+                for(let key in snap.val()) {
+                    let pos = snap.val()[key];
+                    coordenadasBahias[pos.nombre.toUpperCase()] = pos.coordenadas;
+                }
+            }
+        });
 
         let mapa, marcadorMia, marcadorDestino, watchId = null, wakeLock = null, timerInterval = null;
         let tipoGlobal = "", subtipoGlobal = "", placaGlobal = "", destinoGlobal = "", buqueGlobal = "", stsGlobal = "", empleadoGlobal = "";
@@ -127,34 +149,53 @@
         let tracker1Min = null, sender5Min = null;
         let ultimaVezMovimiento = Date.now();
         let expulsado = false; 
-        let destinoPivoteActual = ""; // Variable para llevar control del pivote asignado
+        let destinoPivoteActual = ""; 
 
         mapa = L.map('mapaFondo', { zoomControl: false }).setView([19.066, -104.295], 16);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapa);
 
+        function mostrarAlertaPersonalizada(titulo, mensaje) {
+            document.getElementById('alertTitle').innerText = titulo;
+            document.getElementById('alertText').innerText = mensaje;
+            document.getElementById('customAlert').style.display = 'flex';
+        }
+
         async function solicitarWakeLock() { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {} }
         function hablar(texto) { if ('speechSynthesis' in window) { window.speechSynthesis.speak(new SpeechSynthesisUtterance(texto)); } }
+
+        // LÓGICA DINÁMICA DE CAMPOS
+        document.getElementById('subtipoInput').addEventListener('change', function() {
+            let val = this.value;
+            document.getElementById('empleadoInput').style.display = 'block';
+            if(val === 'Operacion Buque') {
+                document.getElementById('buqueInput').style.display = 'block';
+                document.getElementById('stsInput').style.display = 'block';
+            } else if (val === 'Housekeeping') {
+                document.getElementById('buqueInput').style.display = 'none';
+                document.getElementById('stsInput').style.display = 'none';
+            } else if (val === 'Traslado') {
+                document.getElementById('buqueInput').style.display = 'block';
+                document.getElementById('stsInput').style.display = 'none';
+            }
+        });
 
         function seleccionarPerfil(tipo) {
             tipoGlobal = tipo;
             document.getElementById('pantallaSeleccion').style.display = 'none';
             document.getElementById('pantallaLogin').style.display = 'block';
-            document.getElementById('tituloLogin').innerText = "Ingreso " + tipo;
+            document.getElementById('tituloLogin').innerText = tipo === 'FORANEO' ? "Flujo Foráneo" : "Operación Interna";
             
             if(tipo === 'FORANEO') {
-                document.getElementById('placaInput').placeholder = "Placa (Ej. TR-5)";
                 document.getElementById('posicionInput').style.display = 'block';
                 document.getElementById('subtipoInput').style.display = 'none';
                 document.getElementById('empleadoInput').style.display = 'none';
                 document.getElementById('buqueInput').style.display = 'none';
                 document.getElementById('stsInput').style.display = 'none';
             } else {
-                document.getElementById('placaInput').placeholder = "Num Eco (Ej. ECO-12)";
                 document.getElementById('posicionInput').style.display = 'none';
                 document.getElementById('subtipoInput').style.display = 'block';
-                document.getElementById('empleadoInput').style.display = 'block';
-                document.getElementById('buqueInput').style.display = 'block';
-                document.getElementById('stsInput').style.display = 'block';
+                // Trigger event to set initial fields correctly
+                document.getElementById('subtipoInput').dispatchEvent(new Event('change'));
             }
         }
 
@@ -163,23 +204,24 @@
             document.getElementById('pantallaLogin').style.display = 'none';
         }
 
-        function centrarMapa() {
-            if(latActual && lngActual) mapa.setView([latActual, lngActual], 18);
-        }
+        function centrarMapa() { if(latActual && lngActual) mapa.setView([latActual, lngActual], 18); }
 
         function iniciarRastreo() {
             placaGlobal = document.getElementById('placaInput').value.trim().toUpperCase();
-            if(placaGlobal === "") return alert("Faltan datos de ingreso.");
+            if(!placaGlobal) return mostrarAlertaPersonalizada("Error", "Debes ingresar tu matrícula o número económico.");
+            
             expulsado = false; 
 
             if (tipoGlobal === 'FORANEO') {
                 destinoGlobal = document.getElementById('posicionInput').value.trim().toUpperCase();
+                if(!destinoGlobal) return mostrarAlertaPersonalizada("Error", "Ingresa el destino asignado.");
+
                 document.getElementById('mapaFondo').style.display = 'block';
                 document.getElementById('btnCentrar').style.display = 'flex';
                 setTimeout(() => { mapa.invalidateSize(); }, 300);
                 document.getElementById('pantallaActiva').className = 'panel-flotante';
                 document.getElementById('botoneraInterna').style.display = 'none';
-                document.getElementById('lblDestino').innerText = "📍 " + destinoGlobal;
+                document.getElementById('lblDestino').innerText = "Destino: " + destinoGlobal;
                 
                 if (coordenadasBahias[destinoGlobal]) {
                     if(marcadorDestino) mapa.removeLayer(marcadorDestino);
@@ -188,18 +230,22 @@
             } else {
                 subtipoGlobal = document.getElementById('subtipoInput').value;
                 empleadoGlobal = document.getElementById('empleadoInput').value.trim().toUpperCase();
+                if(!empleadoGlobal) return mostrarAlertaPersonalizada("Error", "Debes ingresar tu ID de empleado.");
+                
                 buqueGlobal = document.getElementById('buqueInput').value.trim().toUpperCase();
                 stsGlobal = document.getElementById('stsInput').value.trim().toUpperCase();
+
+                if(subtipoGlobal === 'Operacion Buque' && (!buqueGlobal || !stsGlobal)) return mostrarAlertaPersonalizada("Error", "Falta Buque o Grúa STS.");
+                if(subtipoGlobal === 'Traslado' && !buqueGlobal) return mostrarAlertaPersonalizada("Error", "Falta el Buque Asignado.");
+
                 document.getElementById('mapaFondo').style.display = 'none';
                 document.getElementById('btnCentrar').style.display = 'none';
                 document.getElementById('pantallaActiva').className = 'panel-completo';
                 document.getElementById('botoneraInterna').style.display = 'block';
                 
-                if(subtipoGlobal === 'Operacion Buque') {
-                    document.getElementById('lblDestino').innerText = `👤 ${empleadoGlobal} | 🚢 ${buqueGlobal} | 🏗️ ${stsGlobal}`;
-                } else {
-                    document.getElementById('lblDestino').innerText = `👤 ${empleadoGlobal} | ⚙️ ${subtipoGlobal}`;
-                }
+                if(subtipoGlobal === 'Operacion Buque') document.getElementById('lblDestino').innerText = `ID: ${empleadoGlobal} | BQ: ${buqueGlobal} | ST: ${stsGlobal}`;
+                else if(subtipoGlobal === 'Traslado') document.getElementById('lblDestino').innerText = `ID: ${empleadoGlobal} | BQ: ${buqueGlobal}`;
+                else document.getElementById('lblDestino').innerText = `ID: ${empleadoGlobal} | ${subtipoGlobal}`;
                 
                 const fechaHoy = new Date().toISOString().split('T')[0];
                 tracker1Min = setInterval(() => {
@@ -207,7 +253,6 @@
                         historialBatch.push({ lat: latActual, lng: lngActual, vel: velActual, est: estadoOperativo, time: Date.now() });
                     }
                 }, 60000); 
-
                 sender5Min = setInterval(() => {
                     if (historialBatch.length > 0 && !expulsado) {
                         const refHistorial = db.ref(`historial_rutas/${fechaHoy}/${placaGlobal}`);
@@ -225,16 +270,16 @@
             ultimaVezMovimiento = Date.now();
             estadoOperativo = "activo";
             solicitarWakeLock();
-            hablar("Ingreso registrado");
+            hablar("Ingreso validado en sistema.");
 
             timerInterval = setInterval(() => {
                 if (expulsado) return;
                 let min = Math.floor((Date.now() - horaIngreso) / 60000);
-                if (estadoOperativo === 'activo') document.getElementById('lblTiempo').innerText = "Flujo Activo: " + min + " min";
+                if (estadoOperativo === 'activo') document.getElementById('lblTiempo').innerText = "Flujo: " + min + " min";
                 
                 if (tipoGlobal === 'INTERNO' && estadoOperativo === 'activo') {
                     let tiempoDetenido = Date.now() - ultimaVezMovimiento;
-                    if (tiempoDetenido >= (3 * 60 * 1000)) cambiarEstado('ocio', 'Detenido por más de 3 minutos');
+                    if (tiempoDetenido >= (3 * 60 * 1000)) cambiarEstado('ocio', 'Detenido prolongado detectado');
                 }
             }, 60000);
 
@@ -246,12 +291,11 @@
                     if (timerInterval) clearInterval(timerInterval);
                     if (tracker1Min) clearInterval(tracker1Min);
                     if (sender5Min) clearInterval(sender5Min);
-                    alert("⚠️ Turno finalizado por la Torre de Control.");
+                    alert("Turno finalizado remotamente.");
                     window.location.reload();
                     return;
                 }
 
-                // SISTEMA DE AUDIO
                 if (data.tts_mensaje && data.tts_timestamp > ultimoAudio) {
                     ultimoAudio = data.tts_timestamp;
                     document.getElementById('textoMensaje').innerText = `"${data.tts_mensaje}"`;
@@ -259,25 +303,18 @@
                     hablar(data.tts_mensaje);
                 }
 
-                // NUEVO: SISTEMA DE DESVÍO (PIVOTE)
                 if (tipoGlobal === 'FORANEO') {
                     const nuevoPivote = data.destino_temporal || "";
                     if (nuevoPivote !== destinoPivoteActual) {
                         destinoPivoteActual = nuevoPivote;
-                        
-                        // Actualizar textos en pantalla
                         if (destinoPivoteActual !== "") {
-                            document.getElementById('lblDestino').innerHTML = `📍 PIVOTE: ${destinoPivoteActual} <br><span style="font-size:12px; color:var(--text-muted); font-weight:500;">(Original: ${destinoGlobal})</span>`;
+                            document.getElementById('lblDestino').innerHTML = `PIVOTE: ${destinoPivoteActual} <br><span style="font-size:12px; font-weight:500;">(Orig: ${destinoGlobal})</span>`;
                         } else {
-                            document.getElementById('lblDestino').innerHTML = `📍 ${destinoGlobal}`;
+                            document.getElementById('lblDestino').innerHTML = `Destino: ${destinoGlobal}`;
                         }
-
-                        // Actualizar el PIN en el mapa
                         if (marcadorDestino) mapa.removeLayer(marcadorDestino);
                         let coordActiva = coordenadasBahias[destinoPivoteActual] || coordenadasBahias[destinoGlobal];
-                        if (coordActiva) {
-                            marcadorDestino = L.marker(coordActiva).addTo(mapa).bindPopup("Destino Asignado");
-                        }
+                        if (coordActiva) marcadorDestino = L.marker(coordActiva).addTo(mapa).bindPopup("Nueva Posición");
                     }
                 }
 
@@ -286,7 +323,7 @@
                     if(estadoOperativo === 'activo') {
                         document.getElementById('btnBano').style.backgroundColor = '#ffca28'; 
                         document.getElementById('btnBano').style.color = '#752305'; 
-                        document.getElementById('btnBano').innerText = "🚾 Pausa (Baño)";
+                        document.getElementById('btnBano').innerText = "Pausa Operativa";
                         ultimaVezMovimiento = Date.now(); 
                     }
                 }
@@ -312,7 +349,6 @@
                         }
                     }
 
-                    // Se envía todo al backend (Nota que no tocamos destino_temporal, ese solo lo manda la Torre)
                     db.ref('camiones_en_patio/' + placaGlobal).update({
                         lat: latActual, lng: lngActual, placa: placaGlobal, tipo: tipoGlobal, subtipo: subtipoGlobal, estado: estadoOperativo,
                         destino: destinoGlobal, buque: buqueGlobal, sts: stsGlobal, empleado: empleadoGlobal, hora_ingreso: horaIngreso, velocidad_actual: velActual
@@ -333,12 +369,12 @@
             const btn = document.getElementById('btnBano');
             if (estadoOperativo === 'baño') {
                 cambiarEstado('activo', null);
-                btn.style.backgroundColor = '#ffca28'; btn.style.color = '#752305'; btn.innerText = "🚾 Pausa (Baño)";
+                btn.style.backgroundColor = '#ffca28'; btn.style.color = '#752305'; btn.innerText = "Pausa Operativa";
                 ultimaVezMovimiento = Date.now();
             } else {
-                cambiarEstado('baño', 'Operador en Baño');
-                btn.style.backgroundColor = '#a4c900'; btn.style.color = 'white'; btn.innerText = "✅ Regresar a Operar";
-                document.getElementById('lblTiempo').innerText = "🚾 EN PAUSA";
+                cambiarEstado('baño', 'Operador en Pausa');
+                btn.style.backgroundColor = '#a4c900'; btn.style.color = 'white'; btn.innerText = "Reanudar Flujo";
+                document.getElementById('lblTiempo').innerText = "PAUSA ACTIVA";
             }
         }
 
