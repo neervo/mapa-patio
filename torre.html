@@ -46,9 +46,8 @@
         
         details > summary { list-style: none; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 800; padding: 10px 0; margin: 10px 0 5px 0; color: var(--text-secondary); border-bottom: 1px solid var(--border-thin); cursor: pointer; display: flex; justify-content: space-between; align-items: center;}
         details > summary::-webkit-details-marker { display: none; }
-        .btn-ojo { background: transparent; border: none; font-size: 14px; cursor: pointer; opacity: 0.6; transition: 0.2s; padding: 0 5px;}
-        .btn-ojo:hover { opacity: 1; transform: scale(1.1);}
-        .btn-ojo.oculto { filter: grayscale(100%) opacity(0.3); }
+        .btn-ojo { background: var(--bg-base); border: 1px solid var(--border-thin); border-radius: 4px; font-size: 9px; cursor: pointer; font-weight:800; color: var(--text-secondary); padding: 4px 8px;}
+        .btn-ojo:hover { background: #ddd;}
 
         .tarjeta-unidad { background: var(--card-glass); border: 1px solid var(--border-thin); padding: 10px 12px; border-radius: 12px; margin-bottom: 8px; cursor: pointer; position: relative; overflow: hidden;}
         .tarjeta-unidad.seleccionada { border-color: var(--primary); background: var(--primary-container);}
@@ -56,7 +55,6 @@
         .tarjeta-unidad.interno { border-left: 4px solid #a4c900; } 
         .tarjeta-unidad.housekeeping { border-left: 4px solid #fbc02d; } 
         .tarjeta-unidad.traslado { border-left: 4px solid #ff9800; } 
-        
         .tarjeta-unidad.foraneo { border-left: 4px solid var(--tertiary); } 
         .tarjeta-unidad.alerta-emergencia { border-left: 4px solid var(--danger); background: rgba(255,0,0,0.05); }
         .tarjeta-unidad.alerta-pager { border-left: 4px solid #f57f17; }
@@ -81,10 +79,7 @@
         
         .btn-radio { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 9999px; cursor: pointer; font-weight: 700; margin-bottom: 8px; font-size: 12px; font-family: 'Plus Jakarta Sans';}
         .btn-historial { background-color: var(--tertiary-container); color: var(--tertiary); border: none; padding: 10px; border-radius: 9999px; cursor: pointer; font-weight: 700; margin-bottom: 8px; font-size: 12px;}
-        
-        /* NUEVOS BOTONES PIVOTE */
         .btn-pivote { background-color: #e1bee7; color: #6a1b9a; border: none; padding: 10px; border-radius: 9999px; cursor: pointer; font-weight: 700; margin-bottom: 8px; font-size: 12px;}
-        
         .btn-resolver { background-color: transparent; color: var(--primary); border: 2px solid var(--primary); padding: 10px; border-radius: 9999px; cursor: pointer; font-weight: 700; margin-bottom: 8px; font-size: 12px;}
         .btn-eliminar { background-color: transparent; color: var(--danger); padding: 8px; border-radius: 9999px; cursor: pointer; font-weight: 600; font-size: 11px; border: none; text-decoration: underline;}
 
@@ -92,15 +87,12 @@
         .dash-card { background: var(--card-glass); border: 1px solid var(--border-thin); padding: 20px; border-radius: 16px; display: flex; flex-direction: column; gap: 5px;}
         .dash-title { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; font-weight: 800;}
         .dash-value { font-size: 40px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.04em;}
-        
-        .btn-excel { background-color: #4caf50; color: white; border: none; padding: 12px; border-radius: 9999px; font-weight: 800; cursor: pointer; font-family: 'Plus Jakarta Sans'; font-size: 13px; text-transform: uppercase; margin-top: 10px; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);}
+        .btn-excel { background-color: #4caf50; color: white; border: none; padding: 12px; border-radius: 9999px; font-weight: 800; cursor: pointer; font-family: 'Plus Jakarta Sans'; font-size: 13px; text-transform: uppercase; margin-top: 10px;}
 
         .ajustes-seccion { padding: 20px; border-bottom: 1px solid var(--border-thin); }
         .ajustes-seccion h3 { color: var(--text-primary); margin-top: 0; font-size: 14px; font-weight: 800;}
         .texto-ayuda { color: var(--text-secondary); font-size: 12px; margin-bottom: 15px; line-height: 1.4; }
         .btn-ajuste { background-color: #ffffff; color: var(--text-primary); border: 1px solid var(--border-thin); padding: 10px; width: 100%; border-radius: 9999px; cursor: pointer; font-weight: 700; margin-bottom: 10px; font-size: 12px;}
-        .btn-guardar-geo { background-color: var(--secondary-container); color: var(--secondary); border: none; padding: 10px; width: 100%; border-radius: 9999px; cursor: pointer; font-weight: 800; display: none; font-size: 12px;}
-        
         .item-geo { display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; border: 1px solid var(--border-thin); font-size: 12px; font-weight: 700;}
         .item-geo button { background: transparent; border: none; cursor: pointer; font-size: 14px;}
 
@@ -114,6 +106,7 @@
         .icono-bano { background-color: #fbc02d; }
         .icono-ocio { background-color: #ba68c8; }
         .icono-fantasma { display: flex; justify-content: center; align-items: center; background-color: white; border: 2px solid var(--primary); width: 12px; height: 12px;}
+        .icono-posicion { background-color: #1d1c15; border: 2px solid white; border-radius: 50%; width: 10px; height: 10px; }
 
         .reproductor-rutas { position: absolute; bottom: 20px; left: 380px; width: calc(100vw - 420px); max-width: 800px; background: rgba(255, 249, 238, 0.95); backdrop-filter: blur(10px); padding: 20px; border-radius: 20px; z-index: 1000; display: none; color: var(--text-primary); border: 1px solid var(--border-thin); box-sizing: border-box;}
         .reproductor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;}
@@ -126,16 +119,38 @@
         .btn-cerrar-rep { background-color: transparent; color: var(--text-secondary); border: 1px solid var(--border-thin); padding: 8px 15px; border-radius: 9999px; font-weight: 700; cursor: pointer; font-size: 11px;}
         .input-fecha { padding: 8px 12px; border-radius: 9999px; border: 1px solid var(--border-thin); font-weight: 600; background: #ffffff; color: var(--text-primary); font-family: 'Plus Jakarta Sans'; font-size: 11px;}
         
-        .geo-tooltip { background: rgba(255,255,255,0.9); border: none; border-radius: 9999px; padding: 4px 10px; color: var(--primary); font-family: 'Plus Jakarta Sans'; font-weight: 800; font-size: 11px;}
+        .geo-tooltip { background: rgba(255,255,255,0.9); border: none; border-radius: 9999px; padding: 4px 10px; color: var(--text-primary); font-family: 'Plus Jakarta Sans'; font-weight: 800; font-size: 11px;}
         .geo-tooltip.oculto { display: none !important; }
+
+        /* MODALES PREMIUM HTML */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(29, 28, 21, 0.6); backdrop-filter: blur(5px); z-index: 9999; display: flex; justify-content: center; align-items: center;}
+        .modal-box { background: white; padding: 32px 24px; border-radius: 24px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.15);}
+        .modal-box h3 { margin-top: 0; color: var(--text-primary); font-weight: 800; font-size: 18px; margin-bottom: 10px;}
+        .modal-box p { color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; line-height: 1.5;}
+        .modal-input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border-thin); margin-bottom: 24px; font-family: 'Plus Jakarta Sans'; font-size: 14px; box-sizing: border-box;}
+        .modal-buttons { display: flex; gap: 10px; justify-content: center;}
+        .modal-btn-cancel { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-thin); padding: 12px 20px; border-radius: 9999px; cursor: pointer; font-weight: 600;}
+        .modal-btn-ok { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 9999px; cursor: pointer; font-weight: 700;}
     </style>
 </head>
 <body>
 
     <div id="mapa"></div>
 
+    <div id="customModal" class="modal-overlay" style="display:none;">
+        <div class="modal-box">
+            <h3 id="modalTitle">Mensaje</h3>
+            <p id="modalText"></p>
+            <input type="text" id="modalInput" class="modal-input" style="display:none;">
+            <div class="modal-buttons">
+                <button id="modalBtnCancel" class="modal-btn-cancel">Cancelar</button>
+                <button id="modalBtnOk" class="modal-btn-ok">Aceptar</button>
+            </div>
+        </div>
+    </div>
+
     <div class="header">
-        <h1>YMS</h1>
+        <h1>YMS Central</h1>
         <div class="contador">Unidades: <span id="contadorCamiones">0</span></div>
     </div>
     
@@ -157,16 +172,16 @@
 
             <div id="panelMulti" class="panel-multi">
                 <h3 id="lblMulti">Unidades: 0</h3>
-                <button class="btn-pivote" onclick="reasignarDestinoMultiple()">📍 Desviar Grupo a Posición Pivote</button>
+                <button class="btn-pivote" onclick="reasignarDestinoMultiple()">Asignar Pivote al Grupo</button>
                 <button class="btn-radio" onclick="enviarMensajeMultiple()">Enviar Mensaje al Grupo</button>
             </div>
             
             <div id="panelAcciones" class="panel-acciones">
                 <h3 id="tituloAccion">Unidad: Seleccionada</h3>
                 <input type="text" id="inputVoz" class="input-tts" placeholder="Dictar instrucción...">
-                <button class="btn-pivote" onclick="reasignarDestinoIndividual()">📍 Asignar Posición Pivote</button>
+                <button class="btn-pivote" onclick="reasignarDestinoIndividual()">Asignar Pivote Temporal</button>
                 <button class="btn-radio" onclick="enviarMensajeTorre()">Enviar Mensaje</button>
-                <button class="btn-historial" onclick="abrirReproductor()">Historial Ruta</button>
+                <button class="btn-historial" onclick="abrirReproductor()">Historial de Ruta</button>
                 <button id="btnResolverAlerta" class="btn-resolver" style="display:none;" onclick="resolverAlertaTorre()">Resolver Alerta</button>
                 <button class="btn-eliminar" onclick="forzarSalidaTorre()">Forzar expulsión del sistema</button>
             </div>
@@ -182,27 +197,32 @@
                     <div class="dash-title">Tiempos Muertos (>3 Min)</div>
                     <div class="dash-value" id="dashOcio" style="color: #9c27b0;">0</div>
                 </div>
-                <button class="btn-excel" onclick="exportarExcel()">📥 Exportar Reporte (Excel)</button>
+                <button class="btn-excel" onclick="exportarExcel()">Descargar Reporte (CSV)</button>
             </div>
         </div>
 
         <div id="tab-ajustes" class="tab-content">
             <div class="ajustes-seccion">
-                <h3>Visualización del Mapa</h3>
-                <label style="font-size: 13px; font-weight: 600; display: flex; align-items: center; cursor: pointer;">
+                <h3>Visualización</h3>
+                <label style="font-size: 13px; font-weight: 600; display: flex; align-items: center; cursor: pointer; margin-bottom: 10px;">
                     <input type="checkbox" id="chkNombresGeo" class="chk-multi" checked onchange="toggleNombresGeo()"> 
-                    Mostrar Nombres de Geocercas
+                    Nombres de Zonas
                 </label>
             </div>
 
             <div class="ajustes-seccion">
-                <h3>Geocercas</h3>
-                <button id="btnDibujarGeo" class="btn-ajuste" onclick="iniciarDibujoGeocerca()">📍 Dibujar Geocerca</button>
-                <button id="btnGuardarGeo" class="btn-guardar-geo" onclick="guardarGeocerca()">Guardar Polígono</button>
+                <h3>Posiciones del Patio (Bahías)</h3>
+                <p class="texto-ayuda">Define coordenadas para que el celular las use de destino.</p>
+                <button id="btnDibujarPos" class="btn-ajuste" onclick="iniciarDibujoPosicion()">Definir Posición</button>
+                <div id="listaPosicionesGuardadas"></div>
             </div>
+
             <div class="ajustes-seccion">
-                <h3>Zonas Creadas</h3>
-                <div id="listaGeocercasGuardadas"></div>
+                <h3>Zonas/Geocercas</h3>
+                <p class="texto-ayuda">Dibuja áreas en el mapa para control visual.</p>
+                <button id="btnDibujarGeo" class="btn-ajuste" onclick="iniciarDibujoGeocerca()">Dibujar Geocerca</button>
+                <button id="btnGuardarGeo" class="btn-guardar-geo" style="display:none;" onclick="guardarGeocerca()">Guardar Polígono</button>
+                <div id="listaGeocercasGuardadas" style="margin-top:10px;"></div>
             </div>
         </div>
 
@@ -236,13 +256,38 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        // ---------------- MODAL PREMIUM ----------------
+        function mostrarModal(titulo, texto, tipo = 'alert', placeholder = '') {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('customModal');
+                document.getElementById('modalTitle').innerText = titulo;
+                document.getElementById('modalText').innerText = texto;
+                const input = document.getElementById('modalInput');
+                const btnCancel = document.getElementById('modalBtnCancel');
+                const btnOk = document.getElementById('modalBtnOk');
+
+                if (tipo === 'prompt') {
+                    input.style.display = 'block'; input.value = ''; input.placeholder = placeholder;
+                    btnCancel.style.display = 'block';
+                } else if (tipo === 'confirm') {
+                    input.style.display = 'none'; btnCancel.style.display = 'block';
+                } else {
+                    input.style.display = 'none'; btnCancel.style.display = 'none';
+                }
+                modal.style.display = 'flex';
+
+                btnOk.onclick = () => { modal.style.display = 'none'; resolve(tipo === 'prompt' ? input.value : true); };
+                btnCancel.onclick = () => { modal.style.display = 'none'; resolve(tipo === 'prompt' ? null : false); };
+            });
+        }
+
         const marcadoresCamiones = {};
         const listaUnidades = document.getElementById('listaUnidades');
         let camionSeleccionado = null;
         let dataGlobal = {};
         let seleccionadosMulti = new Set();
         let geocercasMapa = {}; 
-        
+        let posicionesMapa = {}; 
         let verInternos = true;
         let verForaneos = true;
 
@@ -261,25 +306,30 @@
                 csv += `${u.placa},${u.tipo},${u.subtipo || 'N/A'},${u.estado},${u.destino || u.buque || 'S/D'},${u.sts || 'N/A'},${u.velocidad_actual || 0},${min}\n`;
             }
             const blob = new Blob(["\uFEFF"+csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
-            a.href = url; a.download = `Reporte_YMS_${new Date().toISOString().split('T')[0]}.csv`;
+            a.href = URL.createObjectURL(blob); a.download = `Reporte_YMS_${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
         };
 
         function actualizarDashboard() {
-            let total = 0, ocio = 0, bano = 0;
+            let total = 0, ocio = 0;
             for(let key in dataGlobal) {
-                total++;
-                if(dataGlobal[key].estado === 'ocio') ocio++;
-                if(dataGlobal[key].estado === 'baño') bano++;
+                total++; if(dataGlobal[key].estado === 'ocio') ocio++;
             }
             document.getElementById('dashTotal').innerText = total;
             document.getElementById('dashOcio').innerText = ocio;
         }
 
+        // --- SISTEMA POSICIONES (NUEVO) ---
+        let modoDibujoPos = false;
+        window.iniciarDibujoPosicion = function() {
+            modoDibujoPos = true;
+            document.getElementById('mapa').style.cursor = 'crosshair'; 
+            mostrarModal("Posiciones", "Da clic en el mapa donde se ubica la bahía/posición.", "alert");
+        };
+
         // --- SISTEMA DE GEOCERCAS ---
-        let modoDibujo = false, puntosDibujo = [], polylineDibujo = null, marcadoresDibujo = [];
+        let modoDibujoGeo = false, puntosDibujo = [], polylineDibujo = null, marcadoresDibujo = [];
 
         window.toggleNombresGeo = function() {
             let activo = document.getElementById('chkNombresGeo').checked;
@@ -289,30 +339,41 @@
         };
 
         window.iniciarDibujoGeocerca = function() {
-            modoDibujo = true; puntosDibujo = [];
+            modoDibujoGeo = true; puntosDibujo = [];
             document.getElementById('btnDibujarGeo').style.display = 'none';
             document.getElementById('btnGuardarGeo').style.display = 'block';
             document.getElementById('mapa').style.cursor = 'crosshair'; 
         };
 
-        mapa.on('click', function(e) {
-            if (!modoDibujo) return;
+        mapa.on('click', async function(e) {
+            // Lógica Posiciones
+            if (modoDibujoPos) {
+                modoDibujoPos = false;
+                document.getElementById('mapa').style.cursor = 'grab';
+                let nombre = await mostrarModal("Nueva Posición", "Ingresa el código de esta Bahía/Pivote:", "prompt", "Ej. A0 02");
+                if (nombre) {
+                    db.ref('configuracion/posiciones').push({ nombre: nombre.toUpperCase(), coordenadas: [e.latlng.lat, e.latlng.lng] });
+                    mostrarModal("Éxito", "Posición guardada. Los operadores ya pueden usarla.");
+                }
+                return;
+            }
+
+            // Lógica Geocercas
+            if (!modoDibujoGeo) return;
             puntosDibujo.push([e.latlng.lat, e.latlng.lng]);
-            let marcador = L.circleMarker([e.latlng.lat, e.latlng.lng], {radius: 4, color: '#FF5E3A', fillColor: '#FF5E3A', fillOpacity: 1}).addTo(mapa);
-            marcadoresDibujo.push(marcador);
-            
+            marcadoresDibujo.push(L.circleMarker([e.latlng.lat, e.latlng.lng], {radius: 4, color: '#FF5E3A', fillColor: '#FF5E3A', fillOpacity: 1}).addTo(mapa));
             if (polylineDibujo) mapa.removeLayer(polylineDibujo);
             let puntosPoligono = [...puntosDibujo];
             if(puntosPoligono.length > 2) puntosPoligono.push(puntosPoligono[0]);
             polylineDibujo = L.polygon(puntosPoligono, {color: '#FF5E3A', weight: 2, fillColor: '#ffdbd0', fillOpacity: 0.3}).addTo(mapa);
         });
 
-        window.guardarGeocerca = function() {
-            if (puntosDibujo.length < 3) return alert("Mínimo 3 puntos.");
-            let nombre = prompt("Nombre de la Geocerca:");
+        window.guardarGeocerca = async function() {
+            if (puntosDibujo.length < 3) return mostrarModal("Error", "Mínimo 3 puntos.");
+            let nombre = await mostrarModal("Guardar", "Nombre de la Geocerca:", "prompt", "Ej. Zona LCL");
             if (nombre) db.ref('configuracion/geocercas').push({ nombre: nombre, coordenadas: puntosDibujo });
             
-            modoDibujo = false;
+            modoDibujoGeo = false;
             document.getElementById('btnDibujarGeo').style.display = 'block';
             document.getElementById('btnGuardarGeo').style.display = 'none';
             document.getElementById('mapa').style.cursor = 'grab';
@@ -321,22 +382,40 @@
             puntosDibujo = []; marcadoresDibujo = []; polylineDibujo = null;
         };
 
-        window.eliminarGeocerca = function(key) {
-            if(confirm("¿Borrar esta geocerca?")) db.ref('configuracion/geocercas/' + key).remove();
+        window.eliminarGeocerca = async function(key) {
+            let conf = await mostrarModal("Borrar", "¿Borrar esta geocerca?", "confirm");
+            if(conf) db.ref('configuracion/geocercas/' + key).remove();
         };
+        window.eliminarPosicion = async function(key) {
+            let conf = await mostrarModal("Borrar", "¿Borrar esta posición del patio?", "confirm");
+            if(conf) db.ref('configuracion/posiciones/' + key).remove();
+        };
+
+        db.ref('configuracion/posiciones').on('value', snap => {
+            for(let k in posicionesMapa) mapa.removeLayer(posicionesMapa[k]);
+            posicionesMapa = {};
+            let htmlList = "";
+            if(snap.val()) {
+                const iconoPos = L.divIcon({ className: '', html: `<div class="icono-posicion"></div>`, iconSize: [10, 10], iconAnchor: [5, 5] });
+                for(let key in snap.val()) {
+                    let p = snap.val()[key];
+                    let m = L.marker(p.coordenadas, {icon: iconoPos}).addTo(mapa).bindTooltip(p.nombre, {permanent: true, direction: 'top', className: 'geo-tooltip'});
+                    posicionesMapa[key] = m;
+                    htmlList += `<div class="item-geo"><span>📍 ${p.nombre}</span><button onclick="eliminarPosicion('${key}')">❌</button></div>`;
+                }
+            }
+            document.getElementById('listaPosicionesGuardadas').innerHTML = htmlList || "<p class='texto-ayuda'>No hay posiciones creadas.</p>";
+        });
 
         db.ref('configuracion/geocercas').on('value', snap => {
             for(let k in geocercasMapa) mapa.removeLayer(geocercasMapa[k]);
-            geocercasMapa = {};
-            let htmlListaGeo = "";
-            const data = snap.val();
-            
-            if(data) {
-                let mostrarNombres = document.getElementById('chkNombresGeo').checked ? '' : 'oculto';
-                for(let key in data) {
-                    let geo = data[key];
+            geocercasMapa = {}; let htmlListaGeo = "";
+            if(snap.val()) {
+                let show = document.getElementById('chkNombresGeo').checked ? '' : 'oculto';
+                for(let key in snap.val()) {
+                    let geo = snap.val()[key];
                     let poligono = L.polygon(geo.coordenadas, {color: '#ffffff', weight: 2, fillColor: '#ffffff', fillOpacity: 0.15}).addTo(mapa);
-                    poligono.bindTooltip(`${geo.nombre}`, {permanent: true, direction: 'center', className: `geo-tooltip ${mostrarNombres}`}).openTooltip();
+                    poligono.bindTooltip(`${geo.nombre}`, {permanent: true, direction: 'center', className: `geo-tooltip ${show}`}).openTooltip();
                     geocercasMapa[key] = poligono;
                     htmlListaGeo += `<div class="item-geo"><span>${geo.nombre}</span><button onclick="eliminarGeocerca('${key}')">❌</button></div>`;
                 }
@@ -346,7 +425,6 @@
 
         // --- REPRODUCTOR ---
         let datosHistorial = [], polylineHistorial = null, marcadorHistorial = null, timerHistorial = null;
-
         window.abrirReproductor = function() {
             if (!camionSeleccionado) return;
             document.getElementById('reproductorRutas').style.display = 'block';
@@ -358,16 +436,12 @@
         window.cargarHistorialDia = function() {
             const fecha = document.getElementById('repFecha').value;
             if(!fecha || !camionSeleccionado) return;
-            limpiarRutaMapa();
-            document.getElementById('repInfoHora').innerText = "...";
-
+            limpiarRutaMapa(); document.getElementById('repInfoHora').innerText = "...";
             db.ref(`historial_rutas/${fecha}/${camionSeleccionado}`).once('value', snap => {
-                const data = snap.val();
-                if(!data) { document.getElementById('repInfoHora').innerText = "--:--"; return alert("Sin registros."); }
-                datosHistorial = Object.values(data).sort((a,b) => a.time - b.time);
+                if(!snap.val()) { document.getElementById('repInfoHora').innerText = "--:--"; return mostrarModal("Vacio", "Sin registros."); }
+                datosHistorial = Object.values(snap.val()).sort((a,b) => a.time - b.time);
                 if(datosHistorial.length === 0) return;
-                document.getElementById('sliderRep').max = datosHistorial.length - 1;
-                document.getElementById('sliderRep').value = 0;
+                document.getElementById('sliderRep').max = datosHistorial.length - 1; document.getElementById('sliderRep').value = 0;
                 dibujarLineaHistorial(); actualizarDatosSlider(0);
             });
         };
@@ -386,11 +460,10 @@
             marcadorHistorial.setLatLng([punto.lat, punto.lng]);
             document.getElementById('repInfoHora').innerText = new Date(punto.time).toLocaleTimeString();
             document.getElementById('repInfoVel').innerText = punto.vel + " km/h";
-            document.getElementById('repInfoEst').innerText = punto.est === 'baño' ? 'BAÑO' : punto.est === 'ocio' ? 'OCIO' : 'ACTIVO';
+            document.getElementById('repInfoEst').innerText = punto.est.toUpperCase();
         };
 
         window.moverSliderRep = function() { actualizarDatosSlider(parseInt(document.getElementById('sliderRep').value)); };
-
         window.togglePlayRep = function() {
             const btn = document.getElementById('btnPlayRep');
             if(timerHistorial) { clearInterval(timerHistorial); timerHistorial = null; btn.innerText = "Play"; } 
@@ -411,10 +484,9 @@
             if(timerHistorial) clearInterval(timerHistorial); timerHistorial = null;
             document.getElementById('btnPlayRep').innerText = "Play";
         }
-
         window.cerrarReproductor = function() { limpiarRutaMapa(); document.getElementById('reproductorRutas').style.display = 'none'; datosHistorial = []; mapa.setView([19.066, -104.295], 16); };
 
-        // --- SISTEMA ---
+        // --- SISTEMA Y ACCIONES ---
         window.toggleMulti = function(placa, event) {
             event.stopPropagation();
             if (event.target.checked) seleccionadosMulti.add(placa); else seleccionadosMulti.delete(placa);
@@ -429,30 +501,22 @@
             } else { panel.style.display = 'none'; }
         };
 
-        window.enviarMensajeMultiple = function() {
-            const msj = prompt("Mensaje para el GRUPO:");
-            if (msj && msj.trim() !== "") {
+        window.enviarMensajeMultiple = async function() {
+            let msj = await mostrarModal("Grupo", "Mensaje para el GRUPO:", "prompt");
+            if (msj) {
                 seleccionadosMulti.forEach(placa => { if(dataGlobal[placa]) db.ref('camiones_en_patio/' + placa).update({ tts_mensaje: msj.trim(), tts_timestamp: Date.now() }); });
-                alert("Enviado."); seleccionadosMulti.clear(); actualizarPanelMulti(); renderLista();
+                mostrarModal("Enviado", "Señal transmitida."); seleccionadosMulti.clear(); actualizarPanelMulti(); renderLista();
             }
         };
 
-        // NUEVO REQ: SISTEMA DE PIVOTE MULTIPLE
-        window.reasignarDestinoMultiple = function() {
-            let nuevoDestino = prompt("Ingresa la Bahía temporal (Pivote) para el GRUPO.\n\n(O deja en blanco para regresarlos a su destino original):");
+        window.reasignarDestinoMultiple = async function() {
+            let nuevoDestino = await mostrarModal("Desvío", "Ingresa la Bahía temporal (Pivote).\nDejar vacío para destino original:", "prompt");
             if (nuevoDestino !== null) {
-                let msj = nuevoDestino.trim() !== "" ? "Atención grupo. Procedan a la nueva posición temporal: " + nuevoDestino : "Atención grupo. Regresen a su destino original.";
+                let msj = nuevoDestino.trim() !== "" ? "Atención. Procedan a la nueva posición temporal: " + nuevoDestino : "Atención. Regresen a su destino original.";
                 seleccionadosMulti.forEach(placa => { 
-                    if(dataGlobal[placa]) {
-                        db.ref('camiones_en_patio/' + placa).update({ 
-                            destino_temporal: nuevoDestino.trim().toUpperCase(),
-                            tts_mensaje: msj,
-                            tts_timestamp: Date.now()
-                        }); 
-                    }
+                    if(dataGlobal[placa]) db.ref('camiones_en_patio/' + placa).update({ destino_temporal: nuevoDestino.trim().toUpperCase(), tts_mensaje: msj, tts_timestamp: Date.now() }); 
                 });
-                alert("Comando de desvío enviado al grupo.");
-                seleccionadosMulti.clear(); actualizarPanelMulti(); renderLista();
+                mostrarModal("Desvío", "Comando enviado."); seleccionadosMulti.clear(); actualizarPanelMulti(); renderLista();
             }
         };
 
@@ -466,19 +530,13 @@
             renderLista();
         };
 
-        // NUEVO REQ: SISTEMA DE PIVOTE INDIVIDUAL
-        window.reasignarDestinoIndividual = function() {
+        window.reasignarDestinoIndividual = async function() {
             if(camionSeleccionado) {
-                let nuevoDestino = prompt("Ingresa la Bahía temporal (Pivote) para esta unidad.\n\n(O deja en blanco para regresarlo a su destino original):");
+                let nuevoDestino = await mostrarModal("Desvío", "Ingresa la Bahía temporal (Pivote).\nDejar vacío para original:", "prompt");
                 if (nuevoDestino !== null) {
-                    let msj = nuevoDestino.trim() !== "" ? "Atención. Proceda a la nueva posición temporal: " + nuevoDestino : "Atención. Regrese a su destino original.";
-                    db.ref('camiones_en_patio/' + camionSeleccionado).update({ 
-                        destino_temporal: nuevoDestino.trim().toUpperCase(),
-                        tts_mensaje: msj,
-                        tts_timestamp: Date.now()
-                    });
-                    alert("Comando de desvío enviado a " + camionSeleccionado);
-                    renderLista();
+                    let msj = nuevoDestino.trim() !== "" ? "Atención. Proceda a la posición temporal: " + nuevoDestino : "Atención. Regrese a su destino original.";
+                    db.ref('camiones_en_patio/' + camionSeleccionado).update({ destino_temporal: nuevoDestino.trim().toUpperCase(), tts_mensaje: msj, tts_timestamp: Date.now() });
+                    mostrarModal("Desvío", "Comando enviado a " + camionSeleccionado); renderLista();
                 }
             }
         };
@@ -487,21 +545,23 @@
             const input = document.getElementById('inputVoz');
             if (camionSeleccionado && input.value.trim() !== "") {
                 db.ref('camiones_en_patio/' + camionSeleccionado).update({ tts_mensaje: input.value.trim(), tts_timestamp: Date.now() });
-                input.value = ""; alert("Enviado.");
+                input.value = ""; mostrarModal("Enviado", "Instrucción transmitida.");
             }
         };
 
-        window.enviarMensajeGlobal = function() {
-            const msj = prompt("Mensaje a TODA LA FLOTA:");
-            if (msj && msj.trim() !== "") {
-                if(confirm("¿Transmitir a todos?")) {
-                    for(const placa in dataGlobal) { db.ref('camiones_en_patio/' + placa).update({ tts_mensaje: msj.trim(), tts_timestamp: Date.now() }); }
-                }
+        window.enviarMensajeGlobal = async function() {
+            let msj = await mostrarModal("ALERTA GLOBAL", "Mensaje a TODA LA FLOTA:", "prompt");
+            if (msj) {
+                for(const placa in dataGlobal) { db.ref('camiones_en_patio/' + placa).update({ tts_mensaje: msj.trim(), tts_timestamp: Date.now() }); }
+                mostrarModal("Global", "Alerta transmitida.");
             }
         };
 
         window.resolverAlertaTorre = function() { if (camionSeleccionado) { db.ref('camiones_en_patio/' + camionSeleccionado).update({ estado: 'activo' }); document.getElementById('btnResolverAlerta').style.display = 'none'; } };
-        window.forzarSalidaTorre = function() { if (camionSeleccionado && confirm("¿Expulsar unidad?")) { db.ref('camiones_en_patio/' + camionSeleccionado).remove(); document.getElementById('panelAcciones').style.display = 'none'; camionSeleccionado = null; } };
+        window.forzarSalidaTorre = async function() { 
+            let conf = await mostrarModal("Expulsar", "¿Expulsar unidad?", "confirm");
+            if (camionSeleccionado && conf) { db.ref('camiones_en_patio/' + camionSeleccionado).remove(); document.getElementById('panelAcciones').style.display = 'none'; camionSeleccionado = null; } 
+        };
 
         window.toggleOjito = function(tipo, event) {
             event.stopPropagation(); 
@@ -532,15 +592,13 @@
                 const subtipo = camion.subtipo || '';
                 const estado = camion.estado || 'activo';
                 
+                // VISIBILIDAD (Ojito BUG FIX)
                 if(tipo === 'INTERNO' && !verInternos) { if(marcadoresCamiones[placa]) mapa.removeLayer(marcadoresCamiones[placa]); continue; }
                 if(tipo === 'FORANEO' && !verForaneos) { if(marcadoresCamiones[placa]) mapa.removeLayer(marcadoresCamiones[placa]); continue; }
                 if(marcadoresCamiones[placa] && !mapa.hasLayer(marcadoresCamiones[placa])) marcadoresCamiones[placa].addTo(mapa);
 
-                // TEXTO DE DESTINO (Con Lógica de PIVOTE temporal)
                 let textoDestino = camion.destino || 'S/D';
-                if(tipo === 'FORANEO' && camion.destino_temporal && camion.destino_temporal !== "") {
-                    textoDestino = `🔄 ${camion.destino_temporal} (Orig: ${textoDestino})`;
-                }
+                if(tipo === 'FORANEO' && camion.destino_temporal && camion.destino_temporal !== "") textoDestino = `🔄 ${camion.destino_temporal} (Orig: ${textoDestino})`;
 
                 let infoRuta = tipo === 'FORANEO' ? `Des: ${textoDestino}` : (subtipo === 'Operacion Buque' ? `BQ: ${camion.buque} | ST: ${camion.sts}` : `⚙️ ${subtipo}`);
                 if (filtro !== "" && !placa.includes(filtro) && !infoRuta.includes(filtro)) continue; 
@@ -552,9 +610,9 @@
 
                 let chipHtml = ''; 
                 if (estado === 'emergencia') { claseCSS = 'alerta-emergencia'; chipHtml = `<span class="chip-estado chip-emergencia">Emergencia</span>`;} 
-                else if (estado === 'pager') { claseCSS = 'alerta-pager'; chipHtml = `<span class="chip-estado chip-pager">Falla Pager</span>`;}
-                else if (estado === 'baño') { claseCSS = 'alerta-bano'; chipHtml = `<span class="chip-estado chip-bano">En Baño</span>`;}
-                else if (estado === 'ocio') { claseCSS = 'alerta-ocio'; chipHtml = `<span class="chip-estado chip-ocio">Tiempo Muerto</span>`;}
+                else if (estado === 'pager') { claseCSS = 'alerta-pager'; chipHtml = `<span class="chip-estado chip-pager">Falla</span>`;}
+                else if (estado === 'baño') { claseCSS = 'alerta-bano'; chipHtml = `<span class="chip-estado chip-bano">Pausa</span>`;}
+                else if (estado === 'ocio') { claseCSS = 'alerta-ocio'; chipHtml = `<span class="chip-estado chip-ocio">Ocio</span>`;}
 
                 if (placa === camionSeleccionado) claseCSS += ' seleccionada';
                 let isChecked = seleccionadosMulti.has(placa) ? 'checked' : '';
@@ -573,16 +631,13 @@
                 if (tipo === 'INTERNO') htmlInternos += tarjetaHTML; else htmlForaneos += tarjetaHTML; 
             }
 
-            let vistaFinal = "";
-            let btnOjoInt = verInternos ? "👁️" : "👁️‍🗨️"; let btnOjoFor = verForaneos ? "👁️" : "👁️‍🗨️";
-            let classOjoInt = verInternos ? "" : "oculto"; let classOjoFor = verForaneos ? "" : "oculto";
+            let btnOjoInt = verInternos ? "Ocultar" : "Mostrar"; 
+            let btnOjoFor = verForaneos ? "Ocultar" : "Mostrar";
 
-            if (htmlInternos !== "") {
-                vistaFinal += `<details open><summary>Pipelines Internos <button class="btn-ojo ${classOjoInt}" onclick="toggleOjito('internos', event)" title="Mostrar/Ocultar">${btnOjoInt}</button></summary>${htmlInternos}</details>`;
-            }
-            if (htmlForaneos !== "") {
-                vistaFinal += `<details open><summary>Flujo Foráneo <button class="btn-ojo ${classOjoFor}" onclick="toggleOjito('foraneos', event)" title="Mostrar/Ocultar">${btnOjoFor}</button></summary>${htmlForaneos}</details>`;
-            }
+            // ACORDEÓN FIX: Siempre se renderiza el details, pero el interior depende del HTML generado
+            let vistaFinal = "";
+            vistaFinal += `<details open><summary>Operación Interna <button class="btn-ojo" onclick="toggleOjito('internos', event)">[ ${btnOjoInt} ]</button></summary>${verInternos ? htmlInternos : ''}</details>`;
+            vistaFinal += `<details open><summary>Flujo Foráneo <button class="btn-ojo" onclick="toggleOjito('foraneos', event)">[ ${btnOjoFor} ]</button></summary>${verForaneos ? htmlForaneos : ''}</details>`;
             
             listaUnidades.innerHTML = vistaFinal;
             document.getElementById('contadorCamiones').innerText = totalUnidades;
@@ -611,7 +666,6 @@
                     marcadoresCamiones[placa].estadoGuardado = estado;
                 }
             }
-
             for (const placa in marcadoresCamiones) {
                 if (!dataGlobal[placa]) { 
                     mapa.removeLayer(marcadoresCamiones[placa]); delete marcadoresCamiones[placa]; 
