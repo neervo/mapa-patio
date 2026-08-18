@@ -9,49 +9,35 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
-    
-    <!-- Tipografía Corporativa -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        /* PALETA LUMINOUS HORIZON OPTIMIZADA PARA MÓVIL (Sin lag) */
         :root { 
-            --bg-base: #fff9ee; 
-            --surface: #ffffff; 
-            --border-thin: rgba(137, 114, 107, 0.2);
-            --primary: #FF5E3A; 
-            --primary-shadow: rgba(255, 94, 58, 0.25);
-            --secondary: #a4c900; 
-            --tertiary: #38BDF8;
-            --danger: #ba1a1a;
-            --text-primary: #1d1c15;
-            --text-muted: #56423c;
+            --bg-base: #fff9ee; --surface: #ffffff; --border-thin: rgba(137, 114, 107, 0.2);
+            --primary: #FF5E3A; --primary-shadow: rgba(255, 94, 58, 0.25);
+            --secondary: #a4c900; --tertiary: #38BDF8; --danger: #ba1a1a;
+            --text-primary: #1d1c15; --text-muted: #56423c;
         }
 
         body { margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-base); width: 100vw; height: 100vh; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; position: fixed;}
-        
         #mapaFondo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; display: none; }
         
-        /* TARJETAS PREMIUM (Rápidas, sin blur pesado) */
         .card { background-color: rgba(255, 255, 255, 0.98); padding: 32px 24px; border-radius: 32px; width: 90%; max-width: 380px; box-shadow: 0 12px 40px rgba(159, 65, 34, 0.08); z-index: 10; text-align: center; box-sizing: border-box; border: 1px solid var(--border-thin);}
-        
         .panel-flotante { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); background-color: rgba(255, 255, 255, 0.98); padding: 24px; border-radius: 32px; width: 90%; max-width: 380px; box-shadow: 0 12px 40px rgba(0,0,0,0.12); z-index: 10; text-align: center; box-sizing: border-box; border: 1px solid var(--border-thin);}
-        
         .panel-completo { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: var(--bg-base); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px; box-sizing: border-box; z-index: 10; overflow: hidden;}
         
         h2 { color: var(--text-primary); margin-top: 0; margin-bottom: 24px; font-size: 24px; font-weight: 800; letter-spacing: -0.02em;}
         
-        /* INPUTS PILL-SHAPE */
-        input { width: 100%; font-size: 16px; border: 1px solid var(--border-thin); border-radius: 9999px; margin-bottom: 16px; padding: 16px; text-align: center; font-weight: 600; background: var(--surface); color: var(--text-primary); outline: none; text-transform: uppercase; box-sizing: border-box; font-family: 'Plus Jakarta Sans'; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);}
-        input:focus { border-color: var(--primary); }
+        input, select { width: 100%; font-size: 16px; border: 1px solid var(--border-thin); border-radius: 9999px; margin-bottom: 16px; padding: 16px; text-align: center; font-weight: 600; background: var(--surface); color: var(--text-primary); outline: none; text-transform: uppercase; box-sizing: border-box; font-family: 'Plus Jakarta Sans';}
+        input:focus, select:focus { border-color: var(--primary); }
+        select { appearance: none; cursor: pointer;}
         
-        /* BOTONES TOUCH-FRIENDLY */
         button { font-size: 16px; font-weight: 700; border: none; border-radius: 9999px; padding: 18px; width: 100%; cursor: pointer; color: white; transition: 0.2s; margin-bottom: 12px; box-sizing: border-box; font-family: 'Plus Jakarta Sans';}
         button:active { transform: scale(0.98); }
         
         .btn-gordo { padding: 20px; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 10px;}
-        .btn-foraneo { background-color: var(--tertiary); color: white; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);}
-        .btn-interno { background-color: var(--secondary); color: white; box-shadow: 0 4px 15px rgba(164, 201, 0, 0.3);}
+        .btn-foraneo { background-color: var(--tertiary); box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);}
+        .btn-interno { background-color: var(--secondary); box-shadow: 0 4px 15px rgba(164, 201, 0, 0.3);}
         
         .btn-atras { background-color: transparent; color: var(--text-muted); border: 1px solid var(--border-thin); padding: 12px; width: auto; align-self: flex-start; margin-bottom: 20px; font-size: 14px;}
         .btn-entrar { background: linear-gradient(135deg, #FF5E3A 0%, #ff8a65 100%); box-shadow: 0 6px 20px var(--primary-shadow);}
@@ -59,18 +45,18 @@
         .btn-auxilio { background-color: var(--danger); box-shadow: 0 4px 15px rgba(186, 26, 26, 0.3); }
         .btn-salir { background-color: transparent; color: var(--danger); border: 1px solid var(--border-thin); margin-bottom: 0; padding: 14px;}
 
-        /* TEXTOS DEL PANEL ACTIVO */
         .texto-placa { font-size: 24px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px; letter-spacing: -0.02em;}
         .texto-destino { font-size: 15px; font-weight: 600; color: var(--text-muted); margin-bottom: 16px; background: rgba(0,0,0,0.03); padding: 8px 16px; border-radius: 9999px; display: inline-block;}
         .texto-tiempo { font-size: 18px; color: var(--secondary); font-weight: 800; margin-bottom: 24px; }
 
-        /* ALERTA DE MENSAJES (Súper limpia) */
         #alertaMensaje { display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background-color: #ffca28; padding: 24px; width: 90%; max-width: 380px; border-radius: 24px; z-index: 100; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.15); box-sizing: border-box; border: 2px solid white;}
+        .btn-centrar-mapa { position: absolute; top: 20px; right: 20px; z-index: 1000; background: white; border: 2px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-size: 20px; display: none; align-items: center; justify-content: center; cursor: pointer; padding: 0;}
     </style>
 </head>
 <body>
 
     <div id="mapaFondo"></div>
+    <button id="btnCentrar" class="btn-centrar-mapa" onclick="centrarMapa()">🎯</button>
 
     <div id="alertaMensaje">
         <div style="color: #752305; font-weight: 800; font-size:12px; text-transform: uppercase; letter-spacing: 0.1em;">📩 Torre de Control:</div>
@@ -90,6 +76,12 @@
         <input type="text" id="placaInput" placeholder="Placa / Num Eco">
         <input type="text" id="posicionInput" placeholder="Posición (Ej. A0 03)">
         
+        <select id="subtipoInput" style="display:none;">
+            <option value="Operacion Buque">🚢 Operación Buque</option>
+            <option value="Housekeeping">🧹 Housekeeping</option>
+            <option value="Traslado">🚛 Traslado Interno</option>
+        </select>
+
         <input type="text" id="empleadoInput" placeholder="Num Empleado (Ej. EMP-123)" style="display:none;">
         <input type="text" id="buqueInput" placeholder="Buque Asignado" style="display:none;">
         <input type="text" id="stsInput" placeholder="Grúa STS" style="display:none;">
@@ -114,25 +106,29 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN DE FIREBASE Y VARIABLES GLOBALES
         const firebaseConfig = { apiKey: "AIzaSyAH7D-sLL4fCJDliP8xzuYUQGt-H5H7nXE", authDomain: "patio-densidad.firebaseapp.com", databaseURL: "https://patio-densidad-default-rtdb.firebaseio.com", projectId: "patio-densidad" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        const coordenadasBahias = { "A0 02": [19.0671, -104.2955], "A0 06": [19.0650, -104.2940], "G3 02": [19.0665, -104.2960] };
+        // Puedes agregar aquí más coordenadas de bahías y pivotes cuando lo necesites
+        const coordenadasBahias = { 
+            "A0 02": [19.0671, -104.2955], 
+            "A0 06": [19.0650, -104.2940], 
+            "G3 02": [19.0665, -104.2960],
+            "B2": [19.0668, -104.2950] // Coordenada de ejemplo para tu Pivote B2
+        };
 
         let mapa, marcadorMia, marcadorDestino, watchId = null, wakeLock = null, timerInterval = null;
-        let tipoGlobal = "", placaGlobal = "", destinoGlobal = "", buqueGlobal = "", stsGlobal = "", empleadoGlobal = "";
+        let tipoGlobal = "", subtipoGlobal = "", placaGlobal = "", destinoGlobal = "", buqueGlobal = "", stsGlobal = "", empleadoGlobal = "";
         let horaIngreso = 0, maxSpeed = 0, ultimoAudio = 0, estadoOperativo = "activo";
         
         let latActual = null, lngActual = null, velActual = 0;
         let historialBatch = [];
         let tracker1Min = null, sender5Min = null;
         let ultimaVezMovimiento = Date.now();
-        
         let expulsado = false; 
+        let destinoPivoteActual = ""; // Variable para llevar control del pivote asignado
 
-        // INICIALIZAR MAPA (Sin controles de zoom para el operador)
         mapa = L.map('mapaFondo', { zoomControl: false }).setView([19.066, -104.295], 16);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapa);
 
@@ -148,12 +144,14 @@
             if(tipo === 'FORANEO') {
                 document.getElementById('placaInput').placeholder = "Placa (Ej. TR-5)";
                 document.getElementById('posicionInput').style.display = 'block';
+                document.getElementById('subtipoInput').style.display = 'none';
                 document.getElementById('empleadoInput').style.display = 'none';
                 document.getElementById('buqueInput').style.display = 'none';
                 document.getElementById('stsInput').style.display = 'none';
             } else {
                 document.getElementById('placaInput').placeholder = "Num Eco (Ej. ECO-12)";
                 document.getElementById('posicionInput').style.display = 'none';
+                document.getElementById('subtipoInput').style.display = 'block';
                 document.getElementById('empleadoInput').style.display = 'block';
                 document.getElementById('buqueInput').style.display = 'block';
                 document.getElementById('stsInput').style.display = 'block';
@@ -165,15 +163,19 @@
             document.getElementById('pantallaLogin').style.display = 'none';
         }
 
+        function centrarMapa() {
+            if(latActual && lngActual) mapa.setView([latActual, lngActual], 18);
+        }
+
         function iniciarRastreo() {
             placaGlobal = document.getElementById('placaInput').value.trim().toUpperCase();
             if(placaGlobal === "") return alert("Faltan datos de ingreso.");
-            
             expulsado = false; 
 
             if (tipoGlobal === 'FORANEO') {
                 destinoGlobal = document.getElementById('posicionInput').value.trim().toUpperCase();
                 document.getElementById('mapaFondo').style.display = 'block';
+                document.getElementById('btnCentrar').style.display = 'flex';
                 setTimeout(() => { mapa.invalidateSize(); }, 300);
                 document.getElementById('pantallaActiva').className = 'panel-flotante';
                 document.getElementById('botoneraInterna').style.display = 'none';
@@ -181,18 +183,24 @@
                 
                 if (coordenadasBahias[destinoGlobal]) {
                     if(marcadorDestino) mapa.removeLayer(marcadorDestino);
-                    marcadorDestino = L.marker(coordenadasBahias[destinoGlobal]).addTo(mapa).bindPopup("Destino");
+                    marcadorDestino = L.marker(coordenadasBahias[destinoGlobal]).addTo(mapa).bindPopup("Destino Original");
                 }
             } else {
+                subtipoGlobal = document.getElementById('subtipoInput').value;
                 empleadoGlobal = document.getElementById('empleadoInput').value.trim().toUpperCase();
                 buqueGlobal = document.getElementById('buqueInput').value.trim().toUpperCase();
                 stsGlobal = document.getElementById('stsInput').value.trim().toUpperCase();
                 document.getElementById('mapaFondo').style.display = 'none';
+                document.getElementById('btnCentrar').style.display = 'none';
                 document.getElementById('pantallaActiva').className = 'panel-completo';
                 document.getElementById('botoneraInterna').style.display = 'block';
-                document.getElementById('lblDestino').innerText = `👤 ${empleadoGlobal} | 🚢 ${buqueGlobal} | 🏗️ ${stsGlobal}`;
                 
-                // MOTOR HISTÓRICO
+                if(subtipoGlobal === 'Operacion Buque') {
+                    document.getElementById('lblDestino').innerText = `👤 ${empleadoGlobal} | 🚢 ${buqueGlobal} | 🏗️ ${stsGlobal}`;
+                } else {
+                    document.getElementById('lblDestino').innerText = `👤 ${empleadoGlobal} | ⚙️ ${subtipoGlobal}`;
+                }
+                
                 const fechaHoy = new Date().toISOString().split('T')[0];
                 tracker1Min = setInterval(() => {
                     if(latActual && lngActual && !expulsado) {
@@ -219,44 +227,58 @@
             solicitarWakeLock();
             hablar("Ingreso registrado");
 
-            // RELOJ DE TIEMPO Y ALARMA DE OCIO
             timerInterval = setInterval(() => {
                 if (expulsado) return;
-                
                 let min = Math.floor((Date.now() - horaIngreso) / 60000);
-                if (estadoOperativo === 'activo') {
-                    document.getElementById('lblTiempo').innerText = "Flujo Activo: " + min + " min";
-                }
+                if (estadoOperativo === 'activo') document.getElementById('lblTiempo').innerText = "Flujo Activo: " + min + " min";
                 
                 if (tipoGlobal === 'INTERNO' && estadoOperativo === 'activo') {
                     let tiempoDetenido = Date.now() - ultimaVezMovimiento;
-                    if (tiempoDetenido >= (3 * 60 * 1000)) { 
-                        cambiarEstado('ocio', 'Detenido por más de 3 minutos');
-                    }
+                    if (tiempoDetenido >= (3 * 60 * 1000)) cambiarEstado('ocio', 'Detenido por más de 3 minutos');
                 }
             }, 60000);
 
-            // ESCUCHAR INSTRUCCIONES DE LA TORRE
             db.ref('camiones_en_patio/' + placaGlobal).on('value', snap => {
                 const data = snap.val();
-                
                 if(data === null && placaGlobal !== "") {
                     expulsado = true;
                     if (watchId) navigator.geolocation.clearWatch(watchId);
                     if (timerInterval) clearInterval(timerInterval);
                     if (tracker1Min) clearInterval(tracker1Min);
                     if (sender5Min) clearInterval(sender5Min);
-                    
                     alert("⚠️ Turno finalizado por la Torre de Control.");
                     window.location.reload();
                     return;
                 }
 
+                // SISTEMA DE AUDIO
                 if (data.tts_mensaje && data.tts_timestamp > ultimoAudio) {
                     ultimoAudio = data.tts_timestamp;
                     document.getElementById('textoMensaje').innerText = `"${data.tts_mensaje}"`;
                     document.getElementById('alertaMensaje').style.display = 'block';
                     hablar(data.tts_mensaje);
+                }
+
+                // NUEVO: SISTEMA DE DESVÍO (PIVOTE)
+                if (tipoGlobal === 'FORANEO') {
+                    const nuevoPivote = data.destino_temporal || "";
+                    if (nuevoPivote !== destinoPivoteActual) {
+                        destinoPivoteActual = nuevoPivote;
+                        
+                        // Actualizar textos en pantalla
+                        if (destinoPivoteActual !== "") {
+                            document.getElementById('lblDestino').innerHTML = `📍 PIVOTE: ${destinoPivoteActual} <br><span style="font-size:12px; color:var(--text-muted); font-weight:500;">(Original: ${destinoGlobal})</span>`;
+                        } else {
+                            document.getElementById('lblDestino').innerHTML = `📍 ${destinoGlobal}`;
+                        }
+
+                        // Actualizar el PIN en el mapa
+                        if (marcadorDestino) mapa.removeLayer(marcadorDestino);
+                        let coordActiva = coordenadasBahias[destinoPivoteActual] || coordenadasBahias[destinoGlobal];
+                        if (coordActiva) {
+                            marcadorDestino = L.marker(coordActiva).addTo(mapa).bindPopup("Destino Asignado");
+                        }
+                    }
                 }
 
                 if (data.estado && data.estado !== estadoOperativo) {
@@ -270,35 +292,29 @@
                 }
             });
 
-            // TRACKING GPS
             if ("geolocation" in navigator) {
                 watchId = navigator.geolocation.watchPosition(pos => {
                     if (expulsado) return;
-
-                    latActual = pos.coords.latitude; 
-                    lngActual = pos.coords.longitude;
+                    latActual = pos.coords.latitude; lngActual = pos.coords.longitude;
                     velActual = ((pos.coords.speed || 0) * 3.6).toFixed(1);
-                    
                     if (parseFloat(velActual) > parseFloat(maxSpeed)) maxSpeed = velActual;
                     
                     if (parseFloat(velActual) > 2.0) {
                         ultimaVezMovimiento = Date.now();
-                        if (estadoOperativo === 'ocio') {
-                            cambiarEstado('activo', null);
-                        }
+                        if (estadoOperativo === 'ocio') cambiarEstado('activo', null);
                     }
 
                     if (tipoGlobal === 'FORANEO') {
-                        if (marcadorMia) {
-                            marcadorMia.setLatLng([latActual, lngActual]);
-                        } else {
+                        if (marcadorMia) marcadorMia.setLatLng([latActual, lngActual]);
+                        else {
                             marcadorMia = L.circleMarker([latActual, lngActual], { radius: 8, fillColor: "#38BDF8", color: "white", weight: 2, fillOpacity: 1 }).addTo(mapa);
                             mapa.setView([latActual, lngActual], 18);
                         }
                     }
 
+                    // Se envía todo al backend (Nota que no tocamos destino_temporal, ese solo lo manda la Torre)
                     db.ref('camiones_en_patio/' + placaGlobal).update({
-                        lat: latActual, lng: lngActual, placa: placaGlobal, tipo: tipoGlobal, estado: estadoOperativo,
+                        lat: latActual, lng: lngActual, placa: placaGlobal, tipo: tipoGlobal, subtipo: subtipoGlobal, estado: estadoOperativo,
                         destino: destinoGlobal, buque: buqueGlobal, sts: stsGlobal, empleado: empleadoGlobal, hora_ingreso: horaIngreso, velocidad_actual: velActual
                     });
                 }, err => {}, { enableHighAccuracy: true, maximumAge: 0 });
@@ -309,9 +325,7 @@
             if (expulsado) return;
             estadoOperativo = nuevoEstado;
             db.ref('camiones_en_patio/' + placaGlobal).update({ estado: nuevoEstado });
-            if (msj) {
-                fetch(`https://api.telegram.org/bot8515273340:AAHsV3fsue-dY9CZCWlj1izG-usRtgDY64k/sendMessage?chat_id=-1005100426684&text=${encodeURIComponent("⚠️ ALERTA " + placaGlobal + ": " + msj)}`);
-            }
+            if (msj) fetch(`https://api.telegram.org/bot8515273340:AAHsV3fsue-dY9CZCWlj1izG-usRtgDY64k/sendMessage?chat_id=-1005100426684&text=${encodeURIComponent("⚠️ ALERTA " + placaGlobal + ": " + msj)}`);
         }
 
         function toggleBano() {
@@ -319,15 +333,11 @@
             const btn = document.getElementById('btnBano');
             if (estadoOperativo === 'baño') {
                 cambiarEstado('activo', null);
-                btn.style.backgroundColor = '#ffca28'; 
-                btn.style.color = '#752305'; 
-                btn.innerText = "🚾 Pausa (Baño)";
+                btn.style.backgroundColor = '#ffca28'; btn.style.color = '#752305'; btn.innerText = "🚾 Pausa (Baño)";
                 ultimaVezMovimiento = Date.now();
             } else {
                 cambiarEstado('baño', 'Operador en Baño');
-                btn.style.backgroundColor = '#a4c900'; 
-                btn.style.color = 'white'; 
-                btn.innerText = "✅ Regresar a Operar";
+                btn.style.backgroundColor = '#a4c900'; btn.style.color = 'white'; btn.innerText = "✅ Regresar a Operar";
                 document.getElementById('lblTiempo').innerText = "🚾 EN PAUSA";
             }
         }
@@ -340,11 +350,9 @@
             if (tracker1Min) clearInterval(tracker1Min);
             if (sender5Min) clearInterval(sender5Min);
             if (wakeLock) wakeLock.release().then(() => wakeLock = null);
-            
             if(historialBatch.length > 0 && tipoGlobal === 'INTERNO') {
                 const fechaHoy = new Date().toISOString().split('T')[0];
-                const refHistorial = db.ref(`historial_rutas/${fechaHoy}/${placaGlobal}`);
-                historialBatch.forEach(punto => refHistorial.push(punto));
+                db.ref(`historial_rutas/${fechaHoy}/${placaGlobal}`).set(historialBatch);
             }
             if (placaGlobal !== "") db.ref('camiones_en_patio/' + placaGlobal).remove();
             window.location.reload(); 
