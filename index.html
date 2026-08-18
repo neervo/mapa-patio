@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Horizon YMS - Operador</title>
+    <title>UBICATE-TEC - Operador</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -49,14 +49,12 @@
         .texto-destino { font-size: 14px; font-weight: 600; color: var(--text-muted); margin-bottom: 16px; background: rgba(0,0,0,0.03); padding: 8px 16px; border-radius: 9999px; display: inline-block;}
         .texto-tiempo { font-size: 16px; color: var(--secondary); font-weight: 800; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 0.05em;}
 
-        /* MODALES PREMIUM */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(29, 28, 21, 0.8); backdrop-filter: blur(5px); z-index: 9999; display: flex; justify-content: center; align-items: center;}
         .modal-box { background: white; padding: 32px 24px; border-radius: 24px; width: 85%; max-width: 340px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2);}
         .modal-box h3 { margin-top: 0; color: var(--text-primary); font-weight: 800; font-size: 18px;}
         .modal-box p { color: var(--text-muted); font-size: 15px; margin-bottom: 24px; line-height: 1.5; font-weight: 500;}
         .modal-btn { background: var(--text-primary); padding: 14px; border-radius: 9999px; color: white; width: 100%; font-weight: 700;}
 
-        /* MENSAJE AUDIO TORRE */
         #alertaMensaje { display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background-color: #ffca28; padding: 24px; width: 90%; max-width: 380px; border-radius: 24px; z-index: 100; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.15); box-sizing: border-box; border: 2px solid white;}
         .btn-centrar-mapa { position: absolute; top: 20px; right: 20px; z-index: 1000; background: white; border: 2px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-size: 12px; font-weight:800; display: none; align-items: center; justify-content: center; cursor: pointer; padding: 0; color: var(--primary);}
     </style>
@@ -75,13 +73,13 @@
     </div>
 
     <div id="alertaMensaje">
-        <div style="color: #752305; font-weight: 800; font-size:11px; text-transform: uppercase; letter-spacing: 0.1em;">Señal de Control</div>
+        <div style="color: #752305; font-weight: 800; font-size:11px; text-transform: uppercase; letter-spacing: 0.1em;">Señal de Torre</div>
         <div id="textoMensaje" style="font-size: 18px; font-weight: 800; margin: 16px 0; color: #1d1c15; letter-spacing: -0.02em;"></div>
         <button style="background-color: var(--text-primary); padding:14px;" onclick="document.getElementById('alertaMensaje').style.display = 'none';">Confirmar Recepción</button>
     </div>
 
     <div class="card" id="pantallaSeleccion">
-        <h2>Perfil Operativo</h2>
+        <h2>UBICATE-TEC</h2>
         <button class="btn-gordo btn-foraneo" onclick="seleccionarPerfil('FORANEO')">Flujo Foráneo</button>
         <button class="btn-gordo btn-interno" onclick="seleccionarPerfil('INTERNO')">Operación Interna</button>
     </div>
@@ -113,8 +111,9 @@
             <div class="texto-tiempo" id="lblTiempo">Flujo: 0 min</div>
             
             <div id="botoneraInterna" style="display: none; width: 100%;">
-                <button id="btnBano" style="background-color: #ffca28; color: #752305; box-shadow: 0 4px 15px rgba(255, 202, 40, 0.3);" onclick="toggleBano()">Pausa Operativa</button>
-                <button style="background-color: #f57f17; box-shadow: 0 4px 15px rgba(245, 127, 23, 0.3);" onclick="cambiarEstado('pager', 'Falla de Sistema')">Falla de Sistema</button>
+                <!-- ACTUALIZADO: Textos Baño y Pager -->
+                <button id="btnBano" style="background-color: #ffca28; color: #752305; box-shadow: 0 4px 15px rgba(255, 202, 40, 0.3);" onclick="toggleBano()">Baño</button>
+                <button style="background-color: #f57f17; box-shadow: 0 4px 15px rgba(245, 127, 23, 0.3);" onclick="cambiarEstado('pager', 'Falla de Pager')">Falla Pager</button>
             </div>
 
             <button class="btn-auxilio" onclick="cambiarEstado('emergencia', 'AUXILIO REQUERIDO')">Emergencia</button>
@@ -127,9 +126,8 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let coordenadasBahias = {}; // Se llenará desde Firebase automáticamente
+        let coordenadasBahias = {}; 
         
-        // Cargar Bahías dinámicas creadas en la Torre
         db.ref('configuracion/posiciones').on('value', snap => {
             coordenadasBahias = {};
             if(snap.val()) {
@@ -163,7 +161,6 @@
         async function solicitarWakeLock() { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {} }
         function hablar(texto) { if ('speechSynthesis' in window) { window.speechSynthesis.speak(new SpeechSynthesisUtterance(texto)); } }
 
-        // LÓGICA DINÁMICA DE CAMPOS
         document.getElementById('subtipoInput').addEventListener('change', function() {
             let val = this.value;
             document.getElementById('empleadoInput').style.display = 'block';
@@ -194,7 +191,6 @@
             } else {
                 document.getElementById('posicionInput').style.display = 'none';
                 document.getElementById('subtipoInput').style.display = 'block';
-                // Trigger event to set initial fields correctly
                 document.getElementById('subtipoInput').dispatchEvent(new Event('change'));
             }
         }
@@ -323,7 +319,7 @@
                     if(estadoOperativo === 'activo') {
                         document.getElementById('btnBano').style.backgroundColor = '#ffca28'; 
                         document.getElementById('btnBano').style.color = '#752305'; 
-                        document.getElementById('btnBano').innerText = "Pausa Operativa";
+                        document.getElementById('btnBano').innerText = "Baño";
                         ultimaVezMovimiento = Date.now(); 
                     }
                 }
@@ -369,12 +365,12 @@
             const btn = document.getElementById('btnBano');
             if (estadoOperativo === 'baño') {
                 cambiarEstado('activo', null);
-                btn.style.backgroundColor = '#ffca28'; btn.style.color = '#752305'; btn.innerText = "Pausa Operativa";
+                btn.style.backgroundColor = '#ffca28'; btn.style.color = '#752305'; btn.innerText = "Baño";
                 ultimaVezMovimiento = Date.now();
             } else {
-                cambiarEstado('baño', 'Operador en Pausa');
+                cambiarEstado('baño', 'Operador en Baño');
                 btn.style.backgroundColor = '#a4c900'; btn.style.color = 'white'; btn.innerText = "Reanudar Flujo";
-                document.getElementById('lblTiempo').innerText = "PAUSA ACTIVA";
+                document.getElementById('lblTiempo').innerText = "EN BAÑO";
             }
         }
 
