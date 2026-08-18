@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YMS - Torre de Control</title>
+    <title>UBICATE-TEC - Torre de Control</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+    <!-- SCRIPT PARA GRÁFICAS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
@@ -83,16 +85,20 @@
         .btn-resolver { background-color: transparent; color: var(--primary); border: 2px solid var(--primary); padding: 10px; border-radius: 9999px; cursor: pointer; font-weight: 700; margin-bottom: 8px; font-size: 12px;}
         .btn-eliminar { background-color: transparent; color: var(--danger); padding: 8px; border-radius: 9999px; cursor: pointer; font-weight: 600; font-size: 11px; border: none; text-decoration: underline;}
 
-        .dash-container { padding: 20px; display: flex; flex-direction: column; gap: 15px;}
-        .dash-card { background: var(--card-glass); border: 1px solid var(--border-thin); padding: 20px; border-radius: 16px; display: flex; flex-direction: column; gap: 5px;}
+        /* DASHBOARD CON GRID Y GRÁFICAS */
+        .dash-container { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;}
+        .dash-card { background: var(--card-glass); border: 1px solid var(--border-thin); padding: 15px; border-radius: 16px; display: flex; flex-direction: column; gap: 5px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);}
+        .dash-card.full-width { grid-column: 1 / -1; }
         .dash-title { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; font-weight: 800;}
-        .dash-value { font-size: 40px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.04em;}
-        .btn-excel { background-color: #4caf50; color: white; border: none; padding: 12px; border-radius: 9999px; font-weight: 800; cursor: pointer; font-family: 'Plus Jakarta Sans'; font-size: 13px; text-transform: uppercase; margin-top: 10px;}
+        .dash-value { font-size: 32px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.04em;}
+        .btn-excel { background-color: #4caf50; color: white; border: none; padding: 12px; border-radius: 9999px; font-weight: 800; cursor: pointer; font-family: 'Plus Jakarta Sans'; font-size: 13px; text-transform: uppercase; margin-top: 5px; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3); grid-column: 1 / -1;}
 
         .ajustes-seccion { padding: 20px; border-bottom: 1px solid var(--border-thin); }
         .ajustes-seccion h3 { color: var(--text-primary); margin-top: 0; font-size: 14px; font-weight: 800;}
         .texto-ayuda { color: var(--text-secondary); font-size: 12px; margin-bottom: 15px; line-height: 1.4; }
         .btn-ajuste { background-color: #ffffff; color: var(--text-primary); border: 1px solid var(--border-thin); padding: 10px; width: 100%; border-radius: 9999px; cursor: pointer; font-weight: 700; margin-bottom: 10px; font-size: 12px;}
+        .btn-guardar-geo { background-color: var(--secondary-container); color: var(--secondary); border: none; padding: 10px; width: 100%; border-radius: 9999px; cursor: pointer; font-weight: 800; display: none; font-size: 12px;}
+        
         .item-geo { display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; border: 1px solid var(--border-thin); font-size: 12px; font-weight: 700;}
         .item-geo button { background: transparent; border: none; cursor: pointer; font-size: 14px;}
 
@@ -122,7 +128,7 @@
         .geo-tooltip { background: rgba(255,255,255,0.9); border: none; border-radius: 9999px; padding: 4px 10px; color: var(--text-primary); font-family: 'Plus Jakarta Sans'; font-weight: 800; font-size: 11px;}
         .geo-tooltip.oculto { display: none !important; }
 
-        /* MODALES PREMIUM HTML */
+        /* MODALES PREMIUM */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(29, 28, 21, 0.6); backdrop-filter: blur(5px); z-index: 9999; display: flex; justify-content: center; align-items: center;}
         .modal-box { background: white; padding: 32px 24px; border-radius: 24px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.15);}
         .modal-box h3 { margin-top: 0; color: var(--text-primary); font-weight: 800; font-size: 18px; margin-bottom: 10px;}
@@ -150,14 +156,14 @@
     </div>
 
     <div class="header">
-        <h1>YMS Central</h1>
+        <h1>UBICATE-TEC</h1>
         <div class="contador">Unidades: <span id="contadorCamiones">0</span></div>
     </div>
     
     <div class="panel-lateral">
         
         <div class="tabs-header">
-            <button class="tab-btn activo" id="btnTabMonitoreo" onclick="cambiarTab('monitoreo')">Señales</button>
+            <button class="tab-btn activo" id="btnTabMonitoreo" onclick="cambiarTab('monitoreo')">Unidades</button>
             <button class="tab-btn" id="btnTabDashboard" onclick="cambiarTab('dashboard')">Métricas</button>
             <button class="tab-btn" id="btnTabAjustes" onclick="cambiarTab('ajustes')">Ajustes</button>
         </div>
@@ -190,12 +196,19 @@
         <div id="tab-dashboard" class="tab-content">
             <div class="dash-container">
                 <div class="dash-card">
-                    <div class="dash-title">Total en Operación</div>
+                    <div class="dash-title">Total Operando</div>
                     <div class="dash-value val-orange" id="dashTotal">0</div>
                 </div>
                 <div class="dash-card">
-                    <div class="dash-title">Tiempos Muertos (>3 Min)</div>
-                    <div class="dash-value" id="dashOcio" style="color: #9c27b0;">0</div>
+                    <div class="dash-title">Ocio (>3 Min)</div>
+                    <div class="dash-value" id="dashOcio" style="color: #ba68c8;">0</div>
+                </div>
+                <!-- NUEVO REQ: GRÁFICA DE DASHBOARD -->
+                <div class="dash-card full-width">
+                    <div class="dash-title">Estado de la Flota</div>
+                    <div style="height: 180px; width: 100%; display: flex; justify-content: center; margin-top: 10px;">
+                        <canvas id="graficaFlota"></canvas>
+                    </div>
                 </div>
                 <button class="btn-excel" onclick="exportarExcel()">Descargar Reporte (CSV)</button>
             </div>
@@ -228,6 +241,7 @@
 
     </div>
 
+    <!-- REPRODUCTOR HISTORIAL -->
     <div id="reproductorRutas" class="reproductor-rutas">
         <div class="reproductor-header">
             <h2 id="repPlaca">Historial: --</h2>
@@ -256,7 +270,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // ---------------- MODAL PREMIUM ----------------
         function mostrarModal(titulo, texto, tipo = 'alert', placeholder = '') {
             return new Promise((resolve) => {
                 const modal = document.getElementById('customModal');
@@ -290,6 +303,29 @@
         let posicionesMapa = {}; 
         let verInternos = true;
         let verForaneos = true;
+        let chartFlota = null;
+
+        // INICIALIZAR GRÁFICA AL CARGAR
+        window.onload = () => {
+            const ctx = document.getElementById('graficaFlota').getContext('2d');
+            chartFlota = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Activos', 'Ocio', 'Baño', 'Pager', 'Emergencia'],
+                    datasets: [{
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: ['#a4c900', '#ba68c8', '#fbc02d', '#f57f17', '#ba1a1a'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: { legend: { position: 'right', labels: { font: { family: 'Plus Jakarta Sans', size: 11, weight: 'bold' } } } }
+                }
+            });
+        };
 
         window.cambiarTab = function(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('activo'));
@@ -312,15 +348,26 @@
         };
 
         function actualizarDashboard() {
-            let total = 0, ocio = 0;
+            let total = 0, ocio = 0, act = 0, bano = 0, pager = 0, emerg = 0;
             for(let key in dataGlobal) {
-                total++; if(dataGlobal[key].estado === 'ocio') ocio++;
+                total++;
+                let est = dataGlobal[key].estado;
+                if(est === 'ocio') ocio++;
+                else if(est === 'baño') bano++;
+                else if(est === 'pager') pager++;
+                else if(est === 'emergencia') emerg++;
+                else act++;
             }
             document.getElementById('dashTotal').innerText = total;
             document.getElementById('dashOcio').innerText = ocio;
+
+            if(chartFlota) {
+                chartFlota.data.datasets[0].data = [act, ocio, bano, pager, emerg];
+                chartFlota.update();
+            }
         }
 
-        // --- SISTEMA POSICIONES (NUEVO) ---
+        // --- SISTEMA POSICIONES ---
         let modoDibujoPos = false;
         window.iniciarDibujoPosicion = function() {
             modoDibujoPos = true;
@@ -328,7 +375,7 @@
             mostrarModal("Posiciones", "Da clic en el mapa donde se ubica la bahía/posición.", "alert");
         };
 
-        // --- SISTEMA DE GEOCERCAS ---
+        // --- SISTEMA GEOCERCAS ---
         let modoDibujoGeo = false, puntosDibujo = [], polylineDibujo = null, marcadoresDibujo = [];
 
         window.toggleNombresGeo = function() {
@@ -346,7 +393,6 @@
         };
 
         mapa.on('click', async function(e) {
-            // Lógica Posiciones
             if (modoDibujoPos) {
                 modoDibujoPos = false;
                 document.getElementById('mapa').style.cursor = 'grab';
@@ -357,8 +403,6 @@
                 }
                 return;
             }
-
-            // Lógica Geocercas
             if (!modoDibujoGeo) return;
             puntosDibujo.push([e.latlng.lat, e.latlng.lng]);
             marcadoresDibujo.push(L.circleMarker([e.latlng.lat, e.latlng.lng], {radius: 4, color: '#FF5E3A', fillColor: '#FF5E3A', fillOpacity: 1}).addTo(mapa));
@@ -585,6 +629,7 @@
         window.renderLista = function() {
             const filtro = document.getElementById('inputBuscador').value.trim().toUpperCase();
             let htmlInternos = "", htmlForaneos = "", totalUnidades = 0;
+            let countInt = 0, countFor = 0;
 
             for (const placa in dataGlobal) {
                 const camion = dataGlobal[placa];
@@ -592,7 +637,6 @@
                 const subtipo = camion.subtipo || '';
                 const estado = camion.estado || 'activo';
                 
-                // VISIBILIDAD (Ojito BUG FIX)
                 if(tipo === 'INTERNO' && !verInternos) { if(marcadoresCamiones[placa]) mapa.removeLayer(marcadoresCamiones[placa]); continue; }
                 if(tipo === 'FORANEO' && !verForaneos) { if(marcadoresCamiones[placa]) mapa.removeLayer(marcadoresCamiones[placa]); continue; }
                 if(marcadoresCamiones[placa] && !mapa.hasLayer(marcadoresCamiones[placa])) marcadoresCamiones[placa].addTo(mapa);
@@ -628,16 +672,18 @@
                         <div class="datos"><span>${infoRuta}</span><span>Flujo: ${tiempo}</span></div>
                     </div>`;
 
-                if (tipo === 'INTERNO') htmlInternos += tarjetaHTML; else htmlForaneos += tarjetaHTML; 
+                if (tipo === 'INTERNO') { htmlInternos += tarjetaHTML; countInt++; }
+                else { htmlForaneos += tarjetaHTML; countFor++; }
             }
 
             let btnOjoInt = verInternos ? "Ocultar" : "Mostrar"; 
             let btnOjoFor = verForaneos ? "Ocultar" : "Mostrar";
+            let classOjoInt = verInternos ? "" : "oculto"; 
+            let classOjoFor = verForaneos ? "" : "oculto";
 
-            // ACORDEÓN FIX: Siempre se renderiza el details, pero el interior depende del HTML generado
             let vistaFinal = "";
-            vistaFinal += `<details open><summary>Operación Interna <button class="btn-ojo" onclick="toggleOjito('internos', event)">[ ${btnOjoInt} ]</button></summary>${verInternos ? htmlInternos : ''}</details>`;
-            vistaFinal += `<details open><summary>Flujo Foráneo <button class="btn-ojo" onclick="toggleOjito('foraneos', event)">[ ${btnOjoFor} ]</button></summary>${verForaneos ? htmlForaneos : ''}</details>`;
+            vistaFinal += `<details open><summary>Operación Interna (${countInt}) <button class="btn-ojo ${classOjoInt}" onclick="toggleOjito('internos', event)">[ ${btnOjoInt} ]</button></summary>${verInternos ? htmlInternos : ''}</details>`;
+            vistaFinal += `<details open><summary>Flujo Foráneo (${countFor}) <button class="btn-ojo ${classOjoFor}" onclick="toggleOjito('foraneos', event)">[ ${btnOjoFor} ]</button></summary>${verForaneos ? htmlForaneos : ''}</details>`;
             
             listaUnidades.innerHTML = vistaFinal;
             document.getElementById('contadorCamiones').innerText = totalUnidades;
